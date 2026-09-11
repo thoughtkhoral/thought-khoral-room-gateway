@@ -2,7 +2,7 @@ use std::sync::LazyLock;
 
 use chrono::{DateTime, Utc};
 use jsonschema::Resource;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use uuid::Uuid;
 
@@ -68,24 +68,66 @@ pub struct RpcError {
 }
 
 impl RpcError {
-    const fn invalid_request() -> Self {
+    pub(crate) const fn invalid_request() -> Self {
         Self {
             code: -32600,
             message: "Invalid request",
         }
     }
 
-    const fn unknown_method() -> Self {
+    pub(crate) const fn unknown_method() -> Self {
         Self {
             code: -32601,
             message: "Method not found",
         }
     }
 
-    const fn unsupported_contract_version() -> Self {
+    pub(crate) const fn unsupported_contract_version() -> Self {
         Self {
             code: -32009,
             message: "Unsupported contract version",
+        }
+    }
+
+    pub(crate) const fn unauthenticated() -> Self {
+        Self {
+            code: -32001,
+            message: "Unauthenticated",
+        }
+    }
+
+    pub(crate) const fn forbidden() -> Self {
+        Self {
+            code: -32003,
+            message: "Forbidden",
+        }
+    }
+
+    pub(crate) const fn not_found() -> Self {
+        Self {
+            code: -32004,
+            message: "Room or decision not found",
+        }
+    }
+
+    pub(crate) const fn invalid_transition() -> Self {
+        Self {
+            code: -32010,
+            message: "Invalid state transition",
+        }
+    }
+
+    pub(crate) const fn conflicting_duplicate() -> Self {
+        Self {
+            code: -32012,
+            message: "Duplicate request with a different payload",
+        }
+    }
+
+    pub(crate) const fn internal_error() -> Self {
+        Self {
+            code: -32603,
+            message: "Internal error",
         }
     }
 }
@@ -98,7 +140,78 @@ pub enum ValidatedRequest {
     DecisionTransition(DecisionTransition),
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+impl ValidatedRequest {
+    pub fn id(&self) -> &str {
+        match self {
+            Self::Join(request) => &request.id,
+            Self::ChatSend(request) => &request.id,
+            Self::DecisionPropose(request) => &request.id,
+            Self::DecisionTransition(request) => &request.id,
+        }
+    }
+
+    pub fn room_id(&self) -> Uuid {
+        match self {
+            Self::Join(request) => request.room_id,
+            Self::ChatSend(request) => request.room_id,
+            Self::DecisionPropose(request) => request.room_id,
+            Self::DecisionTransition(request) => request.room_id,
+        }
+    }
+
+    pub fn request_id(&self) -> Uuid {
+        match self {
+            Self::Join(request) => request.request_id,
+            Self::ChatSend(request) => request.request_id,
+            Self::DecisionPropose(request) => request.request_id,
+            Self::DecisionTransition(request) => request.request_id,
+        }
+    }
+
+    pub(crate) fn fingerprint(&self) -> Value {
+        match self {
+            Self::ChatSend(request) => json!({
+                "method": "chat.send",
+                "contractVersion": request.contract_version,
+                "requestId": request.request_id,
+                "roomId": request.room_id,
+                "occurredAt": request.occurred_at,
+                "text": request.text,
+            }),
+            Self::DecisionPropose(request) => json!({
+                "method": "decision.propose",
+                "contractVersion": request.contract_version,
+                "requestId": request.request_id,
+                "roomId": request.room_id,
+                "occurredAt": request.occurred_at,
+                "title": request.title,
+                "summary": request.summary,
+                "sourceEventIds": request.source_event_ids,
+            }),
+            Self::DecisionTransition(request) => json!({
+                "method": "decision.transition",
+                "contractVersion": request.contract_version,
+                "requestId": request.request_id,
+                "roomId": request.room_id,
+                "occurredAt": request.occurred_at,
+                "decisionId": request.decision_id,
+                "action": request.action,
+                "editedTitle": request.edited_title,
+                "editedSummary": request.edited_summary,
+            }),
+            Self::Join(request) => json!({
+                "method": "room.join",
+                "contractVersion": request.contract_version,
+                "requestId": request.request_id,
+                "roomId": request.room_id,
+                "occurredAt": request.occurred_at,
+                "afterSequence": request.after_sequence,
+            }),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Join {
     pub id: String,
@@ -109,7 +222,7 @@ pub struct Join {
     pub after_sequence: Option<i64>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ChatSend {
     pub id: String,
@@ -120,7 +233,7 @@ pub struct ChatSend {
     pub text: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct DecisionPropose {
     pub id: String,
@@ -133,7 +246,7 @@ pub struct DecisionPropose {
     pub source_event_ids: Vec<Uuid>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct DecisionTransition {
     pub id: String,
@@ -147,7 +260,7 @@ pub struct DecisionTransition {
     pub edited_summary: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum DecisionAction {
     Confirm,
