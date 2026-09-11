@@ -8,6 +8,12 @@ use uuid::Uuid;
 
 use support::{TestServer, TokenOptions, common_params, join, recv_json, rpc, send_json};
 
+async fn wait_until_epoch_second(target: i64) {
+    while chrono::Utc::now().timestamp() < target {
+        tokio::time::sleep(std::time::Duration::from_millis(5)).await;
+    }
+}
+
 async fn assert_unauthenticated(server: &TestServer, token: &str) {
     let error = server
         .connect_result(token)
@@ -72,6 +78,19 @@ async fn expired_token_is_unauthenticated_without_leeway() {
     assert_unauthenticated(&server, &server.token_with(options)).await;
 }
 
+// This fails if the validator treats the expiration instant itself as unexpired.
+#[tokio::test]
+async fn token_expiring_at_now_is_unauthenticated() {
+    let server = TestServer::start().await;
+    let boundary = chrono::Utc::now().timestamp() + 1;
+    let mut options = TokenOptions::valid(Uuid::new_v4(), "human");
+    options.exp = boundary;
+    let token = server.token_with(options);
+
+    wait_until_epoch_second(boundary).await;
+    assert_unauthenticated(&server, &token).await;
+}
+
 // This fails if a token is admitted before its nbf instant.
 #[tokio::test]
 async fn future_not_before_token_is_unauthenticated_without_leeway() {
@@ -80,6 +99,19 @@ async fn future_not_before_token_is_unauthenticated_without_leeway() {
     options.nbf = Some(chrono::Utc::now().timestamp() + 30);
 
     assert_unauthenticated(&server, &server.token_with(options)).await;
+}
+
+// This protects the inclusive valid side of the not-before boundary.
+#[tokio::test]
+async fn token_not_before_now_is_authenticated() {
+    let server = TestServer::start().await;
+    let boundary = chrono::Utc::now().timestamp() + 1;
+    let mut options = TokenOptions::valid(Uuid::new_v4(), "human");
+    options.nbf = Some(boundary);
+    let token = server.token_with(options);
+
+    wait_until_epoch_second(boundary).await;
+    let _socket = server.connect(&token).await;
 }
 
 // This fails if any required JWT trust dimension is skipped or defaulted.

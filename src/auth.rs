@@ -117,6 +117,7 @@ impl AuthValidator {
         validation.set_audience(&[&self.audience]);
         validation.set_required_spec_claims(&["exp", "iss", "aud", "sub"]);
         validation.leeway = 0;
+        validation.reject_tokens_expiring_in_less_than = 1;
         validation.validate_nbf = true;
         let claims = decode::<Claims>(token, key, &validation).ok()?.claims;
 
