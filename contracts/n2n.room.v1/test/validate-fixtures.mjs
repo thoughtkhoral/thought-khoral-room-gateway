@@ -18,6 +18,18 @@ ajv.addSchema(envelopeSchema);
 ajv.addSchema(roomEventSchema);
 const validate = ajv.compile(rpcSchema);
 
+const browserAuthentication = {
+  jsonrpc: "2.0",
+  id: "authenticate-1",
+  method: "session.authenticate",
+  params: { accessToken: "header.payload.signature" },
+};
+assert.equal(
+  validate(browserAuthentication),
+  true,
+  `session.authenticate must validate: ${ajv.errorsText(validate.errors)}`,
+);
+
 const assertFixtures = async (directory, expectedValid) => {
   const fileNames = (await readdir(resolve(projectRoot, directory))).sort();
   assert.ok(fileNames.length > 0, `${directory} must contain fixtures`);
@@ -35,4 +47,6 @@ const assertFixtures = async (directory, expectedValid) => {
 await assertFixtures("fixtures/valid", true);
 await assertFixtures("fixtures/invalid", false);
 
-console.log("validated all valid fixtures and rejected all invalid fixtures");
+console.log(
+  "validated session authentication and all valid fixtures; rejected all invalid fixtures",
+);

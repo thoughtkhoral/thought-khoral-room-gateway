@@ -1,12 +1,12 @@
 {
   "contract": "n2n.room.v1",
   "source": "../n2n-contracts",
-  "tag": "n2n-room-v1.0.1",
-  "commit": "b02ad74c876a34282bee850eb8fc3606949f9379",
-  "archiveSha256": "12fe92b410939d62bbcf9d72203978a74180511073875b37d997e0b9cc687c4f",
+  "tag": "n2n-room-v1.0.2",
+  "commit": "e2e3ead757c8b35bfd330e8ea76875e9db264ac3",
+  "archiveSha256": "c38cf237d873fbee62928dbccd6eba0fc5163806914ca31bba4909d95b6fbeed",
   "schemas": {
     "envelope.schema.json": "1d1490eddef16f200971850dfbff8bb8302edbaed1a8e54db51cb1c77ee92857",
-    "rpc.schema.json": "531dab4b8e0d478878a0ffe86c1e6a8304f37adc82778eff5af4f3adf60ea3cb",
+    "rpc.schema.json": "20f00404ca927b04efb9cfbf4ca150568fa12f29ce6bc7d564c27b20a5693cef",
     "room-event.schema.json": "5eaa91285a332aaaef3c2c790275123c30446d6e0ef3bba669e620b066f4f9c5"
   }
 }

@@ -1,0 +1,8 @@
+{
+  "jsonrpc": "2.0",
+  "id": "authenticate-1",
+  "method": "session.authenticate",
+  "params": {
+    "accessToken": "header.payload.signature"
+  }
+}

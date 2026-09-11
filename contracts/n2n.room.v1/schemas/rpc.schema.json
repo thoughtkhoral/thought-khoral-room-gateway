@@ -7,13 +7,32 @@
     "jsonrpc": { "const": "2.0" },
     "id": { "type": "string", "minLength": 1 },
     "method": {
-      "enum": ["room.join", "chat.send", "decision.propose", "decision.transition"]
+      "enum": [
+        "session.authenticate",
+        "room.join",
+        "chat.send",
+        "decision.propose",
+        "decision.transition"
+      ]
     },
     "params": { "type": "object" }
   },
   "required": ["jsonrpc", "id", "method", "params"],
   "additionalProperties": false,
   "oneOf": [
+    {
+      "properties": {
+        "method": { "const": "session.authenticate" },
+        "params": {
+          "type": "object",
+          "properties": {
+            "accessToken": { "type": "string", "minLength": 1 }
+          },
+          "required": ["accessToken"],
+          "additionalProperties": false
+        }
+      }
+    },
     {
       "properties": {
         "method": { "const": "room.join" },

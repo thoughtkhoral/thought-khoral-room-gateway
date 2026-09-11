@@ -4,6 +4,12 @@ Follow the [root N:N MVP foundation implementation plan](../../../../.ai/specs/h
 
 Implementation begins only after the relevant task is approved. The implementation produces language-neutral JSON Schema, protocol documentation, and compatibility fixtures without creating a shared runtime library.
 
+## Browser WebSocket authentication patch
+
+The accepted root [browser WebSocket authentication decision](../../../../.ai/specs/decisions/002-browser-websocket-authentication.md) governs browser clients. This contract records `session.authenticate` as an additive `n2n.room.v1` patch: it is the only JSON-RPC method permitted before a connection is authenticated and its `params` object contains only a non-empty string `accessToken`. Existing authenticated room-method schemas and fixtures remain unchanged.
+
+The gateway owns normative runtime behavior: it validates the token and its issuer, audience, signature, key identifier, algorithm, expiry, and not-before claims; it permits no room operation before successful authentication; and it closes a connection that fails authentication or misses the configured short authentication timeout. Schemas validate the message shape only and must never encode, log, or retain access tokens.
+
 ## Contract validation
 
 The fixture verifier uses the maintained `ajv` 8.20.0 release as its validation dependency. Ajv is MIT licensed and its official documentation provides the dedicated `ajv/dist/2020` export required for JSON Schema Draft 2020-12; the project uses that export rather than the default Draft 07 validator. The verifier also uses the companion `ajv-formats` 3.0.1 package so UUID and RFC 3339 `date-time` formats are assertions rather than annotations. Both packages are development-only dependencies; Node's standard library loads fixtures and no shared runtime package is produced.

@@ -12,7 +12,9 @@
 
 ## Interfaces
 
-The project publishes `n2n.room.v1` for `room.join`, `chat.send`, `decision.propose`, and `decision.transition`, including their JSON-RPC 2.0 envelopes, `contractVersion`, RFC 4122 `requestId`, and structured error codes.
+The project publishes `n2n.room.v1` for browser connection authentication (`session.authenticate`) and authenticated room operations (`room.join`, `chat.send`, `decision.propose`, and `decision.transition`), including their JSON-RPC 2.0 envelopes, `contractVersion`, RFC 4122 `requestId`, and structured error codes. Per the accepted root [browser WebSocket authentication decision](../../../../.ai/specs/decisions/002-browser-websocket-authentication.md), `session.authenticate` carries a non-empty OIDC `accessToken` and is the sole request permitted while a browser WebSocket is unauthenticated.
+
+`session.authenticate` is an additive `n2n.room.v1` patch for browser connection establishment. It preserves the prior authenticated room-operation contract and release history.
 
 ## Explicit exclusions
 
