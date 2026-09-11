@@ -53,7 +53,6 @@ async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Ac
     tokio::pin!(expiry);
 
     let mut joined_room = None;
-    let mut sender = None;
     let mut receiver: Option<broadcast::Receiver<RoomEvent>> = None;
     let mut last_sequence = 0_i64;
 
@@ -76,7 +75,6 @@ async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Ac
                         actor,
                         message,
                         &mut joined_room,
-                        &mut sender,
                         &mut receiver,
                         &mut last_sequence,
                     ).await {
@@ -85,21 +83,33 @@ async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Ac
                 }
                 event = room_receiver.recv() => {
                     match event {
-                        Ok(event) if event.sequence > last_sequence => {
-                            last_sequence = event.sequence;
+                        Ok(event) if event.sequence == last_sequence + 1 => {
                             if send_value(&mut socket, event.to_wire_value()).await.is_err() {
+                                return;
+                            }
+                            last_sequence = event.sequence;
+                        }
+                        Ok(event) if event.sequence > last_sequence + 1 => {
+                            let Some(room_id) = joined_room else { return; };
+                            if replay_in_order(
+                                &mut socket,
+                                &state,
+                                room_id,
+                                &mut last_sequence,
+                            ).await.is_err() {
                                 return;
                             }
                         }
                         Ok(_) => {}
                         Err(broadcast::error::RecvError::Lagged(_)) => {
                             let Some(room_id) = joined_room else { continue; };
-                            let Ok(events) = state.replay(room_id, last_sequence).await else { return; };
-                            for event in events {
-                                last_sequence = event.sequence;
-                                if send_value(&mut socket, event.to_wire_value()).await.is_err() {
-                                    return;
-                                }
+                            if replay_in_order(
+                                &mut socket,
+                                &state,
+                                room_id,
+                                &mut last_sequence,
+                            ).await.is_err() {
+                                return;
                             }
                         }
                         Err(broadcast::error::RecvError::Closed) => return,
@@ -121,7 +131,6 @@ async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Ac
                         actor,
                         message,
                         &mut joined_room,
-                        &mut sender,
                         &mut receiver,
                         &mut last_sequence,
                     ).await {
@@ -133,14 +142,12 @@ async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Ac
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 async fn handle_message(
     socket: &mut WebSocket,
     state: &GatewayState,
     actor: Actor,
     message: Message,
     joined_room: &mut Option<Uuid>,
-    sender: &mut Option<broadcast::Sender<RoomEvent>>,
     receiver: &mut Option<broadcast::Receiver<RoomEvent>>,
     last_sequence: &mut i64,
 ) -> bool {
@@ -169,7 +176,7 @@ async fn handle_message(
             log_rejection(actor, join.room_id, join.request_id, &error);
             return send_error(socket, response_id, error).await.is_ok();
         }
-        let (room_sender, room_receiver) = state.room_channel(join.room_id);
+        let (_, room_receiver) = state.room_channel(join.room_id);
         let after_sequence = join.after_sequence.unwrap_or(0);
         let events = match state.replay(join.room_id, after_sequence).await {
             Ok(events) => events,
@@ -180,7 +187,6 @@ async fn handle_message(
         };
         *last_sequence = events.last().map_or(after_sequence, |event| event.sequence);
         *joined_room = Some(join.room_id);
-        *sender = Some(room_sender);
         *receiver = Some(room_receiver);
         let events = events
             .into_iter()
@@ -210,9 +216,8 @@ async fn handle_message(
             true
         }
         Ok(processed) => {
-            let room_sender = sender.as_ref().expect("joined room has a sender");
             for event in processed.events {
-                let _ = room_sender.send(event);
+                state.publish(event);
             }
             true
         }
@@ -221,6 +226,31 @@ async fn handle_message(
             send_error(socket, response_id, error).await.is_ok()
         }
     }
+}
+
+async fn replay_in_order(
+    socket: &mut WebSocket,
+    state: &GatewayState,
+    room_id: Uuid,
+    last_sequence: &mut i64,
+) -> Result<(), ()> {
+    let events = state
+        .replay(room_id, *last_sequence)
+        .await
+        .map_err(|_| ())?;
+    for event in events {
+        if event.sequence <= *last_sequence {
+            continue;
+        }
+        if event.sequence != *last_sequence + 1 {
+            return Err(());
+        }
+        send_value(socket, event.to_wire_value())
+            .await
+            .map_err(|_| ())?;
+        *last_sequence = event.sequence;
+    }
+    Ok(())
 }
 
 fn log_rejection(actor: Actor, room_id: Uuid, request_id: Uuid, error: &RpcError) {

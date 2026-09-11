@@ -64,6 +64,21 @@ impl GatewayState {
         (sender, receiver)
     }
 
+    pub fn publish(&self, event: RoomEvent) {
+        let sender = {
+            let mut rooms = self
+                .inner
+                .rooms
+                .lock()
+                .expect("room channel map is not poisoned");
+            rooms
+                .entry(event.room_id)
+                .or_insert_with(|| broadcast::channel(256).0)
+                .clone()
+        };
+        let _ = sender.send(event);
+    }
+
     pub(crate) async fn replay(
         &self,
         room_id: Uuid,

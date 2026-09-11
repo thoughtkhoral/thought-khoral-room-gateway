@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::LazyLock};
 
 use futures_util::{SinkExt, StreamExt};
 use jsonwebtoken::{
@@ -33,20 +33,83 @@ const KEY_ID: &str = "integration-key";
 
 pub type TestSocket = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
+struct TestKeys {
+    encoding_key: EncodingKey,
+    other_encoding_key: EncodingKey,
+    jwks: String,
+}
+
+static TEST_KEYS: LazyLock<TestKeys> = LazyLock::new(|| {
+    let private_key =
+        RsaPrivateKey::new(&mut thread_rng(), 2048).expect("the test RSA key must be generated");
+    let private_der = private_key
+        .to_pkcs1_der()
+        .expect("the test RSA key must encode as PKCS#1");
+    let encoding_key = EncodingKey::from_rsa_der(private_der.as_bytes());
+    let other_private_key = RsaPrivateKey::new(&mut thread_rng(), 1024)
+        .expect("the alternate test RSA key must be generated");
+    let other_private_der = other_private_key
+        .to_pkcs1_der()
+        .expect("the alternate test RSA key must encode as PKCS#1");
+    let other_encoding_key = EncodingKey::from_rsa_der(other_private_der.as_bytes());
+    let mut jwk = Jwk::from_encoding_key(&encoding_key, Algorithm::RS256)
+        .expect("the public JWK must derive from the test key");
+    jwk.common.key_id = Some(KEY_ID.to_owned());
+    jwk.common.public_key_use = Some(PublicKeyUse::Signature);
+    let jwks = serde_json::to_string(&JwkSet { keys: vec![jwk] }).unwrap();
+    TestKeys {
+        encoding_key,
+        other_encoding_key,
+        jwks,
+    }
+});
+
 pub struct TestServer {
     pub address: SocketAddr,
     pub pool: PgPool,
+    pub state: GatewayState,
     encoding_key: EncodingKey,
+    other_encoding_key: EncodingKey,
     task: JoinHandle<()>,
 }
 
 #[derive(Serialize)]
-struct Claims<'a> {
+struct Claims {
     sub: String,
-    n2n_role: &'a str,
-    iss: &'a str,
-    aud: &'a str,
+    n2n_role: String,
+    iss: String,
+    aud: String,
     exp: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    nbf: Option<i64>,
+}
+
+pub struct TokenOptions {
+    pub sub: String,
+    pub role: String,
+    pub issuer: String,
+    pub audience: String,
+    pub exp: i64,
+    pub nbf: Option<i64>,
+    pub kid: Option<String>,
+    pub algorithm: Algorithm,
+    pub wrong_signature: bool,
+}
+
+impl TokenOptions {
+    pub fn valid(actor_id: Uuid, role: &str) -> Self {
+        Self {
+            sub: actor_id.to_string(),
+            role: role.to_owned(),
+            issuer: ISSUER.to_owned(),
+            audience: AUDIENCE.to_owned(),
+            exp: chrono::Utc::now().timestamp() + 3_600,
+            nbf: None,
+            kid: Some(KEY_ID.to_owned()),
+            algorithm: Algorithm::RS256,
+            wrong_signature: false,
+        }
+    }
 }
 
 impl TestServer {
@@ -59,22 +122,12 @@ impl TestServer {
             .await
             .expect("the integration database must be reachable");
 
-        let private_key = RsaPrivateKey::new(&mut thread_rng(), 2048)
-            .expect("the test RSA key must be generated");
-        let private_der = private_key
-            .to_pkcs1_der()
-            .expect("the test RSA key must encode as PKCS#1");
-        let encoding_key = EncodingKey::from_rsa_der(private_der.as_bytes());
-        let mut jwk = Jwk::from_encoding_key(&encoding_key, Algorithm::RS256)
-            .expect("the public JWK must derive from the test key");
-        jwk.common.key_id = Some(KEY_ID.to_owned());
-        jwk.common.public_key_use = Some(PublicKeyUse::Signature);
-        let jwks = serde_json::to_string(&JwkSet { keys: vec![jwk] }).unwrap();
-        let auth = AuthValidator::new(ISSUER, AUDIENCE, &jwks)
+        let auth = AuthValidator::new(ISSUER, AUDIENCE, &TEST_KEYS.jwks)
             .expect("the generated test JWKS must configure authentication");
         let state = GatewayState::new(pool.clone(), auth);
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
+        let server_state = state.clone();
         let task = tokio::spawn(async move {
             axum::serve(listener, app(state)).await.unwrap();
         });
@@ -82,7 +135,9 @@ impl TestServer {
         Self {
             address,
             pool,
-            encoding_key,
+            state: server_state,
+            encoding_key: TEST_KEYS.encoding_key.clone(),
+            other_encoding_key: TEST_KEYS.other_encoding_key.clone(),
             task,
         }
     }
@@ -92,16 +147,33 @@ impl TestServer {
     }
 
     pub fn token(&self, actor_id: Uuid, role: &str) -> String {
+        self.token_with(TokenOptions::valid(actor_id, role))
+    }
+
+    pub fn token_with(&self, options: TokenOptions) -> String {
         let claims = Claims {
-            sub: actor_id.to_string(),
-            n2n_role: role,
-            iss: ISSUER,
-            aud: AUDIENCE,
-            exp: chrono::Utc::now().timestamp() + 3_600,
+            sub: options.sub,
+            n2n_role: options.role,
+            iss: options.issuer,
+            aud: options.audience,
+            exp: options.exp,
+            nbf: options.nbf,
         };
-        let mut header = Header::new(Algorithm::RS256);
-        header.kid = Some(KEY_ID.to_owned());
-        encode(&header, &claims, &self.encoding_key).unwrap()
+        let mut header = Header::new(options.algorithm);
+        header.kid = options.kid;
+        let key = if options.wrong_signature {
+            &self.other_encoding_key
+        } else if options.algorithm == Algorithm::HS256 {
+            return encode(
+                &header,
+                &claims,
+                &EncodingKey::from_secret(b"wrong-algorithm"),
+            )
+            .unwrap();
+        } else {
+            &self.encoding_key
+        };
+        encode(&header, &claims, key).unwrap()
     }
 
     pub async fn connect(&self, token: &str) -> TestSocket {

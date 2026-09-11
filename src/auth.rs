@@ -116,7 +116,7 @@ impl AuthValidator {
         validation.set_issuer(&[&self.issuer]);
         validation.set_audience(&[&self.audience]);
         validation.set_required_spec_claims(&["exp", "iss", "aud", "sub"]);
-        validation.leeway = 30;
+        validation.leeway = 0;
         validation.validate_nbf = true;
         let claims = decode::<Claims>(token, key, &validation).ok()?.claims;
 

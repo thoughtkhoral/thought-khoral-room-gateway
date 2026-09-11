@@ -1,5 +1,7 @@
 mod support;
 
+use chrono::Utc;
+use n2n_room_gateway::{NewEvent, append_event};
 use serde_json::json;
 use uuid::Uuid;
 
@@ -34,4 +36,39 @@ async fn reconnect_replays_only_events_after_the_sequence_cursor() {
     assert_eq!(events.len(), 2);
     assert_eq!(events[0]["sequence"], 2);
     assert_eq!(events[1]["sequence"], 3);
+}
+
+// This fails if reverse-scheduled publication can advance past and discard an earlier committed sequence.
+#[tokio::test]
+async fn concurrent_commits_published_in_reverse_are_delivered_in_sequence_order() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let actor_id = Uuid::new_v4();
+    let token = server.token(actor_id, "human");
+    let mut observer = server.connect(&token).await;
+    join(&mut observer, room_id, None).await;
+
+    let new_event = || NewEvent {
+        room_id,
+        request_id: Uuid::new_v4(),
+        event_type: "message.created".to_owned(),
+        actor_id,
+        actor_role: "human".to_owned(),
+        payload: json!({ "text": "concurrent publication" }),
+        occurred_at: Utc::now(),
+    };
+    let (first, second) = tokio::join!(
+        append_event(&server.pool, new_event()),
+        append_event(&server.pool, new_event()),
+    );
+    let mut committed = [first.unwrap(), second.unwrap()];
+    committed.sort_by_key(|event| event.sequence);
+
+    server.state.publish(committed[1].clone());
+    server.state.publish(committed[0].clone());
+
+    let delivered_first = recv_json(&mut observer).await;
+    let delivered_second = recv_json(&mut observer).await;
+    assert_eq!(delivered_first["sequence"], committed[0].sequence);
+    assert_eq!(delivered_second["sequence"], committed[1].sequence);
 }

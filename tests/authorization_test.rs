@@ -1,11 +1,26 @@
 mod support;
 
+use jsonwebtoken::Algorithm;
 use serde_json::json;
 use sqlx::Row;
 use tokio_tungstenite::{connect_async, tungstenite::Error};
 use uuid::Uuid;
 
-use support::{TestServer, common_params, join, recv_json, rpc, send_json};
+use support::{TestServer, TokenOptions, common_params, join, recv_json, rpc, send_json};
+
+async fn assert_unauthenticated(server: &TestServer, token: &str) {
+    let error = server
+        .connect_result(token)
+        .await
+        .expect_err("the invalid token must not establish a WebSocket");
+    let Error::Http(response) = error else {
+        panic!("expected an HTTP rejection, got {error:?}");
+    };
+    assert_eq!(response.status(), 401);
+    let value: serde_json::Value =
+        serde_json::from_slice(response.body().as_ref().unwrap()).unwrap();
+    assert_eq!(value["error"]["code"], -32001);
+}
 
 // This fails if an unauthenticated upgrade can establish a room WebSocket.
 #[tokio::test]
@@ -45,6 +60,60 @@ async fn unsupported_token_role_is_unauthenticated() {
     let value: serde_json::Value =
         serde_json::from_slice(response.body().as_ref().unwrap()).unwrap();
     assert_eq!(value["error"]["code"], -32001);
+}
+
+// This fails if JWT expiration receives any implicit clock-skew grace period.
+#[tokio::test]
+async fn expired_token_is_unauthenticated_without_leeway() {
+    let server = TestServer::start().await;
+    let mut options = TokenOptions::valid(Uuid::new_v4(), "human");
+    options.exp = chrono::Utc::now().timestamp() - 1;
+
+    assert_unauthenticated(&server, &server.token_with(options)).await;
+}
+
+// This fails if a token is admitted before its nbf instant.
+#[tokio::test]
+async fn future_not_before_token_is_unauthenticated_without_leeway() {
+    let server = TestServer::start().await;
+    let mut options = TokenOptions::valid(Uuid::new_v4(), "human");
+    options.nbf = Some(chrono::Utc::now().timestamp() + 30);
+
+    assert_unauthenticated(&server, &server.token_with(options)).await;
+}
+
+// This fails if any required JWT trust dimension is skipped or defaulted.
+#[tokio::test]
+async fn issuer_audience_signature_kid_algorithm_and_subject_are_enforced() {
+    let server = TestServer::start().await;
+
+    let mut wrong_issuer = TokenOptions::valid(Uuid::new_v4(), "human");
+    wrong_issuer.issuer = "http://attacker.test/realms/n2n".to_owned();
+    let mut wrong_audience = TokenOptions::valid(Uuid::new_v4(), "human");
+    wrong_audience.audience = "different-service".to_owned();
+    let mut wrong_signature = TokenOptions::valid(Uuid::new_v4(), "human");
+    wrong_signature.wrong_signature = true;
+    let mut missing_kid = TokenOptions::valid(Uuid::new_v4(), "human");
+    missing_kid.kid = None;
+    let mut wrong_kid = TokenOptions::valid(Uuid::new_v4(), "human");
+    wrong_kid.kid = Some("unknown-key".to_owned());
+    let mut wrong_algorithm = TokenOptions::valid(Uuid::new_v4(), "human");
+    wrong_algorithm.algorithm = Algorithm::HS256;
+    let mut malformed_subject = TokenOptions::valid(Uuid::new_v4(), "human");
+    malformed_subject.sub = "not-a-uuid".to_owned();
+
+    for token in [
+        server.token_with(wrong_issuer),
+        server.token_with(wrong_audience),
+        server.token_with(wrong_signature),
+        server.token_with(missing_kid),
+        server.token_with(wrong_kid),
+        server.token_with(wrong_algorithm),
+        server.token_with(malformed_subject),
+        "not-a-jwt".to_owned(),
+    ] {
+        assert_unauthenticated(&server, &token).await;
+    }
 }
 
 // This fails if an agent can cross the human-only decision governance boundary.
