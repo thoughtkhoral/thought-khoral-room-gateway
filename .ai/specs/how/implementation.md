@@ -6,10 +6,16 @@ Implementation begins only after the relevant task is approved. The gateway must
 
 ## Contract pin and schema-validation dependency
 
-The gateway vendors the `n2n-contracts` release `n2n-room-v1.0.1` beneath
+The gateway vendors the `n2n-contracts` release `n2n-room-v1.0.2` beneath
 `contracts/n2n.room.v1/`; it does not import the sibling repository or expose
 it as a Rust crate. `contracts/lock.json` records the release commit and a
 SHA-256 of the Git archive, making the input to `include_str!` reproducible.
+Release `n2n-room-v1.0.2` resolves to commit
+`e2e3ead757c8b35bfd330e8ea76875e9db264ac3`; its Git archive SHA-256 is
+`c38cf237d873fbee62928dbccd6eba0fc5163806914ca31bba4909d95b6fbeed`.
+The embedded schema SHA-256 values are `1d1490ed...2857` for envelope,
+`20f00404...3cef` for RPC, and `5eaa9128...f9c5` for room event, with the full
+digests recorded in `contracts/lock.json`.
 
 The gateway uses `jsonschema` **0.42.2** with default features disabled. This
 is the maintained Rust validator published by the `Stranger6667/jsonschema`
@@ -92,11 +98,21 @@ and complete locked transitive-license audit for Axum, tracing,
 tracing-subscriber, tokio-tungstenite, RSA, rand, and futures-util. Dependency
 or feature changes require reapproval of that audit.
 
+Root [Decision 002](../../../../.ai/specs/decisions/002-browser-websocket-authentication.md)
+and the accepted local [browser authentication profile](../decisions/002-browser-session-authentication.md)
+govern connection authentication. An Origin-bearing browser upgrade must
+exactly match the required configured allowlist, upgrades without binding an
+HTTP bearer identity, and accepts only `session.authenticate` within the
+bounded timeout. A no-Origin non-browser agent retains the existing mandatory
+Bearer upgrade path. Both paths use the same validator and token-expiration
+close behavior; neither logs credentials or raw room content.
+
 - Startup requires an OIDC issuer, audience, and a configured JWKS JSON
   document. The MVP deliberately does not fetch discovery or JWKS URLs at
   request time; key rotation is an explicit configuration rollout, eliminating
   SSRF and unbounded remote-fetch behavior from the authenticated boundary.
-- Access tokens are accepted only from the HTTP `Authorization: Bearer` header,
+- Access tokens are accepted from browser `session.authenticate` messages or,
+  for no-Origin non-browser clients, the HTTP `Authorization: Bearer` header;
   never a URL query parameter. Validation requires a `kid`, an exact matching
   signature-use JWK, RS256, a valid signature, unexpired `exp`, exact `iss`, an
   allowed `aud`, a non-empty UUID `sub`, and `n2n_role` equal to exactly
@@ -104,10 +120,12 @@ or feature changes require reapproval of that audit.
   claims all map to `-32001`; no claim is defaulted. JWT clock leeway is zero.
   At validation time `now`, acceptance requires `exp > now` and optional
   `nbf <= now`: `exp == now` is rejected and `nbf == now` is accepted.
-- An unauthenticated `/ws` upgrade is rejected before switching protocols with
-  HTTP 401 and a JSON-RPC 2.0 error body carrying `-32001`. An authenticated
-  socket must successfully send `room.join` before room mutations; that join
-  binds the socket to one room, and cross-room requests are forbidden.
+- A no-Origin client without a valid bearer token is rejected before upgrade
+  with HTTP 401 and `-32001`. An allowed-origin browser is briefly upgraded
+  unauthenticated, restricted to `session.authenticate`, and closed on failure
+  or timeout. An authenticated socket must successfully send `room.join`
+  before room mutations; that join binds it to one room, and cross-room
+  requests are forbidden.
 - Agents may join, chat, and propose, but only a human may invoke
   `decision.transition`; an agent attempt returns `-32003` without a database
   write or broadcast. Draft-only transition rules are checked while the
