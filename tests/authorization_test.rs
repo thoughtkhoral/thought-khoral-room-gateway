@@ -6,7 +6,10 @@ use sqlx::Row;
 use tokio_tungstenite::{connect_async, tungstenite::Error};
 use uuid::Uuid;
 
-use support::{TestServer, TokenOptions, common_params, join, recv_json, rpc, send_json};
+use support::{
+    BROWSER_ORIGIN, TestServer, TokenOptions, common_params, join, recv_close_code, recv_json, rpc,
+    send_json,
+};
 
 async fn wait_until_epoch_second(target: i64) {
     while chrono::Utc::now().timestamp() < target {
@@ -66,6 +69,119 @@ async fn unsupported_token_role_is_unauthenticated() {
     let value: serde_json::Value =
         serde_json::from_slice(response.body().as_ref().unwrap()).unwrap();
     assert_eq!(value["error"]["code"], -32001);
+}
+
+// This fails if an allowed browser cannot bind its token identity before joining a room.
+#[tokio::test]
+async fn browser_authenticates_then_joins() {
+    let server = TestServer::start().await;
+    let actor_id = Uuid::new_v4();
+    let token = server.token(actor_id, "human");
+    let mut socket = server.connect_browser(BROWSER_ORIGIN).await;
+
+    send_json(
+        &mut socket,
+        rpc(
+            "authenticate",
+            "session.authenticate",
+            json!({ "accessToken": token }),
+        ),
+    )
+    .await;
+    let authenticated = recv_json(&mut socket).await;
+    assert_eq!(authenticated["id"], "authenticate");
+    assert_eq!(authenticated["result"]["actor"]["id"], actor_id.to_string());
+    assert_eq!(authenticated["result"]["actor"]["role"], "human");
+    assert!(authenticated["result"]["expiresAt"].is_i64());
+    assert!(!authenticated.to_string().contains(&token));
+
+    let joined = join(&mut socket, Uuid::new_v4(), None).await;
+    assert_eq!(joined["result"]["events"], json!([]));
+}
+
+// This fails if an Origin-bearing client can use an upgrade header to bypass first-message authentication.
+#[tokio::test]
+async fn browser_authorization_header_does_not_bypass_session_authentication() {
+    let server = TestServer::start().await;
+    let token = server.token(Uuid::new_v4(), "human");
+    let mut socket = server
+        .connect_browser_result(BROWSER_ORIGIN, Some(&token))
+        .await
+        .expect("an allowed browser origin may upgrade")
+        .0;
+
+    let mut params = common_params(Uuid::new_v4(), Uuid::new_v4());
+    params["afterSequence"] = json!(0);
+    send_json(&mut socket, rpc("join", "room.join", params)).await;
+    assert_eq!(recv_json(&mut socket).await["error"]["code"], -32001);
+    assert_eq!(recv_close_code(&mut socket).await, 1008);
+}
+
+// This fails if the handshake accepts an Origin outside the explicit allowlist.
+#[tokio::test]
+async fn browser_origin_must_be_allowlisted() {
+    let server = TestServer::start().await;
+    let error = server
+        .connect_browser_result("http://attacker.test", None)
+        .await
+        .expect_err("a disallowed browser Origin must not upgrade");
+    let Error::Http(response) = error else {
+        panic!("expected an HTTP rejection, got {error:?}");
+    };
+    assert_eq!(response.status(), 403);
+}
+
+// This fails if a session.authenticate token is trusted without full OIDC validation.
+#[tokio::test]
+async fn browser_invalid_token_is_rejected_and_closed() {
+    let server = TestServer::start().await;
+    let mut socket = server.connect_browser(BROWSER_ORIGIN).await;
+    send_json(
+        &mut socket,
+        rpc(
+            "authenticate",
+            "session.authenticate",
+            json!({ "accessToken": "not-a-jwt" }),
+        ),
+    )
+    .await;
+
+    assert_eq!(recv_json(&mut socket).await["error"]["code"], -32001);
+    assert_eq!(recv_close_code(&mut socket).await, 1008);
+}
+
+// This fails if an unauthenticated browser socket can remain open past the bounded deadline.
+#[tokio::test]
+async fn browser_authentication_timeout_closes_the_socket() {
+    let server =
+        TestServer::start_with_authentication_timeout(std::time::Duration::from_millis(30)).await;
+    let mut socket = server.connect_browser(BROWSER_ORIGIN).await;
+
+    assert_eq!(recv_json(&mut socket).await["error"]["code"], -32001);
+    assert_eq!(recv_close_code(&mut socket).await, 1008);
+}
+
+// This fails if a browser session remains active after its validated JWT lifetime.
+#[tokio::test]
+async fn browser_session_closes_at_token_expiration() {
+    let server = TestServer::start().await;
+    let mut options = TokenOptions::valid(Uuid::new_v4(), "human");
+    options.exp = chrono::Utc::now().timestamp() + 2;
+    let token = server.token_with(options);
+    let mut socket = server.connect_browser(BROWSER_ORIGIN).await;
+    send_json(
+        &mut socket,
+        rpc(
+            "authenticate",
+            "session.authenticate",
+            json!({ "accessToken": token }),
+        ),
+    )
+    .await;
+    assert_eq!(recv_json(&mut socket).await["id"], "authenticate");
+
+    assert_eq!(recv_json(&mut socket).await["error"]["code"], -32001);
+    assert_eq!(recv_close_code(&mut socket).await, 1008);
 }
 
 // This fails if JWT expiration receives any implicit clock-skew grace period.

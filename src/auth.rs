@@ -107,6 +107,13 @@ impl AuthValidator {
         if token.is_empty() || token.contains(char::is_whitespace) {
             return None;
         }
+        self.authenticate_access_token(token)
+    }
+
+    pub fn authenticate_access_token(&self, token: &str) -> Option<Actor> {
+        if token.is_empty() || token.contains(char::is_whitespace) {
+            return None;
+        }
         let header = decode_header(token).ok()?;
         if header.alg != Algorithm::RS256 {
             return None;

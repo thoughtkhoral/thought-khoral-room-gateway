@@ -1,8 +1,10 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     sync::{Arc, Mutex},
+    time::Duration,
 };
 
+use axum::http::Uri;
 use serde_json::json;
 use sqlx::{PgPool, Row};
 use tokio::sync::broadcast;
@@ -21,9 +23,79 @@ pub struct GatewayState {
     inner: Arc<GatewayStateInner>,
 }
 
+#[derive(Clone, Debug)]
+pub struct WebSocketPolicy {
+    allowed_origins: HashSet<String>,
+    authentication_timeout: Duration,
+}
+
+impl WebSocketPolicy {
+    pub fn new<I, S>(
+        allowed_origins: I,
+        authentication_timeout: Duration,
+    ) -> Result<Self, WebSocketPolicyError>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        if authentication_timeout < Duration::from_millis(1)
+            || authentication_timeout > Duration::from_secs(30)
+        {
+            return Err(WebSocketPolicyError);
+        }
+
+        let mut normalized_origins = HashSet::new();
+        for origin in allowed_origins {
+            let origin = origin.as_ref();
+            let uri = origin.parse::<Uri>().map_err(|_| WebSocketPolicyError)?;
+            let scheme = uri.scheme_str().ok_or(WebSocketPolicyError)?;
+            let authority = uri.authority().ok_or(WebSocketPolicyError)?;
+            if !matches!(scheme, "http" | "https") || origin != format!("{scheme}://{authority}") {
+                return Err(WebSocketPolicyError);
+            }
+            normalized_origins.insert(origin.to_owned());
+        }
+        if normalized_origins.is_empty() {
+            return Err(WebSocketPolicyError);
+        }
+
+        Ok(Self {
+            allowed_origins: normalized_origins,
+            authentication_timeout,
+        })
+    }
+
+    fn deny_all() -> Self {
+        Self {
+            allowed_origins: HashSet::new(),
+            authentication_timeout: Duration::from_secs(5),
+        }
+    }
+
+    pub(crate) fn allows_origin(&self, origin: &str) -> bool {
+        self.allowed_origins.contains(origin)
+    }
+
+    pub(crate) fn authentication_timeout(&self) -> Duration {
+        self.authentication_timeout
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct WebSocketPolicyError;
+
+impl std::fmt::Display for WebSocketPolicyError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("invalid WebSocket origin or authentication-timeout policy")
+    }
+}
+
+impl std::error::Error for WebSocketPolicyError {}
+
 struct GatewayStateInner {
     pool: PgPool,
     auth: AuthValidator,
+    websocket_policy: WebSocketPolicy,
     rooms: Mutex<HashMap<Uuid, broadcast::Sender<RoomEvent>>>,
 }
 
@@ -34,10 +106,19 @@ pub(crate) struct ProcessedRequest {
 
 impl GatewayState {
     pub fn new(pool: PgPool, auth: AuthValidator) -> Self {
+        Self::with_websocket_policy(pool, auth, WebSocketPolicy::deny_all())
+    }
+
+    pub fn with_websocket_policy(
+        pool: PgPool,
+        auth: AuthValidator,
+        websocket_policy: WebSocketPolicy,
+    ) -> Self {
         Self {
             inner: Arc::new(GatewayStateInner {
                 pool,
                 auth,
+                websocket_policy,
                 rooms: Mutex::new(HashMap::new()),
             }),
         }
@@ -45,6 +126,10 @@ impl GatewayState {
 
     pub(crate) fn auth(&self) -> &AuthValidator {
         &self.inner.auth
+    }
+
+    pub(crate) fn websocket_policy(&self) -> &WebSocketPolicy {
+        &self.inner.websocket_policy
     }
 
     pub(crate) fn room_channel(
@@ -99,12 +184,19 @@ impl GatewayState {
         {
             return Err(RpcError::forbidden());
         }
-        if matches!(request, ValidatedRequest::Join(_)) {
+        if matches!(
+            request,
+            ValidatedRequest::Join(_) | ValidatedRequest::SessionAuthenticate(_)
+        ) {
             return Err(RpcError::invalid_request());
         }
 
-        let room_id = request.room_id();
-        let request_id = request.request_id();
+        let room_id = request
+            .room_id()
+            .expect("non-room requests returned before persistence");
+        let request_id = request
+            .request_id()
+            .expect("non-room requests returned before persistence");
         let fingerprint = request.fingerprint();
         let mut transaction = self
             .inner
@@ -199,6 +291,9 @@ impl GatewayState {
                 transition_decision_in_transaction(&mut transaction, actor, request).await?
             }
             ValidatedRequest::Join(_) => unreachable!("join requests returned above"),
+            ValidatedRequest::SessionAuthenticate(_) => {
+                unreachable!("session authentication requests returned above")
+            }
         };
 
         record_request(&mut transaction, room_id, request_id, fingerprint, &events)

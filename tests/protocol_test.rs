@@ -2,6 +2,8 @@ use n2n_room_gateway::{ValidatedRequest, validate_request};
 use uuid::Uuid;
 
 const CHAT_SEND: &str = include_str!("../contracts/n2n.room.v1/fixtures/valid/chat-send.json");
+const SESSION_AUTHENTICATE: &str =
+    include_str!("../contracts/n2n.room.v1/fixtures/valid/session-authenticate.json");
 const BAD_VERSION: &str =
     include_str!("../contracts/n2n.room.v1/fixtures/invalid/bad-version.json");
 const MISSING_REQUEST_ID: &str =
@@ -23,6 +25,20 @@ fn validates_chat_send_as_a_typed_request() {
         }
         other => panic!("expected ChatSend, got {other:?}"),
     }
+}
+
+// This fails if the pinned v1.0.2 authentication request is not consumed as a typed request.
+#[test]
+fn validates_session_authenticate_as_a_typed_request() {
+    let request = validate_request(SESSION_AUTHENTICATE).expect("the tagged fixture must validate");
+    assert_eq!(request.room_id(), None);
+    assert_eq!(request.request_id(), None);
+    let ValidatedRequest::SessionAuthenticate(request) = request else {
+        panic!("expected session.authenticate");
+    };
+
+    assert_eq!(request.id, "authenticate-1");
+    assert_eq!(request.access_token, "header.payload.signature");
 }
 
 // This fails if an unsupported contract version is treated as generic malformed input.

@@ -8,6 +8,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let auth = AuthValidator::new(config.oidc_issuer, config.oidc_audience, &config.oidc_jwks)?;
     let pool = PgPoolOptions::new().connect(&config.database_url).await?;
     let listener = tokio::net::TcpListener::bind(config.listen_address).await?;
-    axum::serve(listener, app(GatewayState::new(pool, auth))).await?;
+    axum::serve(
+        listener,
+        app(GatewayState::with_websocket_policy(
+            pool,
+            auth,
+            config.websocket_policy,
+        )),
+    )
+    .await?;
     Ok(())
 }

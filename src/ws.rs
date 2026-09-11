@@ -6,7 +6,10 @@ use axum::{
         State,
         ws::{CloseFrame, Message, WebSocket, WebSocketUpgrade, close_code},
     },
-    http::{HeaderMap, StatusCode, header::AUTHORIZATION},
+    http::{
+        HeaderMap, StatusCode,
+        header::{AUTHORIZATION, ORIGIN},
+    },
     response::{IntoResponse, Response},
     routing::get,
 };
@@ -33,23 +36,130 @@ async fn websocket_upgrade(
     headers: HeaderMap,
     upgrade: WebSocketUpgrade,
 ) -> Response {
+    if let Some(origin) = headers.get(ORIGIN) {
+        let Some(origin) = origin.to_str().ok() else {
+            return rejected_upgrade(StatusCode::FORBIDDEN, RpcError::forbidden());
+        };
+        if !state.websocket_policy().allows_origin(origin) {
+            return rejected_upgrade(StatusCode::FORBIDDEN, RpcError::forbidden());
+        }
+        return upgrade.on_upgrade(move |socket| browser_authentication_session(socket, state));
+    }
+
     let authorization = headers
         .get(AUTHORIZATION)
         .and_then(|value| value.to_str().ok());
     let Some(actor) = state.auth().authenticate_bearer(authorization) else {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(error_response(Value::Null, RpcError::unauthenticated())),
-        )
-            .into_response();
+        return rejected_upgrade(StatusCode::UNAUTHORIZED, RpcError::unauthenticated());
     };
     upgrade.on_upgrade(move |socket| websocket_session(socket, state, actor))
 }
 
+fn rejected_upgrade(status: StatusCode, error: RpcError) -> Response {
+    (status, Json(error_response(Value::Null, error))).into_response()
+}
+
+async fn browser_authentication_session(mut socket: WebSocket, state: GatewayState) {
+    let timeout = tokio::time::sleep(state.websocket_policy().authentication_timeout());
+    tokio::pin!(timeout);
+
+    loop {
+        tokio::select! {
+            _ = &mut timeout => {
+                warn!(error_code = -32001, "browser authentication timed out");
+                close_with_error(
+                    &mut socket,
+                    Value::Null,
+                    RpcError::unauthenticated(),
+                    "authentication timeout",
+                ).await;
+                return;
+            }
+            message = socket.recv() => {
+                let Some(Ok(message)) = message else { return; };
+                match message {
+                    Message::Text(text) => {
+                        let raw = text.as_str();
+                        let fallback_id = request_id_value(raw);
+                        match validate_request(raw) {
+                            Ok(ValidatedRequest::SessionAuthenticate(request)) => {
+                                let Some(actor) = state
+                                    .auth()
+                                    .authenticate_access_token(&request.access_token)
+                                else {
+                                    warn!(error_code = -32001, "browser authentication rejected");
+                                    close_with_error(
+                                        &mut socket,
+                                        Value::String(request.id),
+                                        RpcError::unauthenticated(),
+                                        "authentication failed",
+                                    ).await;
+                                    return;
+                                };
+                                let response = json!({
+                                    "jsonrpc": "2.0",
+                                    "id": request.id,
+                                    "result": {
+                                        "actor": {
+                                            "id": actor.id,
+                                            "role": actor.role.as_str(),
+                                        },
+                                        "expiresAt": actor.expires_at,
+                                    },
+                                });
+                                if send_value(&mut socket, response).await.is_err() {
+                                    return;
+                                }
+                                websocket_session(socket, state, actor).await;
+                                return;
+                            }
+                            Ok(_) => {
+                                warn!(error_code = -32001, "room request rejected before authentication");
+                                close_with_error(
+                                    &mut socket,
+                                    fallback_id,
+                                    RpcError::unauthenticated(),
+                                    "authentication required",
+                                ).await;
+                                return;
+                            }
+                            Err(error) => {
+                                warn!(error_code = error.code, "initial authentication request rejected");
+                                close_with_error(
+                                    &mut socket,
+                                    fallback_id,
+                                    error,
+                                    "invalid authentication request",
+                                ).await;
+                                return;
+                            }
+                        }
+                    }
+                    Message::Close(_) => return,
+                    Message::Ping(_) | Message::Pong(_) => {}
+                    Message::Binary(_) => {
+                        let error = RpcError::invalid_request();
+                        warn!(error_code = error.code, "initial authentication request rejected");
+                        close_with_error(
+                            &mut socket,
+                            Value::Null,
+                            error,
+                            "invalid authentication request",
+                        ).await;
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
 async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Actor) {
-    let now = chrono::Utc::now().timestamp();
-    let expires_in = actor.expires_at.saturating_sub(now).max(0) as u64;
-    let expiry = tokio::time::sleep(Duration::from_secs(expires_in));
+    let expires_at_millis = actor.expires_at.saturating_mul(1_000);
+    let expires_in_millis = expires_at_millis
+        .saturating_sub(chrono::Utc::now().timestamp_millis())
+        .max(0) as u64;
+    let expiry = tokio::time::sleep(Duration::from_millis(expires_in_millis));
     tokio::pin!(expiry);
 
     let mut joined_room = None;
@@ -60,11 +170,12 @@ async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Ac
         if let Some(room_receiver) = receiver.as_mut() {
             tokio::select! {
                 _ = &mut expiry => {
-                    let _ = send_error(&mut socket, Value::Null, RpcError::unauthenticated()).await;
-                    let _ = socket.send(Message::Close(Some(CloseFrame {
-                        code: close_code::POLICY,
-                        reason: "authentication expired".into(),
-                    }))).await;
+                    close_with_error(
+                        &mut socket,
+                        Value::Null,
+                        RpcError::unauthenticated(),
+                        "authentication expired",
+                    ).await;
                     return;
                 }
                 message = socket.recv() => {
@@ -119,8 +230,12 @@ async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Ac
         } else {
             tokio::select! {
                 _ = &mut expiry => {
-                    let _ = send_error(&mut socket, Value::Null, RpcError::unauthenticated()).await;
-                    let _ = socket.send(Message::Close(None)).await;
+                    close_with_error(
+                        &mut socket,
+                        Value::Null,
+                        RpcError::unauthenticated(),
+                        "authentication expired",
+                    ).await;
                     return;
                 }
                 message = socket.recv() => {
@@ -159,6 +274,17 @@ async fn handle_message(
     };
     let raw = text.as_str();
     let fallback_id = request_id_value(raw);
+    if actor.expires_at <= chrono::Utc::now().timestamp() {
+        warn!(actor_id = %actor.id, error_code = -32001, "expired session request rejected");
+        close_with_error(
+            socket,
+            fallback_id,
+            RpcError::unauthenticated(),
+            "authentication expired",
+        )
+        .await;
+        return false;
+    }
     let request = match validate_request(raw) {
         Ok(request) => request,
         Err(error) => {
@@ -167,8 +293,17 @@ async fn handle_message(
         }
     };
     let response_id = Value::String(request.id().to_owned());
-    let room_id = request.room_id();
-    let application_request_id = request.request_id();
+    if matches!(request, ValidatedRequest::SessionAuthenticate(_)) {
+        let error = RpcError::forbidden();
+        warn!(actor_id = %actor.id, error_code = error.code, "session reauthentication rejected");
+        return send_error(socket, response_id, error).await.is_ok();
+    }
+    let room_id = request
+        .room_id()
+        .expect("session authentication requests returned above");
+    let application_request_id = request
+        .request_id()
+        .expect("session authentication requests returned above");
 
     if let ValidatedRequest::Join(join) = request {
         if joined_room.is_some_and(|joined| joined != join.room_id) {
@@ -281,6 +416,21 @@ fn error_response(id: Value, error: RpcError) -> Value {
 
 async fn send_error(socket: &mut WebSocket, id: Value, error: RpcError) -> Result<(), axum::Error> {
     send_value(socket, error_response(id, error)).await
+}
+
+async fn close_with_error(
+    socket: &mut WebSocket,
+    id: Value,
+    error: RpcError,
+    reason: &'static str,
+) {
+    let _ = send_error(socket, id, error).await;
+    let _ = socket
+        .send(Message::Close(Some(CloseFrame {
+            code: close_code::POLICY,
+            reason: reason.into(),
+        })))
+        .await;
 }
 
 async fn send_value(socket: &mut WebSocket, value: Value) -> Result<(), axum::Error> {

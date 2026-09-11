@@ -1,13 +1,13 @@
 #![allow(dead_code)]
 
-use std::{net::SocketAddr, sync::LazyLock};
+use std::{net::SocketAddr, sync::LazyLock, time::Duration};
 
 use futures_util::{SinkExt, StreamExt};
 use jsonwebtoken::{
     Algorithm, EncodingKey, Header, encode,
     jwk::{Jwk, JwkSet, PublicKeyUse},
 };
-use n2n_room_gateway::{AuthValidator, GatewayState, app};
+use n2n_room_gateway::{AuthValidator, GatewayState, WebSocketPolicy, app};
 use rand::thread_rng;
 use rsa::{RsaPrivateKey, pkcs1::EncodeRsaPrivateKey};
 use serde::Serialize;
@@ -22,7 +22,10 @@ use tokio_tungstenite::{
     tungstenite::{
         Message,
         client::IntoClientRequest,
-        http::{HeaderValue, header::AUTHORIZATION},
+        http::{
+            HeaderValue,
+            header::{AUTHORIZATION, ORIGIN},
+        },
     },
 };
 use uuid::Uuid;
@@ -30,6 +33,7 @@ use uuid::Uuid;
 const ISSUER: &str = "http://keycloak.test/realms/n2n";
 const AUDIENCE: &str = "n2n-room-gateway";
 const KEY_ID: &str = "integration-key";
+pub const BROWSER_ORIGIN: &str = "http://workspace.test";
 
 pub type TestSocket = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
@@ -114,6 +118,10 @@ impl TokenOptions {
 
 impl TestServer {
     pub async fn start() -> Self {
+        Self::start_with_authentication_timeout(Duration::from_secs(5)).await
+    }
+
+    pub async fn start_with_authentication_timeout(authentication_timeout: Duration) -> Self {
         let database_url = std::env::var("DATABASE_URL")
             .expect("DATABASE_URL must name a migrated PostgreSQL integration database");
         let pool = PgPoolOptions::new()
@@ -124,7 +132,9 @@ impl TestServer {
 
         let auth = AuthValidator::new(ISSUER, AUDIENCE, &TEST_KEYS.jwks)
             .expect("the generated test JWKS must configure authentication");
-        let state = GatewayState::new(pool.clone(), auth);
+        let policy = WebSocketPolicy::new([BROWSER_ORIGIN], authentication_timeout)
+            .expect("the browser test policy must be valid");
+        let state = GatewayState::with_websocket_policy(pool.clone(), auth, policy);
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
         let server_state = state.clone();
@@ -197,6 +207,34 @@ impl TestServer {
         );
         connect_async(request).await
     }
+
+    pub async fn connect_browser(&self, origin: &str) -> TestSocket {
+        self.connect_browser_result(origin, None).await.unwrap().0
+    }
+
+    pub async fn connect_browser_result(
+        &self,
+        origin: &str,
+        token: Option<&str>,
+    ) -> Result<
+        (
+            TestSocket,
+            tokio_tungstenite::tungstenite::handshake::client::Response,
+        ),
+        tokio_tungstenite::tungstenite::Error,
+    > {
+        let mut request = self.ws_url().into_client_request().unwrap();
+        request
+            .headers_mut()
+            .insert(ORIGIN, HeaderValue::from_str(origin).unwrap());
+        if let Some(token) = token {
+            request.headers_mut().insert(
+                AUTHORIZATION,
+                HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+            );
+        }
+        connect_async(request).await
+    }
 }
 
 impl Drop for TestServer {
@@ -243,5 +281,17 @@ pub async fn recv_json(socket: &mut TestSocket) -> Value {
     match message {
         Message::Text(text) => serde_json::from_str(&text).unwrap(),
         other => panic!("expected a JSON text frame, got {other:?}"),
+    }
+}
+
+pub async fn recv_close_code(socket: &mut TestSocket) -> u16 {
+    let message = tokio::time::timeout(std::time::Duration::from_secs(3), socket.next())
+        .await
+        .expect("the gateway must close before the test timeout")
+        .expect("the WebSocket close frame must be present")
+        .expect("the WebSocket close frame must be valid");
+    match message {
+        Message::Close(Some(frame)) => frame.code.into(),
+        other => panic!("expected a WebSocket close frame, got {other:?}"),
     }
 }

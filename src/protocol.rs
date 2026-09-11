@@ -134,6 +134,7 @@ impl RpcError {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ValidatedRequest {
+    SessionAuthenticate(SessionAuthenticate),
     Join(Join),
     ChatSend(ChatSend),
     DecisionPropose(DecisionPropose),
@@ -143,6 +144,7 @@ pub enum ValidatedRequest {
 impl ValidatedRequest {
     pub fn id(&self) -> &str {
         match self {
+            Self::SessionAuthenticate(request) => &request.id,
             Self::Join(request) => &request.id,
             Self::ChatSend(request) => &request.id,
             Self::DecisionPropose(request) => &request.id,
@@ -150,26 +152,31 @@ impl ValidatedRequest {
         }
     }
 
-    pub fn room_id(&self) -> Uuid {
+    pub fn room_id(&self) -> Option<Uuid> {
         match self {
-            Self::Join(request) => request.room_id,
-            Self::ChatSend(request) => request.room_id,
-            Self::DecisionPropose(request) => request.room_id,
-            Self::DecisionTransition(request) => request.room_id,
+            Self::SessionAuthenticate(_) => None,
+            Self::Join(request) => Some(request.room_id),
+            Self::ChatSend(request) => Some(request.room_id),
+            Self::DecisionPropose(request) => Some(request.room_id),
+            Self::DecisionTransition(request) => Some(request.room_id),
         }
     }
 
-    pub fn request_id(&self) -> Uuid {
+    pub fn request_id(&self) -> Option<Uuid> {
         match self {
-            Self::Join(request) => request.request_id,
-            Self::ChatSend(request) => request.request_id,
-            Self::DecisionPropose(request) => request.request_id,
-            Self::DecisionTransition(request) => request.request_id,
+            Self::SessionAuthenticate(_) => None,
+            Self::Join(request) => Some(request.request_id),
+            Self::ChatSend(request) => Some(request.request_id),
+            Self::DecisionPropose(request) => Some(request.request_id),
+            Self::DecisionTransition(request) => Some(request.request_id),
         }
     }
 
     pub(crate) fn fingerprint(&self) -> Value {
         match self {
+            Self::SessionAuthenticate(_) => {
+                unreachable!("session authentication is not an idempotent room mutation")
+            }
             Self::ChatSend(request) => json!({
                 "method": "chat.send",
                 "contractVersion": request.contract_version,
@@ -208,6 +215,23 @@ impl ValidatedRequest {
                 "afterSequence": request.after_sequence,
             }),
         }
+    }
+}
+
+#[derive(Clone, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SessionAuthenticate {
+    pub id: String,
+    pub access_token: String,
+}
+
+impl std::fmt::Debug for SessionAuthenticate {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("SessionAuthenticate")
+            .field("id", &self.id)
+            .field("access_token", &"[REDACTED]")
+            .finish()
     }
 }
 
@@ -297,7 +321,11 @@ pub fn validate_request(request: &str) -> Result<ValidatedRequest, RpcError> {
         .ok_or_else(RpcError::invalid_request)?;
     if !matches!(
         method,
-        "room.join" | "chat.send" | "decision.propose" | "decision.transition"
+        "session.authenticate"
+            | "room.join"
+            | "chat.send"
+            | "decision.propose"
+            | "decision.transition"
     ) {
         return Err(RpcError::unknown_method());
     }
@@ -306,12 +334,14 @@ pub fn validate_request(request: &str) -> Result<ValidatedRequest, RpcError> {
         .get("params")
         .and_then(Value::as_object)
         .expect("params was checked above");
-    match params.get("contractVersion") {
-        Some(Value::String(version)) if version != "n2n.room.v1" => {
-            return Err(RpcError::unsupported_contract_version());
+    if method != "session.authenticate" {
+        match params.get("contractVersion") {
+            Some(Value::String(version)) if version != "n2n.room.v1" => {
+                return Err(RpcError::unsupported_contract_version());
+            }
+            Some(Value::String(_)) => {}
+            _ => return Err(RpcError::invalid_request()),
         }
-        Some(Value::String(_)) => {}
-        _ => return Err(RpcError::invalid_request()),
     }
 
     if !RPC_VALIDATOR.is_valid(&value) {
@@ -319,6 +349,8 @@ pub fn validate_request(request: &str) -> Result<ValidatedRequest, RpcError> {
     }
 
     match method {
+        "session.authenticate" => deserialize_request::<SessionAuthenticate>(params, id)
+            .map(ValidatedRequest::SessionAuthenticate),
         "room.join" => deserialize_request::<Join>(params, id).map(ValidatedRequest::Join),
         "chat.send" => deserialize_request::<ChatSend>(params, id).map(ValidatedRequest::ChatSend),
         "decision.propose" => deserialize_request::<DecisionPropose>(params, id)
