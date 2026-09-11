@@ -51,6 +51,82 @@ The Task 3 migration check uses an isolated local PostgreSQL 16 instance at
 the gateway root. These are development-only credentials for the temporary
 container and are not a production configuration.
 
+## OIDC JWT dependency decision and evidence
+
+The gateway pins `jsonwebtoken` **11.0.0** with default features disabled and
+only the `rust_crypto` feature enabled. The crate is maintained at
+https://github.com/Keats/jsonwebtoken, is published under the MIT license, and
+declares Rust 1.88.0 as its minimum supported version. The gateway's validated
+toolchain is Rust 1.93.1, so this selection is compatible. Version 11 exposes
+typed JWK/JWKS parsing, `kid` selection, reusable decoding keys, an explicit
+cryptography provider, algorithm allow-listing, and validation for `exp`,
+`nbf`, `aud`, `iss`, and `sub`; those capabilities cover Keycloak access-token
+verification without adding an OIDC discovery or remote-key-fetch path to the
+MVP. The upstream package metadata and API documentation are at
+https://crates.io/crates/jsonwebtoken/11.0.0 and
+https://docs.rs/jsonwebtoken/11.0.0.
+
+The exact normal graph was resolved before adoption with
+`cargo tree --edges normal` on 2026-09-11. `jsonwebtoken 11.0.0` resolves its
+cryptographic path through `signature 2.2.0`, `rsa 0.9.10`, `sha2 0.10.9`,
+`hmac 0.12.1`, `p256 0.13.2`, `p384 0.13.1`, `ed25519-dalek 2.2.0`,
+`curve25519-dalek 4.1.3`, and their RustCrypto support crates. Package metadata
+reports MIT, Apache-2.0 OR MIT, MIT/Apache-2.0, BSD-1-Clause, BSD-2-Clause,
+BSD-3-Clause, Unicode-3.0, or Unlicense OR MIT expressions throughout the
+selected target graph. Every expression is permissive and compatible with this
+Apache-2.0 project; no GPL, LGPL, AGPL, SSPL, proprietary, or unknown-license
+package is admitted. `Cargo.lock` records the final exact resolution used by
+this repository.
+
+`rust_crypto` was selected instead of `aws_lc_rs` because the MVP needs only
+portable signature verification and does not need a native AWS-LC build. The
+feature also supports test-only RSA signing without weakening the production
+algorithm policy. Default `use_pem` is disabled, so production accepts public
+JWK material rather than private or PEM key configuration.
+
+## MVP authentication and WebSocket security decisions
+
+Decision [001](../decisions/001-runtime-security-and-publication.md) is
+accepted as of 2026-09-11T19:40:03Z and records the maturity, compatibility,
+and complete locked transitive-license audit for Axum, tracing,
+tracing-subscriber, tokio-tungstenite, RSA, rand, and futures-util. Dependency
+or feature changes require reapproval of that audit.
+
+- Startup requires an OIDC issuer, audience, and a configured JWKS JSON
+  document. The MVP deliberately does not fetch discovery or JWKS URLs at
+  request time; key rotation is an explicit configuration rollout, eliminating
+  SSRF and unbounded remote-fetch behavior from the authenticated boundary.
+- Access tokens are accepted only from the HTTP `Authorization: Bearer` header,
+  never a URL query parameter. Validation requires a `kid`, an exact matching
+  signature-use JWK, RS256, a valid signature, unexpired `exp`, exact `iss`, an
+  allowed `aud`, a non-empty UUID `sub`, and `n2n_role` equal to exactly
+  `human` or `agent`. Missing, malformed, expired, mismatched, or unsupported
+  claims all map to `-32001`; no claim is defaulted. JWT clock leeway is zero.
+  At validation time `now`, acceptance requires `exp > now` and optional
+  `nbf <= now`: `exp == now` is rejected and `nbf == now` is accepted.
+- An unauthenticated `/ws` upgrade is rejected before switching protocols with
+  HTTP 401 and a JSON-RPC 2.0 error body carrying `-32001`. An authenticated
+  socket must successfully send `room.join` before room mutations; that join
+  binds the socket to one room, and cross-room requests are forbidden.
+- Agents may join, chat, and propose, but only a human may invoke
+  `decision.transition`; an agent attempt returns `-32003` without a database
+  write or broadcast. Draft-only transition rules are checked while the
+  decision row is locked. An edit supersedes the draft, creates its active
+  replacement, persists both immutable events, and records idempotency in the
+  same transaction.
+- The canonical validated request parameters are stored as JSONB for
+  idempotency. Reusing `(roomId, requestId)` with the same canonical request
+  returns the original persisted event or events without rebroadcasting;
+  different parameters return `-32012`.
+- Accepted events are committed before publication to the room broadcast
+  channel. Replays read committed rows where `sequence > afterSequence` in
+  ascending order before the connection consumes live room events. Live
+  delivery never advances over a sequence gap: it replays from the last
+  delivered cursor first, then suppresses any later queued duplicate.
+- Rejection logs contain only error code plus available request, room, actor,
+  and event identifiers. Raw JWTs, untrusted message text, titles, summaries,
+  complete request bodies, and stack traces are never logged.
+
 ## Append-only and persistence validation invariants
 
 `room_events` is database-enforced append-only: a follow-on migration installs
