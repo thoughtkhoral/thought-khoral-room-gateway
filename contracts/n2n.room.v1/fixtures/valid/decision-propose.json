@@ -1,0 +1,14 @@
+{
+  "jsonrpc": "2.0",
+  "id": "proposal-1",
+  "method": "decision.propose",
+  "params": {
+    "contractVersion": "n2n.room.v1",
+    "requestId": "33333333-3333-4333-8333-333333333333",
+    "roomId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "occurredAt": "2026-09-11T12:02:00Z",
+    "title": "Adopt JSON-RPC",
+    "summary": "Room requests use JSON-RPC 2.0 envelopes.",
+    "sourceEventIds": ["bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "jsonrpc": "2.0",
+  "id": "invalid-action-1",
+  "method": "decision.transition",
+  "params": {
+    "contractVersion": "n2n.room.v1",
+    "requestId": "66666666-6666-4666-8666-666666666666",
+    "roomId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "occurredAt": "2026-09-11T12:06:00Z",
+    "decisionId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+    "action": "delete"
+  }
+}

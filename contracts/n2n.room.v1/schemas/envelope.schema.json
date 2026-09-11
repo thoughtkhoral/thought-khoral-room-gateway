@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json",
+  "title": "N:N room v1 application envelope",
+  "type": "object",
+  "properties": {
+    "contractVersion": { "const": "n2n.room.v1" },
+    "requestId": { "type": "string", "format": "uuid" },
+    "roomId": { "type": "string", "format": "uuid" },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  },
+  "required": ["contractVersion", "requestId", "roomId", "occurredAt"]
+}

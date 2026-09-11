@@ -1,0 +1,11 @@
+{
+  "jsonrpc": "2.0",
+  "id": "missing-request-id-1",
+  "method": "chat.send",
+  "params": {
+    "contractVersion": "n2n.room.v1",
+    "roomId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "occurredAt": "2026-09-11T12:05:00Z",
+    "text": "This must be rejected."
+  }
+}

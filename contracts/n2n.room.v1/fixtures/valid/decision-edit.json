@@ -1,0 +1,15 @@
+{
+  "jsonrpc": "2.0",
+  "id": "edit-1",
+  "method": "decision.transition",
+  "params": {
+    "contractVersion": "n2n.room.v1",
+    "requestId": "44444444-4444-4444-8444-444444444444",
+    "roomId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "occurredAt": "2026-09-11T12:03:00Z",
+    "decisionId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+    "action": "edit",
+    "editedTitle": "Adopt JSON-RPC 2.0",
+    "editedSummary": "Room requests use standardized JSON-RPC 2.0 envelopes."
+  }
+}

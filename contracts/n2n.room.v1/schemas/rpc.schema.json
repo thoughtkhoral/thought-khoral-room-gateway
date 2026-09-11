@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://n2n.redhat.com/schemas/n2n.room.v1/rpc.schema.json",
+  "title": "N:N room v1 JSON-RPC request",
+  "type": "object",
+  "properties": {
+    "jsonrpc": { "const": "2.0" },
+    "id": { "type": "string", "minLength": 1 },
+    "method": {
+      "enum": ["room.join", "chat.send", "decision.propose", "decision.transition"]
+    },
+    "params": { "type": "object" }
+  },
+  "required": ["jsonrpc", "id", "method", "params"],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "properties": {
+        "method": { "const": "room.join" },
+        "params": {
+          "type": "object",
+          "allOf": [
+            { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" }
+          ],
+          "properties": {
+            "afterSequence": { "type": "integer", "minimum": 0 }
+          },
+          "unevaluatedProperties": false
+        }
+      }
+    },
+    {
+      "properties": {
+        "method": { "const": "chat.send" },
+        "params": {
+          "type": "object",
+          "allOf": [
+            { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" }
+          ],
+          "properties": {
+            "text": { "type": "string", "minLength": 1 }
+          },
+          "required": ["text"],
+          "unevaluatedProperties": false
+        }
+      }
+    },
+    {
+      "properties": {
+        "method": { "const": "decision.propose" },
+        "params": {
+          "type": "object",
+          "allOf": [
+            { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" }
+          ],
+          "properties": {
+            "title": { "type": "string", "minLength": 1 },
+            "summary": { "type": "string", "minLength": 1 },
+            "sourceEventIds": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "format": "uuid" }
+            }
+          },
+          "required": ["title", "summary", "sourceEventIds"],
+          "unevaluatedProperties": false
+        }
+      }
+    },
+    {
+      "properties": {
+        "method": { "const": "decision.transition" },
+        "params": {
+          "type": "object",
+          "allOf": [
+            { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" }
+          ],
+          "properties": {
+            "decisionId": { "type": "string", "format": "uuid" },
+            "action": { "enum": ["confirm", "edit", "dismiss"] },
+            "editedTitle": { "type": "string", "minLength": 1 },
+            "editedSummary": { "type": "string", "minLength": 1 }
+          },
+          "required": ["decisionId", "action"],
+          "if": { "properties": { "action": { "const": "edit" } } },
+          "then": {
+            "properties": {
+              "editedTitle": true,
+              "editedSummary": true
+            },
+            "required": ["editedTitle", "editedSummary"]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                { "properties": { "editedTitle": true }, "required": ["editedTitle"] },
+                { "properties": { "editedSummary": true }, "required": ["editedSummary"] }
+              ]
+            }
+          },
+          "unevaluatedProperties": false
+        }
+      }
+    }
+  ]
+}

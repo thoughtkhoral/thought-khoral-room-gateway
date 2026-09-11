@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://n2n.redhat.com/schemas/n2n.room.v1/room-event.schema.json",
+  "title": "N:N room v1 persisted room event",
+  "type": "object",
+  "allOf": [
+    { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" }
+  ],
+  "properties": {
+    "sequence": { "type": "integer", "minimum": 1 },
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": {
+      "enum": [
+        "message.created",
+        "decision.proposed",
+        "decision.confirmed",
+        "decision.edited",
+        "decision.dismissed"
+      ]
+    },
+    "actor": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "role": { "enum": ["human", "agent"] }
+      },
+      "required": ["id", "role"],
+      "additionalProperties": false
+    },
+    "payload": { "type": "object" }
+  },
+  "required": ["sequence", "eventId", "eventType", "actor", "payload"],
+  "unevaluatedProperties": false
+}
