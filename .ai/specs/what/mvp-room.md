@@ -10,6 +10,11 @@
 - For an allowed browser Origin, the gateway accepts only `session.authenticate` before binding a fully validated OIDC identity, and closes authentication failures or timeouts without admitting a room operation.
 - It persists ordered immutable room events before broadcasting them and supports replay after a sequence cursor.
 - Only a human participant can confirm, edit, or dismiss a draft decision; no proposal affects active context without that action.
+- A deterministic gateway facilitator may derive a draft proposal only from a persisted
+  `message.created` event whose trimmed text starts with `Decision:` and has a non-empty
+  remainder. It attributes that proposal to the gateway agent, retains the triggering
+  event identifier as provenance, and never invokes a decision transition or an external
+  model, tool, or operating-system command.
 
 ## Interfaces
 

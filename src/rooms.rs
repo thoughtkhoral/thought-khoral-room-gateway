@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::{
     auth::{Actor, ActorRole, AuthValidator},
+    facilitator::{NewDecisionProposal, propose_from_message},
     protocol::{DecisionAction, DecisionTransition, RpcError, ValidatedRequest},
     store::{
         NewEvent, RoomEvent, append_event_in_transaction, lock_room, prior_request, record_request,
@@ -228,22 +229,26 @@ impl GatewayState {
 
         let events = match request {
             ValidatedRequest::ChatSend(request) => {
-                vec![
-                    append_event_in_transaction(
-                        &mut transaction,
-                        NewEvent {
-                            room_id,
-                            request_id,
-                            event_type: "message.created".to_owned(),
-                            actor_id: actor.id,
-                            actor_role: actor.role.as_str().to_owned(),
-                            payload: json!({ "text": request.text }),
-                            occurred_at: request.occurred_at,
-                        },
-                    )
-                    .await
-                    .map_err(|_| RpcError::internal_error())?,
-                ]
+                let message = append_event_in_transaction(
+                    &mut transaction,
+                    NewEvent {
+                        room_id,
+                        request_id,
+                        event_type: "message.created".to_owned(),
+                        actor_id: actor.id,
+                        actor_role: actor.role.as_str().to_owned(),
+                        payload: json!({ "text": request.text }),
+                        occurred_at: request.occurred_at,
+                    },
+                )
+                .await
+                .map_err(|_| RpcError::internal_error())?;
+                let mut events = vec![message.clone()];
+                if let Some(proposal) = propose_from_message(&message) {
+                    events
+                        .push(persist_draft_proposal(&mut transaction, &message, proposal).await?);
+                }
+                events
             }
             ValidatedRequest::DecisionPropose(request) => {
                 let decision_id = Uuid::new_v4();
@@ -318,6 +323,52 @@ impl GatewayState {
             .await
             .map(|processed| processed.events)
     }
+}
+
+async fn persist_draft_proposal(
+    transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    source: &RoomEvent,
+    proposal: NewDecisionProposal,
+) -> Result<RoomEvent, RpcError> {
+    let decision_id = Uuid::new_v4();
+    sqlx::query(
+        r#"
+        INSERT INTO decisions (
+            decision_id, room_id, status, title, summary,
+            source_event_ids, created_at, updated_at
+        ) VALUES ($1, $2, 'draft', $3, $4, $5, $6, $6)
+        "#,
+    )
+    .bind(decision_id)
+    .bind(source.room_id)
+    .bind(&proposal.title)
+    .bind(&proposal.summary)
+    .bind(&proposal.source_event_ids)
+    .bind(source.occurred_at)
+    .execute(&mut **transaction)
+    .await
+    .map_err(|_| RpcError::internal_error())?;
+
+    append_event_in_transaction(
+        transaction,
+        NewEvent {
+            room_id: source.room_id,
+            request_id: source.request_id,
+            event_type: "decision.proposed".to_owned(),
+            actor_id: proposal.actor_id,
+            actor_role: proposal.actor_role,
+            payload: json!({
+                "decisionId": decision_id,
+                "status": "draft",
+                "title": proposal.title,
+                "summary": proposal.summary,
+                "sourceEventIds": proposal.source_event_ids,
+            }),
+            occurred_at: source.occurred_at,
+        },
+    )
+    .await
+    .map_err(|_| RpcError::internal_error())
 }
 
 async fn transition_decision_in_transaction(

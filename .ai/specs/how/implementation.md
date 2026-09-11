@@ -145,6 +145,18 @@ close behavior; neither logs credentials or raw room content.
   and event identifiers. Raw JWTs, untrusted message text, titles, summaries,
   complete request bodies, and stack traces are never logged.
 
+## Deterministic facilitator boundary
+
+After a `chat.send` has been normalized and persisted as `message.created`, the
+gateway may inspect that persisted event locally. Only trimmed text beginning
+with `Decision:` and followed by a non-empty title produces a second persisted
+event, `decision.proposed`. The proposal is a draft attributed to the fixed
+gateway agent, cites exactly the triggering message event ID in
+`sourceEventIds`, and is published only after the transaction commits. The
+facilitator has no transition API and makes no model, tool, operating-system,
+or non-gateway-database call. Human-only `decision.transition` remains the
+sole path to active context.
+
 ## Append-only and persistence validation invariants
 
 `room_events` is database-enforced append-only: a follow-on migration installs
