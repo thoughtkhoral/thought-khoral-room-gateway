@@ -50,3 +50,20 @@ The Task 3 migration check uses an isolated local PostgreSQL 16 instance at
 `DATABASE_URL=postgres://n2n:n2n@127.0.0.1:54329/n2n sqlx migrate run` from
 the gateway root. These are development-only credentials for the temporary
 container and are not a production configuration.
+
+## Append-only and persistence validation invariants
+
+`room_events` is database-enforced append-only: a follow-on migration installs
+a trigger that rejects every `UPDATE` and `DELETE` using SQLSTATE `55000`.
+This prevents sequence reuse after a highest event is removed, even if a
+future application path bypasses `append_event`. The gateway's only normal
+write path is a single transaction that takes a room-scoped advisory lock,
+calculates the next sequence, and inserts one event.
+
+Before opening that transaction, `append_event` turns `NewEvent` into the
+normalized `n2n.room.v1` persisted-event shape and validates it against the
+pinned `room-event.schema.json`, with the same in-memory Draft 2020-12
+validator and UUID/date-time format checks as the request boundary. Invalid
+event type, actor role, or non-object payload therefore returns `StoreError`
+without creating a row. The migration retains the room/event uniqueness
+constraints as a second database integrity boundary.

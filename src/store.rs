@@ -29,12 +29,14 @@ pub struct RoomEvent {
 
 #[derive(Debug)]
 pub enum StoreError {
+    InvalidEvent,
     Database(sqlx::Error),
 }
 
 impl std::fmt::Display for StoreError {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::InvalidEvent => formatter.write_str("invalid room event"),
             Self::Database(error) => write!(formatter, "database error: {error}"),
         }
     }
@@ -51,6 +53,10 @@ impl From<sqlx::Error> for StoreError {
 /// Atomically allocates the next sequence for a room and inserts one immutable event.
 pub async fn append_event(pool: &PgPool, event: NewEvent) -> Result<RoomEvent, StoreError> {
     let event_id = Uuid::new_v4();
+    if !crate::protocol::is_valid_room_event(event_id, &event) {
+        return Err(StoreError::InvalidEvent);
+    }
+
     let mut transaction = pool.begin().await?;
 
     // A transaction-scoped advisory lock serializes sequence allocation per room without

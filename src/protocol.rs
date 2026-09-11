@@ -3,7 +3,7 @@ use std::sync::LazyLock;
 use chrono::{DateTime, Utc};
 use jsonschema::Resource;
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::{Value, json};
 use uuid::Uuid;
 
 const ENVELOPE_SCHEMA: &str = include_str!("../contracts/n2n.room.v1/schemas/envelope.schema.json");
@@ -32,8 +32,33 @@ static RPC_VALIDATOR: LazyLock<jsonschema::Validator> = LazyLock::new(|| {
         .expect("the pinned n2n.room.v1 schemas must compile")
 });
 
+static ROOM_EVENT_VALIDATOR: LazyLock<jsonschema::Validator> = LazyLock::new(|| {
+    let envelope = parse_pinned_schema(ENVELOPE_SCHEMA);
+    let room_event = parse_pinned_schema(ROOM_EVENT_SCHEMA);
+
+    jsonschema::draft202012::options()
+        .should_validate_formats(true)
+        .with_resource(ENVELOPE_SCHEMA_ID, Resource::from_contents(envelope))
+        .build(&room_event)
+        .expect("the pinned n2n.room.v1 room-event schema must compile")
+});
+
 fn parse_pinned_schema(schema: &str) -> Value {
     serde_json::from_str(schema).expect("a checked-in contract schema must be valid JSON")
+}
+
+pub(crate) fn is_valid_room_event(event_id: Uuid, event: &crate::store::NewEvent) -> bool {
+    ROOM_EVENT_VALIDATOR.is_valid(&json!({
+        "contractVersion": "n2n.room.v1",
+        "requestId": event.request_id,
+        "roomId": event.room_id,
+        "occurredAt": event.occurred_at,
+        "sequence": 1,
+        "eventId": event_id,
+        "eventType": event.event_type,
+        "actor": { "id": event.actor_id, "role": event.actor_role },
+        "payload": event.payload,
+    }))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
