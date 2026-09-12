@@ -6,6 +6,8 @@
 
 ## Acceptance criteria
 
+- `GET /health` identifies the product as `ThoughtKhoral`, the service as
+  `thought-khoral-room-gateway`, and its status as `ok`.
 - The gateway validates supported `n2n.room.v1` JSON-RPC requests and returns the specified structured errors for rejected requests.
 - For an allowed browser Origin, the gateway accepts only `session.authenticate` before binding a fully validated OIDC identity, and closes authentication failures or timeouts without admitting a room operation.
 - It persists ordered immutable room events before broadcasting them and supports replay after a sequence cursor.

@@ -51,7 +51,8 @@ impl std::error::Error for AuthConfigurationError {}
 #[derive(Deserialize)]
 struct Claims {
     sub: String,
-    n2n_role: ActorRole,
+    #[serde(rename = "n2n_role")]
+    role: ActorRole,
     exp: i64,
 }
 
@@ -130,7 +131,7 @@ impl AuthValidator {
 
         Some(Actor {
             id: Uuid::parse_str(&claims.sub).ok()?,
-            role: claims.n2n_role,
+            role: claims.role,
             expires_at: claims.exp,
         })
     }

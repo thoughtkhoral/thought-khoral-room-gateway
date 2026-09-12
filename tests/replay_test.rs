@@ -1,8 +1,8 @@
 mod support;
 
 use chrono::Utc;
-use n2n_room_gateway::{NewEvent, append_event};
 use serde_json::json;
+use thought_khoral_room_gateway::{NewEvent, append_event};
 use uuid::Uuid;
 
 use support::{TestServer, common_params, join, recv_json, rpc, send_json};

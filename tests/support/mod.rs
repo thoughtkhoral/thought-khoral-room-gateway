@@ -7,12 +7,12 @@ use jsonwebtoken::{
     Algorithm, EncodingKey, Header, encode,
     jwk::{Jwk, JwkSet, PublicKeyUse},
 };
-use n2n_room_gateway::{AuthValidator, GatewayState, WebSocketPolicy, app};
 use rand::thread_rng;
 use rsa::{RsaPrivateKey, pkcs1::EncodeRsaPrivateKey};
 use serde::Serialize;
 use serde_json::{Value, json};
 use sqlx::{PgPool, postgres::PgPoolOptions};
+use thought_khoral_room_gateway::{AuthValidator, GatewayState, WebSocketPolicy, app};
 use tokio::{
     net::{TcpListener, TcpStream},
     task::JoinHandle,
@@ -30,8 +30,8 @@ use tokio_tungstenite::{
 };
 use uuid::Uuid;
 
-const ISSUER: &str = "http://keycloak.test/realms/n2n";
-const AUDIENCE: &str = "n2n-room-gateway";
+const ISSUER: &str = "http://keycloak.test/realms/thought-khoral";
+const AUDIENCE: &str = "thought-khoral-room-gateway";
 const KEY_ID: &str = "integration-key";
 pub const BROWSER_ORIGIN: &str = "http://workspace.test";
 
@@ -80,7 +80,8 @@ pub struct TestServer {
 #[derive(Serialize)]
 struct Claims {
     sub: String,
-    n2n_role: String,
+    #[serde(rename = "n2n_role")]
+    role: String,
     iss: String,
     aud: String,
     exp: i64,
@@ -156,6 +157,34 @@ impl TestServer {
         format!("ws://{}/ws", self.address)
     }
 
+    pub async fn get(&self, path: &str) -> (u16, String) {
+        let address = self.address;
+        let path = path.to_owned();
+        tokio::task::spawn_blocking(move || {
+            use std::io::{Read, Write};
+
+            let mut stream = std::net::TcpStream::connect(address).unwrap();
+            write!(
+                stream,
+                "GET {path} HTTP/1.1\r\nHost: {address}\r\nConnection: close\r\n\r\n"
+            )
+            .unwrap();
+            let mut response = String::new();
+            stream.read_to_string(&mut response).unwrap();
+
+            let (head, body) = response.split_once("\r\n\r\n").unwrap();
+            let status = head
+                .lines()
+                .next()
+                .and_then(|line| line.split_whitespace().nth(1))
+                .and_then(|status| status.parse::<u16>().ok())
+                .unwrap();
+            (status, body.to_owned())
+        })
+        .await
+        .unwrap()
+    }
+
     pub fn token(&self, actor_id: Uuid, role: &str) -> String {
         self.token_with(TokenOptions::valid(actor_id, role))
     }
@@ -163,7 +192,7 @@ impl TestServer {
     pub fn token_with(&self, options: TokenOptions) -> String {
         let claims = Claims {
             sub: options.sub,
-            n2n_role: options.role,
+            role: options.role,
             iss: options.issuer,
             aud: options.audience,
             exp: options.exp,

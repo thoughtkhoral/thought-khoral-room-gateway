@@ -1,12 +1,12 @@
 mod support;
 
 use chrono::Utc;
-use n2n_room_gateway::{
+use serde_json::json;
+use sqlx::Row;
+use thought_khoral_room_gateway::{
     RoomEvent,
     facilitator::{FACILITATOR_ACTOR_ID, propose_from_message},
 };
-use serde_json::json;
-use sqlx::Row;
 use uuid::Uuid;
 
 use support::{TestServer, common_params, join, recv_json, rpc, send_json};

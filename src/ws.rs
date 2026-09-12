@@ -19,6 +19,7 @@ use tracing::warn;
 use uuid::Uuid;
 
 use crate::{
+    PRODUCT_NAME, SERVICE_NAME,
     auth::Actor,
     protocol::{RpcError, ValidatedRequest, validate_request},
     rooms::GatewayState,
@@ -27,8 +28,17 @@ use crate::{
 
 pub fn app(state: GatewayState) -> Router {
     Router::new()
+        .route("/health", get(gateway_status))
         .route("/ws", get(websocket_upgrade))
         .with_state(state)
+}
+
+pub async fn gateway_status() -> Json<Value> {
+    Json(json!({
+        "product": PRODUCT_NAME,
+        "service": SERVICE_NAME,
+        "status": "ok",
+    }))
 }
 
 async fn websocket_upgrade(

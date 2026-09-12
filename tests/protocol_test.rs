@@ -1,4 +1,5 @@
-use n2n_room_gateway::{ValidatedRequest, validate_request};
+use std::path::Path;
+use thought_khoral_room_gateway::{ValidatedRequest, gateway_status, validate_request};
 use uuid::Uuid;
 
 const CHAT_SEND: &str = include_str!("../contracts/n2n.room.v1/fixtures/valid/chat-send.json");
@@ -8,6 +9,22 @@ const BAD_VERSION: &str =
     include_str!("../contracts/n2n.room.v1/fixtures/invalid/bad-version.json");
 const MISSING_REQUEST_ID: &str =
     include_str!("../contracts/n2n.room.v1/fixtures/invalid/missing-request-id.json");
+
+// This fails if active package, binary, service, or display metadata regresses to a legacy name.
+#[tokio::test]
+async fn health_status_identifies_the_thought_khoral_gateway() {
+    assert_eq!(env!("CARGO_PKG_NAME"), "thought-khoral-room-gateway");
+
+    let binary = env!("CARGO_BIN_EXE_thought-khoral-room-gateway");
+    assert_eq!(
+        Path::new(binary).file_name().and_then(|name| name.to_str()),
+        Some("thought-khoral-room-gateway")
+    );
+
+    let axum::Json(status) = gateway_status().await;
+    assert_eq!(status["product"], "ThoughtKhoral");
+    assert_eq!(status["service"], "thought-khoral-room-gateway");
+}
 
 // This fails if the validated boundary stops returning the typed chat payload.
 #[test]

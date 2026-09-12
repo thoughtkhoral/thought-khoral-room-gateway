@@ -31,6 +31,24 @@ async fn assert_unauthenticated(server: &TestServer, token: &str) {
     assert_eq!(value["error"]["code"], -32001);
 }
 
+// This fails if the public health response is removed from the running gateway.
+#[tokio::test]
+async fn health_route_reports_the_thought_khoral_service_status() {
+    let server = TestServer::start().await;
+
+    let (status, body) = server.get("/health").await;
+
+    assert_eq!(status, 200);
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(&body).unwrap(),
+        json!({
+            "product": "ThoughtKhoral",
+            "service": "thought-khoral-room-gateway",
+            "status": "ok",
+        })
+    );
+}
+
 // This fails if an unauthenticated upgrade can establish a room WebSocket.
 #[tokio::test]
 async fn unauthenticated_upgrade_returns_structured_error() {
@@ -236,7 +254,7 @@ async fn issuer_audience_signature_kid_algorithm_and_subject_are_enforced() {
     let server = TestServer::start().await;
 
     let mut wrong_issuer = TokenOptions::valid(Uuid::new_v4(), "human");
-    wrong_issuer.issuer = "http://attacker.test/realms/n2n".to_owned();
+    wrong_issuer.issuer = "http://attacker.test/realms/thought-khoral".to_owned();
     let mut wrong_audience = TokenOptions::valid(Uuid::new_v4(), "human");
     wrong_audience.audience = "different-service".to_owned();
     let mut wrong_signature = TokenOptions::valid(Uuid::new_v4(), "human");

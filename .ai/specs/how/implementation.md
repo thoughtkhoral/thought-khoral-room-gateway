@@ -6,9 +6,29 @@ Implementation begins only after the relevant task is approved. The gateway must
 
 The accepted local [ThoughtKhoral identity decision](../decisions/002-thoughtkhoral-identity.md) renames this project to `thought-khoral-room-gateway`. The `n2n.room.v1` wire value, vendored compatibility archive, database identifiers, and persisted values remain unchanged.
 
+## Runtime identity and configuration
+
+The Cargo package, library crate, and executable are named
+`thought-khoral-room-gateway` (with Rust's `thought_khoral_room_gateway` import
+form for the library crate). `GET /health` returns `ThoughtKhoral` as the
+product, `thought-khoral-room-gateway` as the service, and `ok` as the status.
+Startup logs emit the same product and service labels.
+
+New service configuration uses `THOUGHT_KHORAL_` names:
+`THOUGHT_KHORAL_ALLOWED_ORIGINS`, `THOUGHT_KHORAL_LISTEN_ADDRESS`,
+`THOUGHT_KHORAL_OIDC_ISSUER`, `THOUGHT_KHORAL_OIDC_AUDIENCE`,
+`THOUGHT_KHORAL_OIDC_JWKS`, and
+`THOUGHT_KHORAL_SESSION_AUTH_TIMEOUT_MS`. The database retains the conventional
+`DATABASE_URL` name. Legacy `N2N_*` aliases are not read because a missed
+deployment rename must fail at startup.
+
+The existing `n2n_role` JWT claim is an authentication payload compatibility
+field and remains unchanged alongside the `n2n.room.v1` wire values. Renaming
+either requires a separately approved compatibility migration.
+
 ## Contract pin and schema-validation dependency
 
-The gateway vendors the `n2n-contracts` release `n2n-room-v1.0.2` beneath
+The gateway vendors the `thought-khoral-contracts` historical release `n2n-room-v1.0.2` beneath
 `contracts/n2n.room.v1/`; it does not import the sibling repository or expose
 it as a Rust crate. `contracts/lock.json` records the release commit and a
 SHA-256 of the Git archive, making the input to `include_str!` reproducible.

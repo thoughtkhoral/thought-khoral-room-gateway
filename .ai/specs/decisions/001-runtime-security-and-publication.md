@@ -4,7 +4,7 @@
 - **Approved at:** 2026-09-11T19:40:03Z
 - **Boundary amendment approved at:** 2026-09-11T20:07:23Z
 - **Approval basis:** Task 4 fix-round directive from the authorized implementation controller
-- **Scope:** `n2n-room-gateway` MVP only
+- **Scope:** `thought-khoral-room-gateway` MVP only
 - **Parent override:** None. This decision tightens the parent requirements for authenticated, ordered room delivery.
 
 ## Context

@@ -1,7 +1,7 @@
 use chrono::Utc;
-use n2n_room_gateway::{NewEvent, StoreError, append_event};
 use serde_json::json;
 use sqlx::postgres::PgPoolOptions;
+use thought_khoral_room_gateway::{NewEvent, StoreError, append_event};
 use uuid::Uuid;
 
 fn new_event(room_id: Uuid, actor_id: Uuid) -> NewEvent {

@@ -4,7 +4,7 @@
 - **Approved at:** 2026-09-11T21:10:23Z
 - **Approval basis:** Approved integration correction adopting root Decision 002
 - **Parent authority:** [Root Decision 002 — Browser WebSocket authentication](../../../../.ai/specs/decisions/002-browser-websocket-authentication.md)
-- **Scope:** `n2n-room-gateway` MVP WebSocket boundary
+- **Scope:** `thought-khoral-room-gateway` MVP WebSocket boundary
 - **Parent override:** None. This decision implements the parent browser-authentication rule and preserves the prior non-browser agent path only as described below.
 
 ## Decision
@@ -14,10 +14,10 @@ The gateway consumes contract release `n2n-room-v1.0.2`, which adds
 
 An upgrade carrying an HTTP `Origin` header is a browser-path request. Its
 origin must exactly match one of the normalized `http` or `https` origins in
-the required `N2N_ALLOWED_ORIGINS` comma-separated allowlist. An origin-bearing
+the required `THOUGHT_KHORAL_ALLOWED_ORIGINS` comma-separated allowlist. An origin-bearing
 upgrade never derives identity from an HTTP `Authorization` header. After the
 upgrade, its first application message must be `session.authenticate` and must
-arrive within `N2N_SESSION_AUTH_TIMEOUT_MS`, which defaults to 5000 and is
+arrive within `THOUGHT_KHORAL_SESSION_AUTH_TIMEOUT_MS`, which defaults to 5000 and is
 restricted to 1 through 30000 milliseconds.
 
 The authentication message carries only `accessToken`. The existing OIDC JWT
