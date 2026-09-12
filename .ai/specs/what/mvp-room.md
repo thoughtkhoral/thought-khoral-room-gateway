@@ -2,7 +2,7 @@
 
 ## Sole MVP responsibility
 
-`n2n-room-gateway` is the sole mediator that validates, persists, replays, and broadcasts governed room events and active-context updates.
+`thought-khoral-room-gateway` is the sole mediator that validates, persists, replays, and broadcasts governed room events and active-context updates.
 
 ## Acceptance criteria
 

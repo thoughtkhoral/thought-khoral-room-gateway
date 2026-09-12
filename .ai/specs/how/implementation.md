@@ -1,8 +1,10 @@
 # Room gateway implementation
 
-Follow the [root N:N MVP foundation implementation plan](../../../../.ai/specs/how/n2n-mvp-foundation-implementation-plan.md) and the root governance decision before changing this project.
+Follow the [root MVP foundation implementation plan](../../../../.ai/specs/how/n2n-mvp-foundation-implementation-plan.md), the [ThoughtKhoral identity migration design](../../../../.ai/specs/how/thoughtkhoral-identity-migration.md), and the root governance decisions before changing this project.
 
 Implementation begins only after the relevant task is approved. The gateway must validate untrusted input, persist before broadcast, and retain the human approval boundary for active room context.
+
+The accepted local [ThoughtKhoral identity decision](../decisions/002-thoughtkhoral-identity.md) renames this project to `thought-khoral-room-gateway`. The `n2n.room.v1` wire value, vendored compatibility archive, database identifiers, and persisted values remain unchanged.
 
 ## Contract pin and schema-validation dependency
 

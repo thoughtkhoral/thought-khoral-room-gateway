@@ -1,6 +1,6 @@
-# N:N room gateway specifications
+# ThoughtKhoral room gateway specifications
 
-Parent requirements in the N:N root `.ai/specs/` apply here. This project may diverge only through an accepted local decision record that identifies the overridden parent rule and its consequences.
+Parent requirements in the ThoughtKhoral root `.ai/specs/` apply here. This project may diverge only through an accepted local decision record that identifies the overridden parent rule and its consequences.
 
 See the [root specification index](../../../.ai/specs/README.md).
 
@@ -9,3 +9,4 @@ See the [root specification index](../../../.ai/specs/README.md).
 - [What: MVP room gateway](what/mvp-room.md)
 - [How: implementation](how/implementation.md)
 - [Decisions](decisions/README.md)
+- [Decision 002: ThoughtKhoral project identity](decisions/002-thoughtkhoral-identity.md)
