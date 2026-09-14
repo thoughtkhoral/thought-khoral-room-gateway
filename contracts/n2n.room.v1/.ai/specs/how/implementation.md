@@ -1,12 +1,12 @@
 # Contracts implementation
 
-Follow the [root N:N MVP foundation implementation plan](../../../../.ai/specs/how/n2n-mvp-foundation-implementation-plan.md) and the root governance decision before changing this project.
+Follow the [root N:N MVP foundation implementation plan](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/n2n-mvp-foundation-implementation-plan.md) and the root governance decision before changing this project.
 
 Implementation begins only after the relevant task is approved. The implementation produces language-neutral JSON Schema, protocol documentation, and compatibility fixtures without creating a shared runtime library.
 
 ## Browser WebSocket authentication patch
 
-The accepted root [browser WebSocket authentication decision](../../../../.ai/specs/decisions/002-browser-websocket-authentication.md) governs browser clients. This contract records `session.authenticate` as an additive `n2n.room.v1` patch: it is the only JSON-RPC method permitted before a connection is authenticated and its `params` object contains only a non-empty string `accessToken`. Existing authenticated room-method schemas and fixtures remain unchanged.
+The accepted root [browser WebSocket authentication decision](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/002-browser-websocket-authentication.md) governs browser clients. This contract records `session.authenticate` as an additive `n2n.room.v1` patch: it is the only JSON-RPC method permitted before a connection is authenticated and its `params` object contains only a non-empty string `accessToken`. Existing authenticated room-method schemas and fixtures remain unchanged.
 
 The gateway owns normative runtime behavior: it validates the token and its issuer, audience, signature, key identifier, algorithm, expiry, and not-before claims; it permits no room operation before successful authentication; and it closes a connection that fails authentication or misses the configured short authentication timeout. Schemas validate the message shape only and must never encode, log, or retain access tokens.
 

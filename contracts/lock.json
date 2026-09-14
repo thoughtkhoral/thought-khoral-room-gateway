@@ -1,6 +1,6 @@
 {
   "contract": "n2n.room.v1",
-  "source": "../n2n-contracts",
+  "source": "https://github.com/thoughtkhoral/thought-khoral-contracts",
   "tag": "n2n-room-v1.0.2",
   "commit": "e2e3ead757c8b35bfd330e8ea76875e9db264ac3",
   "archiveSha256": "c38cf237d873fbee62928dbccd6eba0fc5163806914ca31bba4909d95b6fbeed",

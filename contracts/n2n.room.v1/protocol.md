@@ -16,7 +16,7 @@ Only `confirm`, `edit`, and `dismiss` are valid actions. `edit` requires non-emp
 
 ## Browser WebSocket authentication
 
-Per the accepted root [browser WebSocket authentication decision](../.ai/specs/decisions/002-browser-websocket-authentication.md), a browser opens an unauthenticated connection and its first application message must be `session.authenticate`. Before token validation succeeds, the gateway permits no method other than `session.authenticate`; it validates that access token's issuer, audience, signature, key identifier, algorithm, expiry, and not-before claims before binding identity and role to the connection. The schema validates only that the token is a non-empty string and must not cause a token to be logged or retained.
+Per the accepted root [browser WebSocket authentication decision](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/002-browser-websocket-authentication.md), a browser opens an unauthenticated connection and its first application message must be `session.authenticate`. Before token validation succeeds, the gateway permits no method other than `session.authenticate`; it validates that access token's issuer, audience, signature, key identifier, algorithm, expiry, and not-before claims before binding identity and role to the connection. The schema validates only that the token is a non-empty string and must not cause a token to be logged or retained.
 
 Failed authentication produces structured error `-32001` and the gateway closes the connection when it can send the error. A connection that does not authenticate within its short configured timeout is closed. These failed-authentication and timeout rules are normative gateway behavior, not client fallback behavior.
 
