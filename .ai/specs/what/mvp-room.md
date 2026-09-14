@@ -20,7 +20,7 @@
 
 ## Interfaces
 
-The gateway consumes the `n2n.room.v1` contract method `session.authenticate` for browser connection establishment and the authenticated methods `room.join`, `chat.send`, `decision.propose`, and `decision.transition`. It exposes their normalized events and errors over its WebSocket, governed by [root Decision 002](../../../../.ai/specs/decisions/002-browser-websocket-authentication.md) and the accepted [local browser profile](../decisions/002-browser-session-authentication.md).
+The gateway consumes the `n2n.room.v1` contract method `session.authenticate` for browser connection establishment and the authenticated methods `room.join`, `chat.send`, `decision.propose`, and `decision.transition`. It exposes their normalized events and errors over its WebSocket, governed by [root Decision 002](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/002-browser-websocket-authentication.md) and the accepted [local browser profile](../decisions/002-browser-session-authentication.md).
 
 ## Explicit exclusions
 

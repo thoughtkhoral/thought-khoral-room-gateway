@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Approved at:** 2026-09-11T21:10:23Z
 - **Approval basis:** Approved integration correction adopting root Decision 002
-- **Parent authority:** [Root Decision 002 — Browser WebSocket authentication](../../../../.ai/specs/decisions/002-browser-websocket-authentication.md)
+- **Parent authority:** [Root Decision 002 — Browser WebSocket authentication](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/002-browser-websocket-authentication.md)
 - **Scope:** `thought-khoral-room-gateway` MVP WebSocket boundary
 - **Parent override:** None. This decision implements the parent browser-authentication rule and preserves the prior non-browser agent path only as described below.
 

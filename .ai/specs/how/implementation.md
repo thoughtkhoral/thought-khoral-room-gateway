@@ -1,6 +1,6 @@
 # Room gateway implementation
 
-Follow the [root MVP foundation implementation plan](../../../../.ai/specs/how/n2n-mvp-foundation-implementation-plan.md), the [ThoughtKhoral identity migration design](../../../../.ai/specs/how/thoughtkhoral-identity-migration.md), and the root governance decisions before changing this project.
+Follow the [root MVP foundation implementation plan](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/n2n-mvp-foundation-implementation-plan.md), the [ThoughtKhoral identity migration design](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/thoughtkhoral-identity-migration.md), and the root governance decisions before changing this project.
 
 Implementation begins only after the relevant task is approved. The gateway must validate untrusted input, persist before broadcast, and retain the human approval boundary for active room context.
 
@@ -120,7 +120,7 @@ and complete locked transitive-license audit for Axum, tracing,
 tracing-subscriber, tokio-tungstenite, RSA, rand, and futures-util. Dependency
 or feature changes require reapproval of that audit.
 
-Root [Decision 002](../../../../.ai/specs/decisions/002-browser-websocket-authentication.md)
+Root [Decision 002](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/002-browser-websocket-authentication.md)
 and the accepted local [browser authentication profile](../decisions/002-browser-session-authentication.md)
 govern connection authentication. An Origin-bearing browser upgrade must
 exactly match the required configured allowlist, upgrades without binding an

@@ -4,6 +4,25 @@
 participants and validates, persists, replays, and broadcasts governed
 ThoughtKhoral room events.
 
+## Status
+
+MVP / active development. The gateway owns the authenticated room boundary; it
+does not define the shared contract or provide the local platform composition.
+
+## Build and verify
+
+Requires Rust 1.88 or newer and a PostgreSQL-compatible development database for
+integration tests:
+
+```sh
+cargo fmt --check
+cargo test
+```
+
+See the [local specification index](.ai/specs/README.md), the
+[repository map](https://github.com/thoughtkhoral/thought-khoral/blob/main/docs/repository-map.md),
+and the [organization contribution guide](https://github.com/thoughtkhoral/.github/blob/main/CONTRIBUTING.md).
+
 ## Runtime identity and configuration
 
 `GET /health` returns the active product name `ThoughtKhoral`, the service
