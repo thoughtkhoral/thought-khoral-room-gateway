@@ -22,7 +22,8 @@
       "type": "object",
       "properties": {
         "id": { "type": "string", "format": "uuid" },
-        "role": { "enum": ["human", "agent"] }
+        "role": { "enum": ["human", "agent"] },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 128 }
       },
       "required": ["id", "role"],
       "additionalProperties": false

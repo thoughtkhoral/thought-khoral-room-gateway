@@ -22,8 +22,7 @@ use crate::{
     PRODUCT_NAME, SERVICE_NAME,
     auth::Actor,
     protocol::{RpcError, ValidatedRequest, validate_request},
-    rooms::GatewayState,
-    store::RoomEvent,
+    rooms::{GatewayState, RoomBroadcast, RoomParticipant},
 };
 
 pub fn app(state: GatewayState) -> Router {
@@ -109,11 +108,12 @@ async fn browser_authentication_session(mut socket: WebSocket, state: GatewaySta
                                 let response = json!({
                                     "jsonrpc": "2.0",
                                     "id": request.id,
-                                    "result": {
-                                        "actor": {
-                                            "id": actor.id,
-                                            "role": actor.role.as_str(),
-                                        },
+                                "result": {
+                                    "actor": {
+                                        "id": actor.id,
+                                        "role": actor.role.as_str(),
+                                        "displayName": actor.display_name,
+                                    },
                                         "expiresAt": actor.expires_at,
                                     },
                                 });
@@ -173,7 +173,7 @@ async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Ac
     tokio::pin!(expiry);
 
     let mut joined_room = None;
-    let mut receiver: Option<broadcast::Receiver<RoomEvent>> = None;
+    let mut receiver: Option<broadcast::Receiver<RoomBroadcast>> = None;
     let mut last_sequence = 0_i64;
 
     loop {
@@ -186,42 +186,62 @@ async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Ac
                         RpcError::unauthenticated(),
                         "authentication expired",
                     ).await;
-                    return;
+                    break;
                 }
                 message = socket.recv() => {
-                    let Some(Ok(message)) = message else { return; };
+                    let Some(Ok(message)) = message else { break; };
                     if !handle_message(
                         &mut socket,
                         &state,
-                        actor,
+                        actor.clone(),
                         message,
                         &mut joined_room,
                         &mut receiver,
                         &mut last_sequence,
                     ).await {
-                        return;
+                        break;
                     }
                 }
                 event = room_receiver.recv() => {
                     match event {
-                        Ok(event) if event.sequence == last_sequence + 1 => {
+                        Ok(RoomBroadcast::Event(event)) if event.sequence == last_sequence + 1 => {
                             if send_value(&mut socket, event.to_wire_value()).await.is_err() {
-                                return;
+                                break;
                             }
                             last_sequence = event.sequence;
                         }
-                        Ok(event) if event.sequence > last_sequence + 1 => {
-                            let Some(room_id) = joined_room else { return; };
+                        Ok(RoomBroadcast::Event(event)) if event.sequence > last_sequence + 1 => {
+                            let Some(room_id) = joined_room else { break; };
                             if replay_in_order(
                                 &mut socket,
                                 &state,
                                 room_id,
                                 &mut last_sequence,
                             ).await.is_err() {
-                                return;
+                                break;
                             }
                         }
-                        Ok(_) => {}
+                        Ok(RoomBroadcast::Event(_)) => {}
+                        Ok(RoomBroadcast::Participants {
+                            participants,
+                            exclude_actor_id,
+                        }) => {
+                            if exclude_actor_id == Some(actor.id) {
+                                continue;
+                            }
+                            if send_value(
+                                &mut socket,
+                                participant_update_value(
+                                    joined_room.expect("participant updates require a room"),
+                                    participants,
+                                ),
+                            )
+                            .await
+                            .is_err()
+                            {
+                                break;
+                            }
+                        }
                         Err(broadcast::error::RecvError::Lagged(_)) => {
                             let Some(room_id) = joined_room else { continue; };
                             if replay_in_order(
@@ -230,10 +250,10 @@ async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Ac
                                 room_id,
                                 &mut last_sequence,
                             ).await.is_err() {
-                                return;
+                                break;
                             }
                         }
-                        Err(broadcast::error::RecvError::Closed) => return,
+                        Err(broadcast::error::RecvError::Closed) => break,
                     }
                 }
             }
@@ -246,25 +266,35 @@ async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Ac
                         RpcError::unauthenticated(),
                         "authentication expired",
                     ).await;
-                    return;
+                    break;
                 }
                 message = socket.recv() => {
-                    let Some(Ok(message)) = message else { return; };
+                    let Some(Ok(message)) = message else { break; };
                     if !handle_message(
                         &mut socket,
                         &state,
-                        actor,
+                        actor.clone(),
                         message,
                         &mut joined_room,
                         &mut receiver,
                         &mut last_sequence,
                     ).await {
-                        return;
+                        break;
                     }
                 }
             }
         }
     }
+
+    cleanup_presence(&state, &actor, &mut joined_room).await;
+}
+
+async fn cleanup_presence(state: &GatewayState, actor: &Actor, joined_room: &mut Option<Uuid>) {
+    let Some(room_id) = joined_room.take() else {
+        return;
+    };
+    state.unregister_participant(room_id, actor.id);
+    let _ = state.publish_participant_snapshot(room_id, None).await;
 }
 
 async fn handle_message(
@@ -273,7 +303,7 @@ async fn handle_message(
     actor: Actor,
     message: Message,
     joined_room: &mut Option<Uuid>,
-    receiver: &mut Option<broadcast::Receiver<RoomEvent>>,
+    receiver: &mut Option<broadcast::Receiver<RoomBroadcast>>,
     last_sequence: &mut i64,
 ) -> bool {
     let Message::Text(text) = message else {
@@ -318,15 +348,29 @@ async fn handle_message(
     if let ValidatedRequest::Join(join) = request {
         if joined_room.is_some_and(|joined| joined != join.room_id) {
             let error = RpcError::forbidden();
-            log_rejection(actor, join.room_id, join.request_id, &error);
+            log_rejection(&actor, join.room_id, join.request_id, &error);
             return send_error(socket, response_id, error).await.is_ok();
         }
+        let is_new_join = joined_room.is_none();
         let (_, room_receiver) = state.room_channel(join.room_id);
         let after_sequence = join.after_sequence.unwrap_or(0);
         let events = match state.replay(join.room_id, after_sequence).await {
             Ok(events) => events,
             Err(error) => {
-                log_rejection(actor, join.room_id, join.request_id, &error);
+                log_rejection(&actor, join.room_id, join.request_id, &error);
+                return send_error(socket, response_id, error).await.is_ok();
+            }
+        };
+        if is_new_join {
+            state.register_participant(join.room_id, &actor);
+        }
+        let participants = match state.participant_snapshot(join.room_id).await {
+            Ok(participants) => participants,
+            Err(error) => {
+                if is_new_join {
+                    state.unregister_participant(join.room_id, actor.id);
+                }
+                log_rejection(&actor, join.room_id, join.request_id, &error);
                 return send_error(socket, response_id, error).await.is_ok();
             }
         };
@@ -337,21 +381,34 @@ async fn handle_message(
             .into_iter()
             .map(|event| event.to_wire_value())
             .collect::<Vec<_>>();
-        return send_value(
+        let sent = send_value(
             socket,
-            json!({ "jsonrpc": "2.0", "id": response_id, "result": { "events": events } }),
+            json!({
+                "jsonrpc": "2.0",
+                "id": response_id,
+                "result": {
+                    "events": events,
+                    "participants": participants.iter().map(RoomParticipant::to_wire_value).collect::<Vec<_>>(),
+                }
+            }),
         )
         .await
         .is_ok();
+        if sent && is_new_join {
+            let _ = state
+                .publish_participant_snapshot(join.room_id, Some(actor.id))
+                .await;
+        }
+        return sent;
     }
 
     if *joined_room != Some(room_id) {
         let error = RpcError::forbidden();
-        log_rejection(actor, room_id, application_request_id, &error);
+        log_rejection(&actor, room_id, application_request_id, &error);
         return send_error(socket, response_id, error).await.is_ok();
     }
 
-    match state.process(actor, request).await {
+    match state.process(actor.clone(), request).await {
         Ok(processed) if processed.duplicate => {
             for event in processed.events {
                 if send_value(socket, event.to_wire_value()).await.is_err() {
@@ -367,7 +424,7 @@ async fn handle_message(
             true
         }
         Err(error) => {
-            log_rejection(actor, room_id, application_request_id, &error);
+            log_rejection(&actor, room_id, application_request_id, &error);
             send_error(socket, response_id, error).await.is_ok()
         }
     }
@@ -398,7 +455,7 @@ async fn replay_in_order(
     Ok(())
 }
 
-fn log_rejection(actor: Actor, room_id: Uuid, request_id: Uuid, error: &RpcError) {
+fn log_rejection(actor: &Actor, room_id: Uuid, request_id: Uuid, error: &RpcError) {
     warn!(
         actor_id = %actor.id,
         room_id = %room_id,
@@ -414,6 +471,18 @@ fn request_id_value(raw: &str) -> Value {
         .and_then(|value| value.get("id").cloned())
         .filter(|id| id.is_string())
         .unwrap_or(Value::Null)
+}
+
+fn participant_update_value(room_id: Uuid, participants: Vec<RoomParticipant>) -> Value {
+    json!({
+        "jsonrpc": "2.0",
+        "method": "room.participants.updated",
+        "params": {
+            "contractVersion": "n2n.room.v1",
+            "roomId": room_id,
+            "participants": participants.iter().map(RoomParticipant::to_wire_value).collect::<Vec<_>>(),
+        }
+    })
 }
 
 fn error_response(id: Value, error: RpcError) -> Value {

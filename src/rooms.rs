@@ -5,7 +5,7 @@ use std::{
 };
 
 use axum::http::Uri;
-use serde_json::json;
+use serde_json::{Value, json};
 use sqlx::{PgPool, Row};
 use tokio::sync::broadcast;
 use uuid::Uuid;
@@ -97,7 +97,43 @@ struct GatewayStateInner {
     pool: PgPool,
     auth: AuthValidator,
     websocket_policy: WebSocketPolicy,
-    rooms: Mutex<HashMap<Uuid, broadcast::Sender<RoomEvent>>>,
+    rooms: Mutex<HashMap<Uuid, broadcast::Sender<RoomBroadcast>>>,
+    presence: Mutex<HashMap<Uuid, HashMap<Uuid, ParticipantPresence>>>,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct RoomParticipant {
+    pub id: Uuid,
+    pub role: String,
+    pub display_name: String,
+    pub online: bool,
+}
+
+impl RoomParticipant {
+    pub fn to_wire_value(&self) -> Value {
+        json!({
+            "id": self.id,
+            "role": self.role,
+            "displayName": self.display_name,
+            "online": self.online,
+        })
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(crate) enum RoomBroadcast {
+    Event(RoomEvent),
+    Participants {
+        participants: Vec<RoomParticipant>,
+        exclude_actor_id: Option<Uuid>,
+    },
+}
+
+#[derive(Clone, Debug)]
+struct ParticipantPresence {
+    role: String,
+    display_name: String,
+    connections: usize,
 }
 
 pub(crate) struct ProcessedRequest {
@@ -121,6 +157,7 @@ impl GatewayState {
                 auth,
                 websocket_policy,
                 rooms: Mutex::new(HashMap::new()),
+                presence: Mutex::new(HashMap::new()),
             }),
         }
     }
@@ -136,7 +173,10 @@ impl GatewayState {
     pub(crate) fn room_channel(
         &self,
         room_id: Uuid,
-    ) -> (broadcast::Sender<RoomEvent>, broadcast::Receiver<RoomEvent>) {
+    ) -> (
+        broadcast::Sender<RoomBroadcast>,
+        broadcast::Receiver<RoomBroadcast>,
+    ) {
         let mut rooms = self
             .inner
             .rooms
@@ -162,7 +202,121 @@ impl GatewayState {
                 .or_insert_with(|| broadcast::channel(256).0)
                 .clone()
         };
-        let _ = sender.send(event);
+        let _ = sender.send(RoomBroadcast::Event(event));
+    }
+
+    pub(crate) fn register_participant(&self, room_id: Uuid, actor: &Actor) {
+        let mut presence = self
+            .inner
+            .presence
+            .lock()
+            .expect("room presence map is not poisoned");
+        let room = presence.entry(room_id).or_default();
+        let participant = room.entry(actor.id).or_insert_with(|| ParticipantPresence {
+            role: actor.role.as_str().to_owned(),
+            display_name: actor.display_name.clone(),
+            connections: 0,
+        });
+        participant.role = actor.role.as_str().to_owned();
+        participant.display_name = actor.display_name.clone();
+        participant.connections += 1;
+    }
+
+    pub(crate) fn unregister_participant(&self, room_id: Uuid, actor_id: Uuid) {
+        let mut presence = self
+            .inner
+            .presence
+            .lock()
+            .expect("room presence map is not poisoned");
+        let Some(room) = presence.get_mut(&room_id) else {
+            return;
+        };
+        let Some(participant) = room.get_mut(&actor_id) else {
+            return;
+        };
+        if participant.connections > 1 {
+            participant.connections -= 1;
+        } else {
+            participant.connections = 0;
+        }
+    }
+
+    pub(crate) async fn participant_snapshot(
+        &self,
+        room_id: Uuid,
+    ) -> Result<Vec<RoomParticipant>, RpcError> {
+        let events = self.replay(room_id, 0).await?;
+        let mut participants = HashMap::<Uuid, RoomParticipant>::new();
+        for event in events {
+            let role = event.actor_role;
+            let display_name = event.actor_display_name.unwrap_or_else(|| {
+                format!(
+                    "{} {}",
+                    if role == "human" { "Human" } else { "Agent" },
+                    &event.actor_id.to_string()[..8]
+                )
+            });
+            participants.insert(
+                event.actor_id,
+                RoomParticipant {
+                    id: event.actor_id,
+                    role,
+                    display_name,
+                    online: false,
+                },
+            );
+        }
+        if let Some(room_presence) = self
+            .inner
+            .presence
+            .lock()
+            .expect("room presence map is not poisoned")
+            .get(&room_id)
+            .cloned()
+        {
+            for (id, presence) in room_presence {
+                participants.insert(
+                    id,
+                    RoomParticipant {
+                        id,
+                        role: presence.role,
+                        display_name: presence.display_name,
+                        online: presence.connections > 0,
+                    },
+                );
+            }
+        }
+        let mut participants = participants.into_values().collect::<Vec<_>>();
+        participants.sort_by(|left, right| {
+            left.role
+                .cmp(&right.role)
+                .then_with(|| left.display_name.cmp(&right.display_name))
+                .then_with(|| left.id.cmp(&right.id))
+        });
+        Ok(participants)
+    }
+
+    pub(crate) async fn publish_participant_snapshot(
+        &self,
+        room_id: Uuid,
+        exclude_actor_id: Option<Uuid>,
+    ) -> Result<(), RpcError> {
+        let participants = self.participant_snapshot(room_id).await?;
+        let sender = {
+            let rooms = self
+                .inner
+                .rooms
+                .lock()
+                .expect("room channel map is not poisoned");
+            rooms.get(&room_id).cloned()
+        };
+        if let Some(sender) = sender {
+            let _ = sender.send(RoomBroadcast::Participants {
+                participants,
+                exclude_actor_id,
+            });
+        }
+        Ok(())
     }
 
     pub(crate) async fn replay(
@@ -237,6 +391,7 @@ impl GatewayState {
                         event_type: "message.created".to_owned(),
                         actor_id: actor.id,
                         actor_role: actor.role.as_str().to_owned(),
+                        actor_display_name: Some(actor.display_name.clone()),
                         payload: json!({ "text": request.text }),
                         occurred_at: request.occurred_at,
                     },
@@ -278,6 +433,7 @@ impl GatewayState {
                             event_type: "decision.proposed".to_owned(),
                             actor_id: actor.id,
                             actor_role: actor.role.as_str().to_owned(),
+                            actor_display_name: Some(actor.display_name.clone()),
                             payload: json!({
                                 "decisionId": decision_id,
                                 "status": "draft",
@@ -357,6 +513,7 @@ async fn persist_draft_proposal(
             event_type: "decision.proposed".to_owned(),
             actor_id: proposal.actor_id,
             actor_role: proposal.actor_role,
+            actor_display_name: Some(proposal.actor_display_name),
             payload: json!({
                 "decisionId": decision_id,
                 "status": "draft",
@@ -428,6 +585,7 @@ async fn transition_decision_in_transaction(
                     event_type: event_type.to_owned(),
                     actor_id: actor.id,
                     actor_role: actor.role.as_str().to_owned(),
+                    actor_display_name: Some(actor.display_name.clone()),
                     payload: json!({
                         "decisionId": request.decision_id,
                         "status": status,
@@ -481,6 +639,7 @@ async fn transition_decision_in_transaction(
                     event_type: "decision.edited".to_owned(),
                     actor_id: actor.id,
                     actor_role: actor.role.as_str().to_owned(),
+                    actor_display_name: Some(actor.display_name.clone()),
                     payload: json!({
                         "decisionId": request.decision_id,
                         "status": "superseded",
@@ -499,6 +658,7 @@ async fn transition_decision_in_transaction(
                     event_type: "decision.confirmed".to_owned(),
                     actor_id: actor.id,
                     actor_role: actor.role.as_str().to_owned(),
+                    actor_display_name: Some(actor.display_name.clone()),
                     payload: json!({
                         "decisionId": replacement_id,
                         "status": "active",

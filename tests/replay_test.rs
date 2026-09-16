@@ -54,6 +54,7 @@ async fn concurrent_commits_published_in_reverse_are_delivered_in_sequence_order
         event_type: "message.created".to_owned(),
         actor_id,
         actor_role: "human".to_owned(),
+        actor_display_name: Some("Test Human".to_owned()),
         payload: json!({ "text": "concurrent publication" }),
         occurred_at: Utc::now(),
     };

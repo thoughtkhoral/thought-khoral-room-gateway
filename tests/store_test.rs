@@ -11,6 +11,7 @@ fn new_event(room_id: Uuid, actor_id: Uuid) -> NewEvent {
         event_type: "message.created".to_owned(),
         actor_id,
         actor_role: "human".to_owned(),
+        actor_display_name: Some("Test Human".to_owned()),
         payload: json!({ "text": "message" }),
         occurred_at: Utc::now(),
     }

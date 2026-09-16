@@ -7,12 +7,18 @@
 | Method | Parameters | Success result |
 | --- | --- | --- |
 | `session.authenticate` | `accessToken` | Authenticated connection identity and role. |
-| `room.join` | `roomId`, `requestId`, `occurredAt`, `afterSequence?` | Ordered room snapshot and events after the cursor. |
+| `room.join` | `roomId`, `requestId`, `occurredAt`, `afterSequence?` | Ordered room snapshot, events after the cursor, and the participant snapshot. |
 | `chat.send` | `roomId`, `requestId`, `occurredAt`, `text` | Normalized `message.created` event. |
 | `decision.propose` | `roomId`, `requestId`, `occurredAt`, `title`, `summary`, `sourceEventIds` | `decision.proposed` event. |
 | `decision.transition` | `roomId`, `requestId`, `occurredAt`, `decisionId`, `action`, `editedTitle?`, `editedSummary?` | `decision.confirmed`, `decision.edited`, or `decision.dismissed` event. |
 
 Only `confirm`, `edit`, and `dismiss` are valid actions. `edit` requires non-empty `editedTitle` and `editedSummary`; the other actions must not supply either edit field.
+
+The gateway may send the JSON-RPC notification `room.participants.updated` without
+an `id`. Its params contain `contractVersion`, `roomId`, and a `participants`
+array. Each participant has `id`, `role`, `displayName`, and `online`. The list
+contains actors found in room history and currently joined connections; presence
+is ephemeral and is not persisted as a room event.
 
 ## Browser WebSocket authentication
 

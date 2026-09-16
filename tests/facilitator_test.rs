@@ -20,6 +20,7 @@ fn message_event(text: &str) -> RoomEvent {
         event_type: "message.created".to_owned(),
         actor_id: Uuid::new_v4(),
         actor_role: "human".to_owned(),
+        actor_display_name: Some("Test Human".to_owned()),
         payload: json!({ "text": text }),
         occurred_at: Utc::now(),
     }

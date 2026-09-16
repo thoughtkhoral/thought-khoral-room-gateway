@@ -4,6 +4,7 @@ use crate::store::RoomEvent;
 
 /// The gateway-owned identity recorded on deterministic facilitator proposals.
 pub const FACILITATOR_ACTOR_ID: Uuid = Uuid::from_u128(0x6e326e00_0000_0000_0000_000000000001);
+pub const FACILITATOR_DISPLAY_NAME: &str = "ThoughtKhoral Facilitator";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NewDecisionProposal {
@@ -12,6 +13,7 @@ pub struct NewDecisionProposal {
     pub source_event_ids: Vec<Uuid>,
     pub actor_id: Uuid,
     pub actor_role: String,
+    pub actor_display_name: String,
 }
 
 /// Derives one draft-only proposal from an already-persisted decision message.
@@ -34,5 +36,6 @@ pub fn propose_from_message(event: &RoomEvent) -> Option<NewDecisionProposal> {
         source_event_ids: vec![event.event_id],
         actor_id: FACILITATOR_ACTOR_ID,
         actor_role: "agent".to_owned(),
+        actor_display_name: FACILITATOR_DISPLAY_NAME.to_owned(),
     })
 }

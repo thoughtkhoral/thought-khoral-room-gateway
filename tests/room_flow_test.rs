@@ -6,6 +6,52 @@ use uuid::Uuid;
 
 use support::{TestServer, common_params, join, recv_json, rpc, send_json};
 
+#[tokio::test]
+async fn join_returns_named_participants_and_presence_updates() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let first_id = Uuid::new_v4();
+    let mut first_options = support::TokenOptions::valid(first_id, "human");
+    first_options.name = Some("Maya Chen".to_owned());
+    let mut first = server.connect(&server.token_with(first_options)).await;
+
+    let joined = join(&mut first, room_id, None).await;
+    assert_eq!(
+        joined["result"]["participants"][0]["displayName"],
+        "Maya Chen"
+    );
+    assert_eq!(joined["result"]["participants"][0]["online"], true);
+
+    let mut message = common_params(Uuid::new_v4(), room_id);
+    message["text"] = json!("The join response is complete.");
+    send_json(&mut first, rpc("message", "chat.send", message)).await;
+    assert_eq!(recv_json(&mut first).await["eventType"], "message.created");
+
+    let second_id = Uuid::new_v4();
+    let mut second_options = support::TokenOptions::valid(second_id, "agent");
+    second_options.preferred_username = Some("Atlas Planner".to_owned());
+    let mut second = server.connect(&server.token_with(second_options)).await;
+    let second_joined = join(&mut second, room_id, None).await;
+    assert_eq!(
+        second_joined["result"]["participants"]
+            .as_array()
+            .unwrap()
+            .len(),
+        2
+    );
+    assert_eq!(
+        recv_json(&mut first).await["method"],
+        "room.participants.updated"
+    );
+
+    drop(second);
+    let offline_update = recv_json(&mut first).await;
+    let participants = offline_update["params"]["participants"].as_array().unwrap();
+    assert!(participants.iter().any(|participant| {
+        participant["displayName"] == "Atlas Planner" && participant["online"] == false
+    }));
+}
+
 // This fails if a chat event is broadcast before persistence or clients see divergent events.
 #[tokio::test]
 async fn two_humans_receive_the_same_persisted_message_sequence() {

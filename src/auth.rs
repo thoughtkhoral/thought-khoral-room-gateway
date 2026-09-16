@@ -23,10 +23,11 @@ impl ActorRole {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Actor {
     pub id: Uuid,
     pub role: ActorRole,
+    pub display_name: String,
     pub expires_at: i64,
 }
 
@@ -54,6 +55,26 @@ struct Claims {
     #[serde(rename = "n2n_role")]
     role: ActorRole,
     exp: i64,
+    name: Option<String>,
+    preferred_username: Option<String>,
+}
+
+pub(crate) fn display_name_for(
+    role: ActorRole,
+    actor_id: Uuid,
+    name: Option<&str>,
+    preferred_username: Option<&str>,
+) -> String {
+    let role_label = match role {
+        ActorRole::Human => "Human",
+        ActorRole::Agent => "Agent",
+    };
+    name.or(preferred_username)
+        .and_then(|value| {
+            let trimmed = value.trim();
+            (!trimmed.is_empty()).then(|| trimmed.chars().take(128).collect())
+        })
+        .unwrap_or_else(|| format!("{role_label} {}", &actor_id.to_string()[..8]))
 }
 
 impl AuthValidator {
@@ -129,10 +150,45 @@ impl AuthValidator {
         validation.validate_nbf = true;
         let claims = decode::<Claims>(token, key, &validation).ok()?.claims;
 
+        let actor_id = Uuid::parse_str(&claims.sub).ok()?;
         Some(Actor {
-            id: Uuid::parse_str(&claims.sub).ok()?,
+            id: actor_id,
             role: claims.role,
+            display_name: display_name_for(
+                claims.role,
+                actor_id,
+                claims.name.as_deref(),
+                claims.preferred_username.as_deref(),
+            ),
             expires_at: claims.exp,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ActorRole, display_name_for};
+    use uuid::Uuid;
+
+    #[test]
+    fn prefers_trimmed_name_then_username_then_role_and_short_id() {
+        let actor_id = Uuid::parse_str("12345678-1234-4234-8234-123456789abc").unwrap();
+        assert_eq!(
+            display_name_for(
+                ActorRole::Human,
+                actor_id,
+                Some("  Maya Chen  "),
+                Some("maya"),
+            ),
+            "Maya Chen"
+        );
+        assert_eq!(
+            display_name_for(ActorRole::Agent, actor_id, None, Some("atlas")),
+            "atlas"
+        );
+        assert_eq!(
+            display_name_for(ActorRole::Human, actor_id, None, None),
+            "Human 12345678"
+        );
     }
 }

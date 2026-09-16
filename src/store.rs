@@ -10,6 +10,7 @@ pub struct NewEvent {
     pub event_type: String,
     pub actor_id: Uuid,
     pub actor_role: String,
+    pub actor_display_name: Option<String>,
     pub payload: Value,
     pub occurred_at: DateTime<Utc>,
 }
@@ -23,12 +24,20 @@ pub struct RoomEvent {
     pub event_type: String,
     pub actor_id: Uuid,
     pub actor_role: String,
+    pub actor_display_name: Option<String>,
     pub payload: Value,
     pub occurred_at: DateTime<Utc>,
 }
 
 impl RoomEvent {
     pub fn to_wire_value(&self) -> Value {
+        let mut actor = serde_json::json!({
+            "id": self.actor_id,
+            "role": self.actor_role,
+        });
+        if let Some(display_name) = &self.actor_display_name {
+            actor["displayName"] = serde_json::json!(display_name);
+        }
         serde_json::json!({
             "contractVersion": "n2n.room.v1",
             "requestId": self.request_id,
@@ -37,9 +46,35 @@ impl RoomEvent {
             "sequence": self.sequence,
             "eventId": self.event_id,
             "eventType": self.event_type,
-            "actor": { "id": self.actor_id, "role": self.actor_role },
+            "actor": actor,
             "payload": self.payload,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::RoomEvent;
+    use chrono::{TimeZone, Utc};
+    use serde_json::json;
+    use uuid::Uuid;
+
+    #[test]
+    fn wire_event_includes_a_trusted_display_name_when_available() {
+        let event = RoomEvent {
+            event_id: Uuid::new_v4(),
+            room_id: Uuid::new_v4(),
+            sequence: 1,
+            request_id: Uuid::new_v4(),
+            event_type: "message.created".to_owned(),
+            actor_id: Uuid::new_v4(),
+            actor_role: "human".to_owned(),
+            actor_display_name: Some("Maya Chen".to_owned()),
+            payload: json!({ "text": "Hello" }),
+            occurred_at: Utc.timestamp_opt(0, 0).single().unwrap(),
+        };
+
+        assert_eq!(event.to_wire_value()["actor"]["displayName"], "Maya Chen");
     }
 }
 
@@ -99,12 +134,13 @@ pub(crate) async fn append_event_in_transaction(
         INSERT INTO room_events (
             event_id, room_id, sequence, request_id, event_type,
             actor_id, actor_role, payload, occurred_at
+            , actor_display_name
         )
-        SELECT $1, $2, COALESCE(MAX(sequence), 0) + 1, $3, $4, $5, $6, $7, $8
+        SELECT $1, $2, COALESCE(MAX(sequence), 0) + 1, $3, $4, $5, $6, $7, $8, $9
         FROM room_events
         WHERE room_id = $2
         RETURNING event_id, room_id, sequence, request_id, event_type,
-                  actor_id, actor_role, payload, occurred_at
+                  actor_id, actor_role, actor_display_name, payload, occurred_at
         "#,
     )
     .bind(event_id)
@@ -115,6 +151,7 @@ pub(crate) async fn append_event_in_transaction(
     .bind(event.actor_role)
     .bind(event.payload)
     .bind(event.occurred_at)
+    .bind(event.actor_display_name)
     .fetch_one(&mut **transaction)
     .await?;
     room_event_from_row(row)
@@ -128,7 +165,7 @@ pub async fn events_after(
     let rows = sqlx::query(
         r#"
         SELECT event_id, room_id, sequence, request_id, event_type,
-               actor_id, actor_role, payload, occurred_at
+               actor_id, actor_role, actor_display_name, payload, occurred_at
         FROM room_events
         WHERE room_id = $1 AND sequence > $2
         ORDER BY sequence ASC
@@ -161,7 +198,7 @@ pub(crate) async fn prior_request(
     let rows = sqlx::query(
         r#"
         SELECT event_id, room_id, sequence, request_id, event_type,
-               actor_id, actor_role, payload, occurred_at
+               actor_id, actor_role, actor_display_name, payload, occurred_at
         FROM room_events
         WHERE event_id = ANY($1)
         ORDER BY sequence ASC
@@ -209,6 +246,7 @@ fn room_event_from_row(row: PgRow) -> Result<RoomEvent, StoreError> {
         event_type: row.try_get("event_type")?,
         actor_id: row.try_get("actor_id")?,
         actor_role: row.try_get("actor_role")?,
+        actor_display_name: row.try_get("actor_display_name")?,
         payload: row.try_get("payload")?,
         occurred_at: row.try_get("occurred_at")?,
     })

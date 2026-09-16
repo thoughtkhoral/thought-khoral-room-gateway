@@ -11,6 +11,7 @@
 - The gateway validates supported `n2n.room.v1` JSON-RPC requests and returns the specified structured errors for rejected requests.
 - For an allowed browser Origin, the gateway accepts only `session.authenticate` before binding a fully validated OIDC identity, and closes authentication failures or timeouts without admitting a room operation.
 - It persists ordered immutable room events before broadcasting them and supports replay after a sequence cursor.
+- It returns the room participant snapshot from `room.join` and broadcasts ephemeral participant presence updates, using trusted OIDC display-name claims when available and a role-plus-short-ID fallback otherwise.
 - Only a human participant can confirm, edit, or dismiss a draft decision; no proposal affects active context without that action.
 - A deterministic gateway facilitator may derive a draft proposal only from a persisted
   `message.created` event whose trimmed text starts with `Decision:` and has a non-empty
@@ -20,7 +21,7 @@
 
 ## Interfaces
 
-The gateway consumes the `n2n.room.v1` contract method `session.authenticate` for browser connection establishment and the authenticated methods `room.join`, `chat.send`, `decision.propose`, and `decision.transition`. It exposes their normalized events and errors over its WebSocket, governed by [root Decision 002](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/002-browser-websocket-authentication.md) and the accepted [local browser profile](../decisions/002-browser-session-authentication.md).
+The gateway consumes the `n2n.room.v1` contract method `session.authenticate` for browser connection establishment and the authenticated methods `room.join`, `chat.send`, `decision.propose`, and `decision.transition`. It exposes their normalized events, participant snapshots/updates, and errors over its WebSocket, governed by [root Decision 002](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/002-browser-websocket-authentication.md) and the accepted [local browser profile](../decisions/002-browser-session-authentication.md).
 
 ## Explicit exclusions
 

@@ -87,6 +87,10 @@ struct Claims {
     exp: i64,
     #[serde(skip_serializing_if = "Option::is_none")]
     nbf: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    preferred_username: Option<String>,
 }
 
 pub struct TokenOptions {
@@ -96,6 +100,8 @@ pub struct TokenOptions {
     pub audience: String,
     pub exp: i64,
     pub nbf: Option<i64>,
+    pub name: Option<String>,
+    pub preferred_username: Option<String>,
     pub kid: Option<String>,
     pub algorithm: Algorithm,
     pub wrong_signature: bool,
@@ -110,6 +116,8 @@ impl TokenOptions {
             audience: AUDIENCE.to_owned(),
             exp: chrono::Utc::now().timestamp() + 3_600,
             nbf: None,
+            name: None,
+            preferred_username: None,
             kid: Some(KEY_ID.to_owned()),
             algorithm: Algorithm::RS256,
             wrong_signature: false,
@@ -197,6 +205,8 @@ impl TestServer {
             aud: options.audience,
             exp: options.exp,
             nbf: options.nbf,
+            name: options.name,
+            preferred_username: options.preferred_username,
         };
         let mut header = Header::new(options.algorithm);
         header.kid = options.kid;
