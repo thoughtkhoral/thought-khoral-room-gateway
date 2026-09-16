@@ -13,11 +13,18 @@
 - It persists ordered immutable room events before broadcasting them and supports replay after a sequence cursor.
 - It returns the room participant snapshot from `room.join` and broadcasts ephemeral participant presence updates, using trusted OIDC display-name claims when available and a role-plus-short-ID fallback otherwise.
 - Only a human participant can confirm, edit, or dismiss a draft decision; no proposal affects active context without that action.
-- A deterministic gateway facilitator may derive a draft proposal only from a persisted
-  `message.created` event whose trimmed text starts with `Decision:` and has a non-empty
-  remainder. It attributes that proposal to the gateway agent, retains the triggering
-  event identifier as provenance, and never invokes a decision transition or an external
-  model, tool, or operating-system command.
+- The gateway owns the facilitator draft-proposal port. After a persisted room
+  event, that port may return zero or more drafts which the gateway records as
+  `decision.proposed`. The port must not invoke a decision transition, write
+  active context, or call an external model, tool, or operating-system command
+  inside this process. See root [decision 005](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/005-room-scoped-poc-memory.md).
+- The live implementation of that port is the deterministic `Decision:` parser:
+  it may derive a draft only from a persisted `message.created` event whose
+  trimmed text starts with `Decision:` and has a non-empty remainder. It
+  attributes that proposal to the gateway agent and retains the triggering
+  event identifier as provenance. A memory-engine / Cognee implementation of
+  the same port is out of this project's runtime until a separately approved
+  plan enables it; this gateway must not add a second independent propose path.
 
 ## Interfaces
 
@@ -25,4 +32,7 @@ The gateway consumes the `n2n.room.v1` contract method `session.authenticate` fo
 
 ## Explicit exclusions
 
-This project does not own contract definitions, provide a browser UI, compose local infrastructure, grant agents database credentials or shell access, or integrate external agent runtimes, A2A, or MCP services.
+This project does not own contract definitions, provide a browser UI, compose
+local infrastructure, grant agents database credentials or shell access,
+integrate Cognee or other memory-engine runtimes in this process, or integrate
+external agent runtimes, A2A, or MCP services.

@@ -1,6 +1,6 @@
 # Room gateway implementation
 
-Follow the [root MVP foundation implementation plan](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/n2n-mvp-foundation-implementation-plan.md), the [ThoughtKhoral identity migration design](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/thoughtkhoral-identity-migration.md), and the root governance decisions before changing this project.
+Follow the [root MVP foundation implementation plan](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/n2n-mvp-foundation-implementation-plan.md), the [ThoughtKhoral identity migration design](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/thoughtkhoral-identity-migration.md), [decision 005](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/005-room-scoped-poc-memory.md), and the root governance decisions before changing this project.
 
 Implementation begins only after the relevant task is approved. The gateway must validate untrusted input, persist before broadcast, and retain the human approval boundary for active room context.
 
@@ -167,17 +167,29 @@ close behavior; neither logs credentials or raw room content.
   and event identifiers. Raw JWTs, untrusted message text, titles, summaries,
   complete request bodies, and stack traces are never logged.
 
-## Deterministic facilitator boundary
+## Facilitator draft-proposal port
 
-After a `chat.send` has been normalized and persisted as `message.created`, the
+The gateway owns the facilitator **port**. After a room event is persisted, the
+gateway asks that port for zero or more drafts, records any result as
+`decision.proposed` in the same authorization and persistence boundary, and
+never lets that path invoke `decision.transition`. Human-only
+`decision.transition` remains the sole path to active context.
+
+The live implementation is the deterministic `Decision:` parser. After a
+`chat.send` has been normalized and persisted as `message.created`, the
 gateway may inspect that persisted event locally. Only trimmed text beginning
 with `Decision:` and followed by a non-empty title produces a second persisted
 event, `decision.proposed`. The proposal is a draft attributed to the fixed
 gateway agent, cites exactly the triggering message event ID in
-`sourceEventIds`, and is published only after the transaction commits. The
-facilitator has no transition API and makes no model, tool, operating-system,
-or non-gateway-database call. Human-only `decision.transition` remains the
-sole path to active context.
+`sourceEventIds`, and is published only after the transaction commits. This
+implementation makes no model, tool, operating-system, or non-gateway-database
+call.
+
+A later Cognee / memory-engine implementation may occupy the same port under
+root [decision 005](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/005-room-scoped-poc-memory.md).
+This project must not embed Cognee, call an unmediated model, or add a second
+independent propose path beside the port. Switching the live implementation
+requires a separately approved memory-engine How and implementation plan.
 
 ## Append-only and persistence validation invariants
 

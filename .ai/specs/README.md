@@ -12,6 +12,13 @@ See the [root specification index](https://github.com/thoughtkhoral/thought-khor
 - [Decisions](decisions/README.md)
 - [Decision 002: ThoughtKhoral project identity](decisions/002-thoughtkhoral-identity.md)
 
+## Facilitator draft-proposal port
+
+The gateway owns the facilitator port and the live `Decision:` implementation.
+Cognee occupies that port later from `thought-khoral-memory-engine` and is not
+a runtime of this project. See root [decision 005](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/005-room-scoped-poc-memory.md)
+and the [memory-engine POC What](https://github.com/thoughtkhoral/thought-khoral-memory-engine/blob/main/.ai/specs/what/poc-room-scoped-memory.md).
+
 ## Room lifecycle compatibility boundary
 
 The workspace UI owns explicit Enter/Leave presentation and closes its client
