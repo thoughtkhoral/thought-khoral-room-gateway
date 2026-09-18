@@ -30,6 +30,7 @@
     "mentions": {
       "type": "array",
       "maxItems": 50,
+      "description": "Structural duplicates are rejected. Contract validation additionally requires participant IDs and aliases to be semantically unique.",
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/mention" }
     }

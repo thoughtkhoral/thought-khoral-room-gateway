@@ -1,0 +1,17 @@
+{
+  "jsonrpc": "2.0",
+  "id": "chat-duplicate-alias-1",
+  "method": "chat.send",
+  "params": {
+    "contractVersion": "n2n.room.v1",
+    "requestId": "71717171-7171-4171-8171-717171717171",
+    "roomId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "occurredAt": "2026-09-18T12:06:00Z",
+    "text": "Do not duplicate an alias audience.",
+    "mentions": [
+      { "type": "alias", "alias": "allagents" },
+      { "type": "alias", "alias": "allagents" }
+    ],
+    "delivery": "mentioned"
+  }
+}

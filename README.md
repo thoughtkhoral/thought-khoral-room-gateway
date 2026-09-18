@@ -44,8 +44,8 @@ runtime resource.
 
 ## Compatibility exclusions
 
-The vendored `n2n.room.v1` contract, its immutable `n2n-room-v1.0.3-slash-decisions` release
-tag, JSON Schema identifiers, the existing `n2n_role` JWT claim, and the
+The vendored `n2n.room.v1` contract is pinned to its authoritative commit (recorded in
+`contracts/lock.json` with source archive and schema hashes). Its JSON Schema identifiers, the existing `n2n_role` JWT claim, and the
 database schema/data identifiers remain unchanged for wire and data
 compatibility. They require dedicated contract or data migration decisions
 before they can be renamed.

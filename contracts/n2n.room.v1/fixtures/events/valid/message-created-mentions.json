@@ -1,0 +1,25 @@
+{
+  "contractVersion": "n2n.room.v1",
+  "requestId": "81818181-8181-4181-8181-818181818181",
+  "roomId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "occurredAt": "2026-09-18T12:10:00Z",
+  "sequence": 8,
+  "eventId": "82828282-8282-4282-8282-828282828282",
+  "eventType": "message.created",
+  "actor": {
+    "id": "99999999-9999-4999-8999-999999999999",
+    "role": "human"
+  },
+  "payload": {
+    "delivery": "mentioned",
+    "mentions": [
+      { "type": "participant", "id": "11111111-1111-4111-8111-111111111111", "token": "maya-chen" },
+      { "type": "participant", "id": "22222222-2222-4222-8222-222222222222", "token": "atlas-planner" },
+      { "type": "alias", "alias": "allagents" }
+    ],
+    "audienceIds": [
+      "11111111-1111-4111-8111-111111111111",
+      "22222222-2222-4222-8222-222222222222"
+    ]
+  }
+}

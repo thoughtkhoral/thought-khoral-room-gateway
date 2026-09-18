@@ -13,8 +13,8 @@ const packageMetadata = await loadJson("package.json");
 const protocol = await readFile(resolve(projectRoot, "protocol.md"), "utf8");
 assert.equal(
   packageMetadata.name,
-  "@n2n/contracts",
-  "the vendored contract package identity must remain stable",
+  "thought-khoral-contracts",
+  "package metadata must use the ThoughtKhoral contracts identity",
 );
 assert.match(
   protocol,
@@ -32,6 +32,28 @@ ajv.addSchema(roomEventSchema);
 const validate = ajv.compile(rpcSchema);
 const validateRoomEvent = ajv.compile(roomEventSchema);
 
+const hasUniqueMentionIdentities = (mentions) => {
+  if (!Array.isArray(mentions)) return true;
+
+  const participantIds = new Set();
+  const aliases = new Set();
+  for (const mention of mentions) {
+    const identities = mention.type === "participant" ? participantIds : aliases;
+    const identity = mention.type === "participant" ? mention.id : mention.alias;
+    if (identities.has(identity)) return false;
+    identities.add(identity);
+  }
+  return true;
+};
+
+const validateMentionIdentities = (value) =>
+  hasUniqueMentionIdentities(value.params?.mentions) &&
+  hasUniqueMentionIdentities(value.payload?.mentions);
+
+const validateContract = (value) => validate(value) && validateMentionIdentities(value);
+const validateRoomEventContract = (value) =>
+  validateRoomEvent(value) && validateMentionIdentities(value);
+
 const browserAuthentication = {
   jsonrpc: "2.0",
   id: "authenticate-1",
@@ -39,7 +61,7 @@ const browserAuthentication = {
   params: { accessToken: "header.payload.signature" },
 };
 assert.equal(
-  validate(browserAuthentication),
+  validateContract(browserAuthentication),
   true,
   `session.authenticate must validate: ${ajv.errorsText(validate.errors)}`,
 );
@@ -65,7 +87,7 @@ const deletedDecisionEvent = {
   },
 };
 assert.equal(
-  validateRoomEvent(deletedDecisionEvent),
+  validateRoomEventContract(deletedDecisionEvent),
   true,
   `decision.deleted must validate: ${ajv.errorsText(validateRoomEvent.errors)}`,
 );
@@ -73,7 +95,7 @@ assert.equal(
 const deletedDecisionEventWithoutSummary = structuredClone(deletedDecisionEvent);
 delete deletedDecisionEventWithoutSummary.payload.summary;
 assert.equal(
-  validateRoomEvent(deletedDecisionEventWithoutSummary),
+  validateRoomEventContract(deletedDecisionEventWithoutSummary),
   false,
   "decision.deleted must require payload.summary",
 );
@@ -83,7 +105,7 @@ const assertFixtures = async (directory, expectedValid) => {
   assert.ok(fileNames.length > 0, `${directory} must contain fixtures`);
 
   for (const fileName of fileNames) {
-    const isValid = validate(await loadJson(`${directory}/${fileName}`));
+    const isValid = validateContract(await loadJson(`${directory}/${fileName}`));
     assert.equal(
       isValid,
       expectedValid,
@@ -97,7 +119,9 @@ const assertRoomEventFixtures = async (directory, expectedValid) => {
   assert.ok(fileNames.length > 0, `${directory} must contain fixtures`);
 
   for (const fileName of fileNames) {
-    const isValid = validateRoomEvent(await loadJson(`${directory}/${fileName}`));
+    const isValid = validateRoomEventContract(
+      await loadJson(`${directory}/${fileName}`),
+    );
     assert.equal(
       isValid,
       expectedValid,
@@ -108,8 +132,9 @@ const assertRoomEventFixtures = async (directory, expectedValid) => {
 
 await assertFixtures("fixtures/valid", true);
 await assertFixtures("fixtures/invalid", false);
-await assertRoomEventFixtures("fixtures/invalid-events", false);
+await assertRoomEventFixtures("fixtures/events/valid", true);
+await assertRoomEventFixtures("fixtures/events/invalid", false);
 
 console.log(
-  "validated session authentication and all valid fixtures; rejected all invalid fixtures",
+  "validated session authentication, request fixtures, and persisted event fixtures",
 );

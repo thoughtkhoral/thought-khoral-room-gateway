@@ -1,0 +1,20 @@
+{
+  "contractVersion": "n2n.room.v1",
+  "requestId": "85858585-8585-4585-8585-858585858585",
+  "roomId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "occurredAt": "2026-09-18T12:12:00Z",
+  "sequence": 10,
+  "eventId": "86868686-8686-4686-8686-868686868686",
+  "eventType": "message.created",
+  "actor": {
+    "id": "99999999-9999-4999-8999-999999999999",
+    "role": "human"
+  },
+  "payload": {
+    "delivery": "mentioned",
+    "mentions": [
+      { "type": "alias", "alias": "allagents" },
+      { "type": "alias", "alias": "allagents" }
+    ]
+  }
+}
