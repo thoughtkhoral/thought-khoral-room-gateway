@@ -73,3 +73,37 @@ async fn concurrent_commits_published_in_reverse_are_delivered_in_sequence_order
     assert_eq!(delivered_first["sequence"], committed[0].sequence);
     assert_eq!(delivered_second["sequence"], committed[1].sequence);
 }
+
+// This fails if replay drops the deletion audit event or returns it out of sequence.
+#[tokio::test]
+async fn reconnect_replays_decision_proposal_and_deletion_audit() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let token = server.token(Uuid::new_v4(), "human");
+    let mut socket = server.connect(&token).await;
+    join(&mut socket, room_id, None).await;
+
+    let mut proposal = common_params(Uuid::new_v4(), room_id);
+    proposal["title"] = json!("Replay this draft");
+    proposal["summary"] = json!("Replay the deletion too.");
+    proposal["sourceEventIds"] = json!([]);
+    send_json(&mut socket, rpc("proposal", "decision.propose", proposal)).await;
+    let proposed = recv_json(&mut socket).await;
+    let decision_id = proposed["payload"]["decisionId"].clone();
+    let mut delete = common_params(Uuid::new_v4(), room_id);
+    delete["decisionId"] = decision_id;
+    send_json(&mut socket, rpc("delete", "decision.delete", delete)).await;
+    assert_eq!(
+        recv_json(&mut socket).await["eventType"],
+        "decision.deleted"
+    );
+    drop(socket);
+
+    let mut reconnected = server.connect(&token).await;
+    let joined = join(&mut reconnected, room_id, Some(0)).await;
+    let events = joined["result"]["events"].as_array().unwrap();
+    assert_eq!(events.len(), 2);
+    assert_eq!(events[0]["eventType"], "decision.proposed");
+    assert_eq!(events[1]["eventType"], "decision.deleted");
+    assert!(events[0]["sequence"].as_i64().unwrap() < events[1]["sequence"].as_i64().unwrap());
+}
