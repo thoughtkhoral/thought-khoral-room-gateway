@@ -242,6 +242,44 @@ async fn chat_mentions_reject_unknown_direct_participant_without_persistence() {
     assert_eq!(ledger_count, 0);
 }
 
+// This fails if global delivery bypasses direct target validation and persists an unknown mention.
+#[tokio::test]
+async fn chat_mentions_reject_unknown_direct_participant_in_room_delivery() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let request_id = Uuid::new_v4();
+    let mut sender = server.connect(&server.token(Uuid::new_v4(), "human")).await;
+    join(&mut sender, room_id, None).await;
+
+    let mut params = common_params(request_id, room_id);
+    params["text"] = json!("This global message has an unknown mention.");
+    params["mentions"] = json!([
+        { "type": "participant", "id": Uuid::new_v4(), "token": "unknown" }
+    ]);
+    params["delivery"] = json!("room");
+    send_json(&mut sender, rpc("unknown-room", "chat.send", params)).await;
+
+    assert_eq!(recv_json(&mut sender).await["error"]["code"], -32013);
+    let event_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM room_events WHERE room_id = $1 AND request_id = $2",
+    )
+    .bind(room_id)
+    .bind(request_id)
+    .fetch_one(&server.pool)
+    .await
+    .unwrap();
+    assert_eq!(event_count, 0);
+    let ledger_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM room_requests WHERE room_id = $1 AND request_id = $2",
+    )
+    .bind(room_id)
+    .bind(request_id)
+    .fetch_one(&server.pool)
+    .await
+    .unwrap();
+    assert_eq!(ledger_count, 0);
+}
+
 // This fails if allhumans uses display names or includes agents in the targeted audience.
 #[tokio::test]
 async fn chat_mentions_expand_allhumans_by_role_only() {

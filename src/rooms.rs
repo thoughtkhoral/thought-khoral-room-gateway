@@ -129,22 +129,28 @@ fn resolve_chat_audience(
     participants: &[RoomParticipant],
     request: &ChatSend,
 ) -> Result<Vec<Uuid>, RpcError> {
-    if request.delivery == ChatDelivery::Room {
-        return Ok(Vec::new());
-    }
-
     let known_participant_ids = participants
         .iter()
         .map(|participant| participant.id)
         .collect::<HashSet<_>>();
+
+    for mention in &request.mentions {
+        if let ChatMention::Participant { id, .. } = mention
+            && !known_participant_ids.contains(id)
+        {
+            return Err(RpcError::unknown_mention_target());
+        }
+    }
+
+    if request.delivery == ChatDelivery::Room {
+        return Ok(Vec::new());
+    }
+
     let mut audience_ids = HashSet::from([actor.id]);
 
     for mention in &request.mentions {
         match mention {
             ChatMention::Participant { id, .. } => {
-                if !known_participant_ids.contains(id) {
-                    return Err(RpcError::unknown_mention_target());
-                }
                 audience_ids.insert(*id);
             }
             ChatMention::Alias {
