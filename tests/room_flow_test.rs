@@ -413,7 +413,7 @@ async fn chat_mentions_reject_unknown_direct_participant_in_room_delivery() {
     assert_eq!(ledger_count, 0);
 }
 
-// This fails if repeated direct mention identities are accepted with different tokens.
+// Exact duplicate direct targets are rejected structurally before persistence.
 #[tokio::test]
 async fn chat_mentions_reject_duplicate_direct_participant_without_persistence() {
     let server = TestServer::start().await;
@@ -437,11 +437,11 @@ async fn chat_mentions_reject_duplicate_direct_participant_without_persistence()
     params["delivery"] = json!("mentioned");
     send_json(&mut sender, rpc("duplicate-direct", "chat.send", params)).await;
 
-    assert_eq!(recv_json(&mut sender).await["error"]["code"], -32013);
+    assert_eq!(recv_json(&mut sender).await["error"]["code"], -32600);
     assert_request_was_not_persisted(&server, room_id, request_id).await;
 }
 
-// This fails if repeated alias identities are accepted or reach either persistence table.
+// Exact duplicate aliases are rejected structurally before persistence.
 #[tokio::test]
 async fn chat_mentions_reject_duplicate_alias_without_persistence() {
     let server = TestServer::start().await;
@@ -459,7 +459,7 @@ async fn chat_mentions_reject_duplicate_alias_without_persistence() {
     params["delivery"] = json!("mentioned");
     send_json(&mut sender, rpc("duplicate-alias", "chat.send", params)).await;
 
-    assert_eq!(recv_json(&mut sender).await["error"]["code"], -32013);
+    assert_eq!(recv_json(&mut sender).await["error"]["code"], -32600);
     assert_request_was_not_persisted(&server, room_id, request_id).await;
 }
 
