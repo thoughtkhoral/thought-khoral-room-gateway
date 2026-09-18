@@ -28,13 +28,13 @@ either requires a separately approved compatibility migration.
 
 ## Contract pin and schema-validation dependency
 
-The gateway vendors the `thought-khoral-contracts` historical release `n2n-room-v1.0.2` beneath
+The gateway vendors the `thought-khoral-contracts` release `n2n-room-v1.0.3-slash-decisions` beneath
 `contracts/n2n.room.v1/`; it does not import the sibling repository or expose
 it as a Rust crate. `contracts/lock.json` records the release commit and a
 SHA-256 of the Git archive, making the input to `include_str!` reproducible.
-Release `n2n-room-v1.0.2` resolves to commit
-`e2e3ead757c8b35bfd330e8ea76875e9db264ac3`; its Git archive SHA-256 is
-`c38cf237d873fbee62928dbccd6eba0fc5163806914ca31bba4909d95b6fbeed`.
+Release `n2n-room-v1.0.3-slash-decisions` resolves to commit
+`548efccc3a7c51401db63db1707707b250c9d550`; its vendored archive SHA-256 is
+`969addd80a17476226fcb7f1b4d1f5dfc9625c0f133f4bf8448a0eebb2661e8e`.
 The embedded schema SHA-256 values are `1d1490ed...2857` for envelope,
 `20f00404...3cef` for RPC, and `5eaa9128...f9c5` for room event, with the full
 digests recorded in `contracts/lock.json`.

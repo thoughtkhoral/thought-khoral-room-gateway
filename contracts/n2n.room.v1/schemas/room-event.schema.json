@@ -1,10 +1,42 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://n2n.redhat.com/schemas/n2n.room.v1/room-event.schema.json",
-  "title": "N:N room v1 persisted room event",
+  "title": "ThoughtKhoral room v1 persisted room event",
   "type": "object",
   "allOf": [
-    { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" }
+    { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" },
+    {
+      "if": {
+        "properties": {
+          "eventType": { "const": "decision.deleted" }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "decisionId": { "type": "string", "format": "uuid" },
+              "priorStatus": { "type": "string", "minLength": 1 },
+              "title": { "type": "string", "minLength": 1 },
+              "summary": { "type": "string", "minLength": 1 },
+              "sourceEventIds": {
+                "type": "array",
+                "minItems": 0,
+                "items": { "type": "string", "format": "uuid" }
+              }
+            },
+            "required": [
+              "decisionId",
+              "priorStatus",
+              "title",
+              "summary",
+              "sourceEventIds"
+            ]
+          }
+        }
+      }
+    }
   ],
   "properties": {
     "sequence": { "type": "integer", "minimum": 1 },
@@ -15,7 +47,8 @@
         "decision.proposed",
         "decision.confirmed",
         "decision.edited",
-        "decision.dismissed"
+        "decision.dismissed",
+        "decision.deleted"
       ]
     },
     "actor": {

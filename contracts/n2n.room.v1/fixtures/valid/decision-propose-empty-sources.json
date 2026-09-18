@@ -1,0 +1,15 @@
+{
+  "jsonrpc": "2.0",
+  "id": "propose-empty-sources-1",
+  "method": "decision.propose",
+  "params": {
+    "contractVersion": "n2n.room.v1",
+    "requestId": "55555555-5555-4555-8555-555555555555",
+    "roomId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "occurredAt": "2026-09-18T12:01:00Z",
+    "title": "Decision without source evidence",
+    "summary": "This decision was created without selecting source messages.",
+    "sourceEventIds": []
+  }
+}
+
