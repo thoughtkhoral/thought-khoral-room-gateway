@@ -13,7 +13,10 @@ use uuid::Uuid;
 use crate::{
     auth::{Actor, ActorRole, AuthValidator},
     memory_engine_client::MemoryEngineClient,
-    protocol::{DecisionAction, DecisionDelete, DecisionTransition, RpcError, ValidatedRequest},
+    protocol::{
+        ChatDelivery, ChatMention, ChatMentionAlias, ChatSend, DecisionAction, DecisionDelete,
+        DecisionTransition, RpcError, ValidatedRequest,
+    },
     store::{
         NewEvent, RoomEvent, append_event_in_transaction, lock_room, prior_request, record_request,
     },
@@ -119,6 +122,68 @@ impl RoomParticipant {
             "online": self.online,
         })
     }
+}
+
+fn resolve_chat_audience(
+    actor: &Actor,
+    participants: &[RoomParticipant],
+    request: &ChatSend,
+) -> Result<Vec<Uuid>, RpcError> {
+    if request.delivery == ChatDelivery::Room {
+        return Ok(Vec::new());
+    }
+
+    let known_participant_ids = participants
+        .iter()
+        .map(|participant| participant.id)
+        .collect::<HashSet<_>>();
+    let mut audience_ids = HashSet::from([actor.id]);
+
+    for mention in &request.mentions {
+        match mention {
+            ChatMention::Participant { id, .. } => {
+                if !known_participant_ids.contains(id) {
+                    return Err(RpcError::unknown_mention_target());
+                }
+                audience_ids.insert(*id);
+            }
+            ChatMention::Alias {
+                alias: ChatMentionAlias::AllHumans,
+            } => {
+                audience_ids.extend(
+                    participants
+                        .iter()
+                        .filter(|participant| participant.role == "human")
+                        .map(|participant| participant.id),
+                );
+            }
+            ChatMention::Alias {
+                alias: ChatMentionAlias::AllAgents,
+            } => {
+                audience_ids.extend(
+                    participants
+                        .iter()
+                        .filter(|participant| {
+                            matches!(participant.role.as_str(), "agent" | "human")
+                        })
+                        .map(|participant| participant.id),
+                );
+            }
+        }
+    }
+
+    let mut audience_ids = audience_ids.into_iter().collect::<Vec<_>>();
+    audience_ids.sort_unstable();
+    Ok(audience_ids)
+}
+
+fn normalized_chat_payload(request: &ChatSend, audience_ids: &[Uuid]) -> serde_json::Value {
+    json!({
+        "text": request.text,
+        "mentions": request.mentions,
+        "delivery": request.delivery,
+        "audienceIds": audience_ids,
+    })
 }
 
 #[derive(Clone, Debug)]
@@ -405,6 +470,8 @@ impl GatewayState {
 
         let events = match request {
             ValidatedRequest::ChatSend(request) => {
+                let participants = self.participant_snapshot(room_id).await?;
+                let audience_ids = resolve_chat_audience(&actor, &participants, &request)?;
                 let message = append_event_in_transaction(
                     &mut transaction,
                     NewEvent {
@@ -414,7 +481,7 @@ impl GatewayState {
                         actor_id: actor.id,
                         actor_role: actor.role.as_str().to_owned(),
                         actor_display_name: Some(actor.display_name.clone()),
-                        payload: json!({ "text": request.text }),
+                        payload: normalized_chat_payload(&request, &audience_ids),
                         occurred_at: request.occurred_at,
                     },
                 )
