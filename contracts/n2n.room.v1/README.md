@@ -30,6 +30,19 @@ The project publishes contract artifacts and does not provide a shared runtime
 library. Consumers should pin a released contract tag and verify compatibility
 before adopting changes.
 
+## Message mentions and delivery
+
+`chat.send` accepts optional `mentions` and `delivery` fields. The default
+delivery is `room`; `mentioned` delivers only to the resolved audience and the
+sender. Mentions support direct, known participant targets and the fixed
+aliases `@allhumans` and `@allagents`.
+
+Mention tokens are lowercase ASCII slugs, so both `@maya` and `@maya-chen` are
+valid forms. A request may include at most 50 unique targets. Participant
+targets are unique by ID and aliases by alias, including in persisted
+`message.created` payloads. See [`protocol.md`](protocol.md) and the valid and
+invalid fixtures for the normative details.
+
 ## Contributing
 
 Start with an issue in this repository. Contract changes require an approved
