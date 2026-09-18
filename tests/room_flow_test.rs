@@ -150,3 +150,77 @@ async fn changed_request_with_reused_id_returns_conflicting_duplicate() {
     let error = recv_json(&mut socket).await;
     assert_eq!(error["error"]["code"], -32012);
 }
+
+// This fails if deletion is not atomic, does not preserve the audit event, or is not idempotent.
+#[tokio::test]
+async fn human_delete_physically_removes_draft_and_replays_audit_event() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let token = server.token(Uuid::new_v4(), "human");
+    let mut socket = server.connect(&token).await;
+    join(&mut socket, room_id, None).await;
+
+    let source_id = Uuid::new_v4();
+    let mut proposal = common_params(Uuid::new_v4(), room_id);
+    proposal["title"] = json!("Delete this draft");
+    proposal["summary"] = json!("The audit snapshot must remain.");
+    proposal["sourceEventIds"] = json!([source_id]);
+    send_json(&mut socket, rpc("proposal", "decision.propose", proposal)).await;
+    let proposed = recv_json(&mut socket).await;
+    let decision_id = Uuid::parse_str(proposed["payload"]["decisionId"].as_str().unwrap()).unwrap();
+
+    let delete_request_id = Uuid::new_v4();
+    let mut delete = common_params(delete_request_id, room_id);
+    delete["decisionId"] = json!(decision_id);
+    send_json(
+        &mut socket,
+        rpc("delete", "decision.delete", delete.clone()),
+    )
+    .await;
+    let deleted = recv_json(&mut socket).await;
+    assert_eq!(deleted["eventType"], "decision.deleted");
+    assert_eq!(deleted["payload"]["decisionId"], decision_id.to_string());
+    assert_eq!(deleted["payload"]["priorStatus"], "draft");
+    assert_eq!(deleted["payload"]["title"], "Delete this draft");
+    assert_eq!(
+        deleted["payload"]["summary"],
+        "The audit snapshot must remain."
+    );
+    assert_eq!(deleted["payload"]["sourceEventIds"], json!([source_id]));
+
+    let decision_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM decisions WHERE room_id = $1 AND decision_id = $2",
+    )
+    .bind(room_id)
+    .bind(decision_id)
+    .fetch_one(&server.pool)
+    .await
+    .unwrap();
+    assert_eq!(decision_count, 0);
+    let audit_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM room_events WHERE room_id = $1 AND event_type = 'decision.deleted' AND request_id = $2",
+    )
+    .bind(room_id)
+    .bind(delete_request_id)
+    .fetch_one(&server.pool)
+    .await
+    .unwrap();
+    assert_eq!(audit_count, 1);
+
+    send_json(&mut socket, rpc("retry", "decision.delete", delete)).await;
+    assert_eq!(recv_json(&mut socket).await, deleted);
+    let event_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM room_events WHERE room_id = $1 AND request_id = $2",
+    )
+    .bind(room_id)
+    .bind(delete_request_id)
+    .fetch_one(&server.pool)
+    .await
+    .unwrap();
+    assert_eq!(event_count, 1);
+
+    let mut missing = common_params(Uuid::new_v4(), room_id);
+    missing["decisionId"] = json!(decision_id);
+    send_json(&mut socket, rpc("missing", "decision.delete", missing)).await;
+    assert_eq!(recv_json(&mut socket).await["error"]["code"], -32004);
+}

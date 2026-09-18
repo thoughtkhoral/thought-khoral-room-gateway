@@ -305,6 +305,36 @@ async fn agent_cannot_transition_a_decision() {
     assert_eq!(error["error"]["code"], -32003);
 }
 
+// This fails if an agent can physically delete a decision across the human-only boundary.
+#[tokio::test]
+async fn agent_cannot_delete_a_decision() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let mut human = server.connect(&server.token(Uuid::new_v4(), "human")).await;
+    join(&mut human, room_id, None).await;
+    let mut proposal = common_params(Uuid::new_v4(), room_id);
+    proposal["title"] = json!("Keep this draft");
+    proposal["summary"] = json!("It must survive an unauthorized delete.");
+    proposal["sourceEventIds"] = json!([]);
+    send_json(&mut human, rpc("proposal", "decision.propose", proposal)).await;
+    let proposed = recv_json(&mut human).await;
+    let decision_id = Uuid::parse_str(proposed["payload"]["decisionId"].as_str().unwrap()).unwrap();
+
+    let mut agent = server.connect(&server.token(Uuid::new_v4(), "agent")).await;
+    join(&mut agent, room_id, None).await;
+    let mut delete = common_params(Uuid::new_v4(), room_id);
+    delete["decisionId"] = json!(decision_id);
+    send_json(&mut agent, rpc("delete", "decision.delete", delete)).await;
+    assert_eq!(recv_json(&mut agent).await["error"]["code"], -32003);
+
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM decisions WHERE decision_id = $1")
+        .bind(decision_id)
+        .fetch_one(&server.pool)
+        .await
+        .unwrap();
+    assert_eq!(count, 1);
+}
+
 // This fails if a valid human cannot activate a draft decision.
 #[tokio::test]
 async fn human_can_confirm_a_draft_decision() {

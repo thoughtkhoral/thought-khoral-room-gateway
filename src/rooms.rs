@@ -13,7 +13,7 @@ use uuid::Uuid;
 use crate::{
     auth::{Actor, ActorRole, AuthValidator},
     memory_engine_client::MemoryEngineClient,
-    protocol::{DecisionAction, DecisionTransition, RpcError, ValidatedRequest},
+    protocol::{DecisionAction, DecisionDelete, DecisionTransition, RpcError, ValidatedRequest},
     store::{
         NewEvent, RoomEvent, append_event_in_transaction, lock_room, prior_request, record_request,
     },
@@ -468,7 +468,9 @@ impl GatewayState {
             ValidatedRequest::DecisionTransition(request) => {
                 transition_decision_in_transaction(&mut transaction, actor, request).await?
             }
-            ValidatedRequest::DecisionDelete(_) => return Err(RpcError::unknown_method()),
+            ValidatedRequest::DecisionDelete(request) => {
+                delete_decision_in_transaction(&mut transaction, actor, request).await?
+            }
             ValidatedRequest::Join(_) => unreachable!("join requests returned above"),
             ValidatedRequest::SessionAuthenticate(_) => {
                 unreachable!("session authentication requests returned above")
@@ -504,6 +506,68 @@ impl GatewayState {
             .await
             .map(|processed| processed.events)
     }
+}
+
+async fn delete_decision_in_transaction(
+    transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    actor: Actor,
+    request: DecisionDelete,
+) -> Result<Vec<RoomEvent>, RpcError> {
+    let row = sqlx::query(
+        r#"
+        SELECT status, title, summary, source_event_ids
+        FROM decisions
+        WHERE decision_id = $1 AND room_id = $2
+        FOR UPDATE
+        "#,
+    )
+    .bind(request.decision_id)
+    .bind(request.room_id)
+    .fetch_optional(&mut **transaction)
+    .await
+    .map_err(|_| RpcError::internal_error())?
+    .ok_or_else(RpcError::not_found)?;
+    let prior_status: String = row
+        .try_get("status")
+        .map_err(|_| RpcError::internal_error())?;
+    let title: String = row
+        .try_get("title")
+        .map_err(|_| RpcError::internal_error())?;
+    let summary: String = row
+        .try_get("summary")
+        .map_err(|_| RpcError::internal_error())?;
+    let source_event_ids: Vec<Uuid> = row
+        .try_get("source_event_ids")
+        .map_err(|_| RpcError::internal_error())?;
+
+    let event = append_event_in_transaction(
+        transaction,
+        NewEvent {
+            room_id: request.room_id,
+            request_id: request.request_id,
+            event_type: "decision.deleted".to_owned(),
+            actor_id: actor.id,
+            actor_role: actor.role.as_str().to_owned(),
+            actor_display_name: Some(actor.display_name),
+            payload: json!({
+                "decisionId": request.decision_id,
+                "priorStatus": prior_status,
+                "title": title,
+                "summary": summary,
+                "sourceEventIds": source_event_ids,
+            }),
+            occurred_at: request.occurred_at,
+        },
+    )
+    .await
+    .map_err(|_| RpcError::internal_error())?;
+    sqlx::query("DELETE FROM decisions WHERE decision_id = $1 AND room_id = $2")
+        .bind(request.decision_id)
+        .bind(request.room_id)
+        .execute(&mut **transaction)
+        .await
+        .map_err(|_| RpcError::internal_error())?;
+    Ok(vec![event])
 }
 
 async fn transition_decision_in_transaction(
