@@ -52,3 +52,17 @@ before they can be renamed.
 
 For the complete boundary and local decisions, see [the local specification
 index](.ai/specs/README.md).
+
+## Message mentions and delivery
+
+The gateway is authoritative for mention delivery. It validates every direct
+target against the current room roster and canonical display-name token,
+rejects unknown, stale, duplicate, or noncanonical targets without writing an
+event, and expands fixed aliases by role. `@allhumans` reaches humans only;
+`@allagents` reaches agents and is also visible to all humans for supervision.
+
+Messages default to room-wide delivery. `delivery: "mentioned"` persists a
+resolved `audienceIds` list containing the sender and is filtered consistently
+for live broadcast and replay while global room sequence numbers continue to
+advance. The vendored `n2n.room.v1` contract documents the wire fields and is
+pinned in [`contracts/lock.json`](contracts/lock.json).
