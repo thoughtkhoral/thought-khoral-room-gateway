@@ -142,9 +142,11 @@ fn normalized_participant_name(display_name: &str) -> String {
         })
         .trim_matches('-')
         .to_owned();
-    (!slug.is_empty())
-        .then_some(slug)
-        .unwrap_or_else(|| "participant".to_owned())
+    if slug.is_empty() {
+        "participant".to_owned()
+    } else {
+        slug
+    }
 }
 
 fn participant_id_token(id: Uuid) -> String {
@@ -154,9 +156,11 @@ fn participant_id_token(id: Uuid) -> String {
         .filter(|character| character.is_ascii_alphanumeric())
         .flat_map(char::to_lowercase)
         .collect::<String>();
-    (!token.is_empty())
-        .then_some(token)
-        .unwrap_or_else(|| "participant".to_owned())
+    if token.is_empty() {
+        "participant".to_owned()
+    } else {
+        token
+    }
 }
 
 fn participant_mention_tokens(participants: &[RoomParticipant]) -> Vec<String> {

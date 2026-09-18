@@ -19,7 +19,10 @@ use uuid::Uuid;
 use support::TestServer;
 use support::{common_params, join, recv_json, rpc, send_json};
 
-async fn recording_endpoint() -> (String, oneshot::Receiver<(HeaderMap, Bytes)>) {
+type RecordedRequest = (HeaderMap, Bytes);
+type RecordingSender = std::sync::Arc<tokio::sync::Mutex<Option<oneshot::Sender<RecordedRequest>>>>;
+
+async fn recording_endpoint() -> (String, oneshot::Receiver<RecordedRequest>) {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let address = listener.local_addr().unwrap();
     let (sender, receiver) = oneshot::channel();
@@ -27,9 +30,7 @@ async fn recording_endpoint() -> (String, oneshot::Receiver<(HeaderMap, Bytes)>)
         .route(
             "/internal/v1/ingest",
             post(
-                |State(sender): State<
-                    std::sync::Arc<tokio::sync::Mutex<Option<oneshot::Sender<(HeaderMap, Bytes)>>>>,
-                >,
+                |State(sender): State<RecordingSender>,
                  headers: HeaderMap,
                  body: Bytes| async move {
                     if let Some(sender) = sender.lock().await.take() {

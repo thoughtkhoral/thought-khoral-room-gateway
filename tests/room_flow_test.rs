@@ -432,7 +432,7 @@ async fn chat_mentions_reject_duplicate_direct_participant_without_persistence()
     params["text"] = json!("Do not deliver duplicate direct mentions.");
     params["mentions"] = json!([
         { "type": "participant", "id": target_id, "token": "maya-chen" },
-        { "type": "participant", "id": target_id, "token": "not-maya" }
+        { "type": "participant", "id": target_id, "token": "maya-chen" }
     ]);
     params["delivery"] = json!("mentioned");
     send_json(&mut sender, rpc("duplicate-direct", "chat.send", params)).await;

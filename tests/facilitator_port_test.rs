@@ -34,7 +34,7 @@ fn gateway_adapter_validates_and_converts_memory_draft() {
         source_event_ids: vec![source.event_id],
     };
 
-    let proposal = validate_memory_engine_proposal(candidate, &[source.clone()])
+    let proposal = validate_memory_engine_proposal(candidate, std::slice::from_ref(&source))
         .expect("memory draft should use the existing facilitator port");
     assert_eq!(proposal.source_event_ids, vec![source.event_id]);
     assert_eq!(proposal.actor_id, FACILITATOR_ACTOR_ID);

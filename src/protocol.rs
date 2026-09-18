@@ -1,4 +1,4 @@
-use std::sync::LazyLock;
+use std::{collections::HashSet, sync::LazyLock};
 
 use chrono::{DateTime, Utc};
 use jsonschema::Resource;
@@ -50,7 +50,7 @@ fn parse_pinned_schema(schema: &str) -> Value {
 }
 
 pub(crate) fn is_valid_room_event(event_id: Uuid, event: &crate::store::NewEvent) -> bool {
-    ROOM_EVENT_VALIDATOR.is_valid(&json!({
+    let event = json!({
         "contractVersion": "n2n.room.v1",
         "requestId": event.request_id,
         "roomId": event.room_id,
@@ -60,7 +60,67 @@ pub(crate) fn is_valid_room_event(event_id: Uuid, event: &crate::store::NewEvent
         "eventType": event.event_type,
         "actor": { "id": event.actor_id, "role": event.actor_role },
         "payload": event.payload,
-    }))
+    });
+    ROOM_EVENT_VALIDATOR.is_valid(&event) && message_mentions_are_unique(&event)
+}
+
+fn message_mentions_are_unique(event: &Value) -> bool {
+    if event.get("eventType").and_then(Value::as_str) != Some("message.created") {
+        return true;
+    }
+    let Some(mentions) = event.pointer("/payload/mentions").and_then(Value::as_array) else {
+        return true;
+    };
+
+    let mut participant_ids = HashSet::new();
+    let mut aliases = HashSet::new();
+    mentions.iter().all(
+        |mention| match mention.get("type").and_then(Value::as_str) {
+            Some("participant") => mention
+                .get("id")
+                .and_then(Value::as_str)
+                .is_some_and(|id| participant_ids.insert(id)),
+            Some("alias") => mention
+                .get("alias")
+                .and_then(Value::as_str)
+                .is_some_and(|alias| aliases.insert(alias)),
+            _ => false,
+        },
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_valid_room_event;
+    use chrono::Utc;
+    use serde_json::json;
+    use uuid::Uuid;
+
+    // This fails if structural schema validation accepts duplicate direct identities with different tokens.
+    #[test]
+    fn rejects_persisted_message_with_duplicate_participant_identity() {
+        let target_id = Uuid::new_v4();
+        let event = crate::store::NewEvent {
+            room_id: Uuid::new_v4(),
+            request_id: Uuid::new_v4(),
+            event_type: "message.created".to_owned(),
+            actor_id: Uuid::new_v4(),
+            actor_role: "human".to_owned(),
+            actor_display_name: None,
+            payload: json!({
+                "text": "targeted message",
+                "delivery": "mentioned",
+                "mentions": [
+                    { "type": "participant", "id": target_id, "token": "maya-chen" },
+                    { "type": "participant", "id": target_id, "token": "maya" }
+                ],
+                "audienceIds": [target_id],
+            }),
+            occurred_at: Utc::now(),
+        };
+
+        assert!(!is_valid_room_event(Uuid::new_v4(), &event));
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

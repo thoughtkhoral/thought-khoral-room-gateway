@@ -17,6 +17,17 @@ fn new_event(room_id: Uuid, actor_id: Uuid) -> NewEvent {
     }
 }
 
+fn mentioned_event(room_id: Uuid, actor_id: Uuid, mentions: serde_json::Value) -> NewEvent {
+    let mut event = new_event(room_id, actor_id);
+    event.payload = json!({
+        "text": "targeted message",
+        "delivery": "mentioned",
+        "mentions": mentions,
+        "audienceIds": [actor_id],
+    });
+    event
+}
+
 // This fails if appends do not atomically allocate consecutive room-local sequences.
 #[tokio::test]
 async fn appends_immutable_events_with_room_local_sequences() {
@@ -77,6 +88,49 @@ async fn rejects_non_object_payload_before_inserting() {
     let pool = PgPoolOptions::new().connect(&database_url).await.unwrap();
     let mut event = new_event(Uuid::new_v4(), Uuid::new_v4());
     event.payload = json!(["not an object"]);
+
+    assert!(matches!(
+        append_event(&pool, event).await,
+        Err(StoreError::InvalidEvent)
+    ));
+}
+
+// This fails if persisted message.created events accept the same direct identity twice.
+#[tokio::test]
+async fn rejects_persisted_message_with_duplicate_participant_mention_identity() {
+    let database_url = std::env::var("DATABASE_URL").unwrap();
+    let pool = PgPoolOptions::new().connect(&database_url).await.unwrap();
+    let room_id = Uuid::new_v4();
+    let actor_id = Uuid::new_v4();
+    let target_id = Uuid::new_v4();
+    let event = mentioned_event(
+        room_id,
+        actor_id,
+        json!([
+            { "type": "participant", "id": target_id, "token": "maya-chen" },
+            { "type": "participant", "id": target_id, "token": "maya" }
+        ]),
+    );
+
+    assert!(matches!(
+        append_event(&pool, event).await,
+        Err(StoreError::InvalidEvent)
+    ));
+}
+
+// This fails if persisted message.created events accept the same alias identity twice.
+#[tokio::test]
+async fn rejects_persisted_message_with_duplicate_alias_mention_identity() {
+    let database_url = std::env::var("DATABASE_URL").unwrap();
+    let pool = PgPoolOptions::new().connect(&database_url).await.unwrap();
+    let event = mentioned_event(
+        Uuid::new_v4(),
+        Uuid::new_v4(),
+        json!([
+            { "type": "alias", "alias": "allhumans" },
+            { "type": "alias", "alias": "allhumans" }
+        ]),
+    );
 
     assert!(matches!(
         append_event(&pool, event).await,
