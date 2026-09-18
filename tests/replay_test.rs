@@ -7,6 +7,14 @@ use uuid::Uuid;
 
 use support::{TestServer, common_params, join, recv_json, rpc, send_json};
 
+async fn drain_participant_updates(socket: &mut support::TestSocket) {
+    while let Ok(update) =
+        tokio::time::timeout(std::time::Duration::from_millis(150), recv_json(socket)).await
+    {
+        assert_eq!(update["method"], "room.participants.updated");
+    }
+}
+
 // This fails if reconnect replay ignores the cursor or returns events out of order.
 #[tokio::test]
 async fn reconnect_replays_only_events_after_the_sequence_cursor() {
@@ -36,6 +44,58 @@ async fn reconnect_replays_only_events_after_the_sequence_cursor() {
     assert_eq!(events.len(), 2);
     assert_eq!(events[0]["sequence"], 2);
     assert_eq!(events[1]["sequence"], 3);
+}
+
+// This fails if replay exposes mentioned events outside their audience or renumbers later events.
+#[tokio::test]
+async fn replay_skips_hidden_targeted_events_without_creating_sequence_gaps() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let sender_id = Uuid::new_v4();
+    let observer_id = Uuid::new_v4();
+    let target_id = Uuid::new_v4();
+    let sender_token = server.token(sender_id, "human");
+    let observer_token = server.token(observer_id, "human");
+    let target_token = server.token(target_id, "agent");
+    let mut sender = server.connect(&sender_token).await;
+    let mut observer = server.connect(&observer_token).await;
+    let mut target = server.connect(&target_token).await;
+    join(&mut sender, room_id, None).await;
+    join(&mut observer, room_id, None).await;
+    join(&mut target, room_id, None).await;
+    drain_participant_updates(&mut sender).await;
+    drain_participant_updates(&mut observer).await;
+    drain_participant_updates(&mut target).await;
+
+    let mut targeted = common_params(Uuid::new_v4(), room_id);
+    targeted["text"] = json!("Only the target agent may read this.");
+    targeted["mentions"] = json!([{ "type": "participant", "id": target_id, "token": "target" }]);
+    targeted["delivery"] = json!("mentioned");
+    send_json(&mut sender, rpc("targeted", "chat.send", targeted)).await;
+    let targeted_event = recv_json(&mut sender).await;
+    assert_eq!(targeted_event["sequence"], 1);
+    assert_eq!(recv_json(&mut target).await, targeted_event);
+
+    let mut public = common_params(Uuid::new_v4(), room_id);
+    public["text"] = json!("Everyone may read this.");
+    send_json(&mut sender, rpc("public", "chat.send", public)).await;
+    let public_event = recv_json(&mut sender).await;
+    assert_eq!(public_event["sequence"], 2);
+    assert_eq!(recv_json(&mut observer).await, public_event);
+    assert_eq!(recv_json(&mut target).await, public_event);
+    drop(observer);
+    drop(target);
+
+    let mut reconnected_observer = server.connect(&observer_token).await;
+    let observer_events = join(&mut reconnected_observer, room_id, Some(0)).await;
+    assert_eq!(observer_events["result"]["events"], json!([public_event]));
+
+    let mut reconnected_target = server.connect(&target_token).await;
+    let target_events = join(&mut reconnected_target, room_id, Some(0)).await;
+    assert_eq!(
+        target_events["result"]["events"],
+        json!([targeted_event, public_event])
+    );
 }
 
 // This fails if reverse-scheduled publication can advance past and discard an earlier committed sequence.

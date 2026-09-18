@@ -23,6 +23,7 @@ use crate::{
     auth::Actor,
     protocol::{RpcError, ValidatedRequest, validate_request},
     rooms::{GatewayState, RoomBroadcast, RoomParticipant},
+    store::RoomEvent,
 };
 
 pub fn app(state: GatewayState) -> Router {
@@ -205,7 +206,9 @@ async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Ac
                 event = room_receiver.recv() => {
                     match event {
                         Ok(RoomBroadcast::Event(event)) if event.sequence == last_sequence + 1 => {
-                            if send_value(&mut socket, event.to_wire_value()).await.is_err() {
+                            if event_visible_to(&event, actor.id)
+                                && send_value(&mut socket, event.to_wire_value()).await.is_err()
+                            {
                                 break;
                             }
                             last_sequence = event.sequence;
@@ -216,6 +219,7 @@ async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Ac
                                 &mut socket,
                                 &state,
                                 room_id,
+                                actor.id,
                                 &mut last_sequence,
                             ).await.is_err() {
                                 break;
@@ -248,6 +252,7 @@ async fn websocket_session(mut socket: WebSocket, state: GatewayState, actor: Ac
                                 &mut socket,
                                 &state,
                                 room_id,
+                                actor.id,
                                 &mut last_sequence,
                             ).await.is_err() {
                                 break;
@@ -379,6 +384,7 @@ async fn handle_message(
         *receiver = Some(room_receiver);
         let events = events
             .into_iter()
+            .filter(|event| event_visible_to(event, actor.id))
             .map(|event| event.to_wire_value())
             .collect::<Vec<_>>();
         let sent = send_value(
@@ -434,6 +440,7 @@ async fn replay_in_order(
     socket: &mut WebSocket,
     state: &GatewayState,
     room_id: Uuid,
+    actor_id: Uuid,
     last_sequence: &mut i64,
 ) -> Result<(), ()> {
     let events = state
@@ -447,12 +454,30 @@ async fn replay_in_order(
         if event.sequence != *last_sequence + 1 {
             return Err(());
         }
-        send_value(socket, event.to_wire_value())
-            .await
-            .map_err(|_| ())?;
+        if event_visible_to(&event, actor_id) {
+            send_value(socket, event.to_wire_value())
+                .await
+                .map_err(|_| ())?;
+        }
         *last_sequence = event.sequence;
     }
     Ok(())
+}
+
+fn event_visible_to(event: &RoomEvent, actor: Uuid) -> bool {
+    match event.payload.get("delivery").and_then(Value::as_str) {
+        Some("mentioned") => event
+            .payload
+            .get("audienceIds")
+            .and_then(Value::as_array)
+            .is_some_and(|audience_ids| {
+                audience_ids.iter().any(|audience_id| {
+                    audience_id.as_str().and_then(|id| id.parse::<Uuid>().ok()) == Some(actor)
+                })
+            }),
+        Some("room") | None => true,
+        Some(_) => true,
+    }
 }
 
 fn log_rejection(actor: &Actor, room_id: Uuid, request_id: Uuid, error: &RpcError) {

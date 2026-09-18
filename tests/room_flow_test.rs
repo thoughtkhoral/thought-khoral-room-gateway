@@ -12,6 +12,23 @@ fn sorted_ids(ids: impl IntoIterator<Item = Uuid>) -> Vec<String> {
     ids
 }
 
+async fn no_message_arrives(socket: &mut support::TestSocket) {
+    assert!(
+        tokio::time::timeout(std::time::Duration::from_millis(150), recv_json(socket))
+            .await
+            .is_err(),
+        "a participant outside the message audience must not receive an event"
+    );
+}
+
+async fn drain_participant_updates(socket: &mut support::TestSocket) {
+    while let Ok(update) =
+        tokio::time::timeout(std::time::Duration::from_millis(150), recv_json(socket)).await
+    {
+        assert_eq!(update["method"], "room.participants.updated");
+    }
+}
+
 #[tokio::test]
 async fn join_returns_named_participants_and_presence_updates() {
     let server = TestServer::start().await;
@@ -155,6 +172,94 @@ async fn changed_request_with_reused_id_returns_conflicting_duplicate() {
     send_json(&mut socket, rpc("conflict", "chat.send", original)).await;
     let error = recv_json(&mut socket).await;
     assert_eq!(error["error"]["code"], -32012);
+}
+
+// This fails if a mentioned message is broadcast to humans outside its direct audience.
+#[tokio::test]
+async fn direct_agent_message_is_visible_only_to_the_sender_and_target_agent() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let sender_id = Uuid::new_v4();
+    let observer_id = Uuid::new_v4();
+    let agent_id = Uuid::new_v4();
+    let mut sender = server.connect(&server.token(sender_id, "human")).await;
+    let mut observer = server.connect(&server.token(observer_id, "human")).await;
+    let mut agent = server.connect(&server.token(agent_id, "agent")).await;
+    join(&mut sender, room_id, None).await;
+    join(&mut observer, room_id, None).await;
+    join(&mut agent, room_id, None).await;
+    drain_participant_updates(&mut sender).await;
+    drain_participant_updates(&mut observer).await;
+    drain_participant_updates(&mut agent).await;
+
+    let mut params = common_params(Uuid::new_v4(), room_id);
+    params["text"] = json!("Atlas, please review this privately.");
+    params["mentions"] = json!([{ "type": "participant", "id": agent_id, "token": "atlas" }]);
+    params["delivery"] = json!("mentioned");
+    send_json(&mut sender, rpc("direct-agent", "chat.send", params)).await;
+
+    let event = recv_json(&mut sender).await;
+    assert_eq!(event["payload"]["delivery"], "mentioned");
+    assert_eq!(recv_json(&mut agent).await, event);
+    no_message_arrives(&mut observer).await;
+}
+
+// This fails if an all-agents mention is not visible to every participant in the room.
+#[tokio::test]
+async fn all_agents_message_is_visible_to_agents_and_humans() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let sender_id = Uuid::new_v4();
+    let observer_id = Uuid::new_v4();
+    let agent_id = Uuid::new_v4();
+    let mut sender = server.connect(&server.token(sender_id, "human")).await;
+    let mut observer = server.connect(&server.token(observer_id, "human")).await;
+    let mut agent = server.connect(&server.token(agent_id, "agent")).await;
+    join(&mut sender, room_id, None).await;
+    join(&mut observer, room_id, None).await;
+    join(&mut agent, room_id, None).await;
+    drain_participant_updates(&mut sender).await;
+    drain_participant_updates(&mut observer).await;
+    drain_participant_updates(&mut agent).await;
+
+    let mut params = common_params(Uuid::new_v4(), room_id);
+    params["text"] = json!("@allagents, everyone should see this.");
+    params["mentions"] = json!([{ "type": "alias", "alias": "allagents" }]);
+    params["delivery"] = json!("mentioned");
+    send_json(&mut sender, rpc("all-agents-live", "chat.send", params)).await;
+
+    let event = recv_json(&mut sender).await;
+    assert_eq!(recv_json(&mut observer).await, event);
+    assert_eq!(recv_json(&mut agent).await, event);
+}
+
+// This fails if a mentioned all-humans message is broadcast to an agent.
+#[tokio::test]
+async fn all_humans_message_is_visible_only_to_humans() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let sender_id = Uuid::new_v4();
+    let observer_id = Uuid::new_v4();
+    let agent_id = Uuid::new_v4();
+    let mut sender = server.connect(&server.token(sender_id, "human")).await;
+    let mut observer = server.connect(&server.token(observer_id, "human")).await;
+    let mut agent = server.connect(&server.token(agent_id, "agent")).await;
+    join(&mut sender, room_id, None).await;
+    join(&mut observer, room_id, None).await;
+    join(&mut agent, room_id, None).await;
+    drain_participant_updates(&mut sender).await;
+    drain_participant_updates(&mut observer).await;
+    drain_participant_updates(&mut agent).await;
+
+    let mut params = common_params(Uuid::new_v4(), room_id);
+    params["text"] = json!("@allhumans, this is for people only.");
+    params["mentions"] = json!([{ "type": "alias", "alias": "allhumans" }]);
+    params["delivery"] = json!("mentioned");
+    send_json(&mut sender, rpc("all-humans-live", "chat.send", params)).await;
+
+    let event = recv_json(&mut sender).await;
+    assert_eq!(recv_json(&mut observer).await, event);
+    no_message_arrives(&mut agent).await;
 }
 
 // This fails if a targeted chat omits any direct participant or fails to persist its mention data.
