@@ -56,7 +56,9 @@ async fn replay_skips_hidden_targeted_events_without_creating_sequence_gaps() {
     let target_id = Uuid::new_v4();
     let sender_token = server.token(sender_id, "human");
     let observer_token = server.token(observer_id, "human");
-    let target_token = server.token(target_id, "agent");
+    let mut target_options = support::TokenOptions::valid(target_id, "agent");
+    target_options.name = Some("Target".to_owned());
+    let target_token = server.token_with(target_options);
     let mut sender = server.connect(&sender_token).await;
     let mut observer = server.connect(&observer_token).await;
     let mut target = server.connect(&target_token).await;

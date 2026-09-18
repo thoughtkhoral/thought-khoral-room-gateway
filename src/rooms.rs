@@ -8,6 +8,7 @@ use axum::http::Uri;
 use serde_json::{Value, json};
 use sqlx::{PgPool, Row};
 use tokio::sync::broadcast;
+use unicode_normalization::UnicodeNormalization;
 use uuid::Uuid;
 
 use crate::{
@@ -124,21 +125,163 @@ impl RoomParticipant {
     }
 }
 
+const MENTION_ALIASES: [&str; 2] = ["allhumans", "allagents"];
+
+fn normalized_participant_name(display_name: &str) -> String {
+    let slug = display_name
+        .nfkd()
+        .filter(|character| !matches!(*character, '\u{0300}'..='\u{036f}'))
+        .flat_map(char::to_lowercase)
+        .fold(String::new(), |mut slug, character| {
+            if character.is_ascii_alphanumeric() {
+                slug.push(character);
+            } else if !slug.ends_with('-') {
+                slug.push('-');
+            }
+            slug
+        })
+        .trim_matches('-')
+        .to_owned();
+    (!slug.is_empty())
+        .then_some(slug)
+        .unwrap_or_else(|| "participant".to_owned())
+}
+
+fn participant_id_token(id: Uuid) -> String {
+    let token = id
+        .to_string()
+        .chars()
+        .filter(|character| character.is_ascii_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect::<String>();
+    (!token.is_empty())
+        .then_some(token)
+        .unwrap_or_else(|| "participant".to_owned())
+}
+
+fn participant_mention_tokens(participants: &[RoomParticipant]) -> Vec<String> {
+    let names = participants
+        .iter()
+        .map(|participant| normalized_participant_name(&participant.display_name))
+        .collect::<Vec<_>>();
+    let mut name_counts = HashMap::<&str, usize>::new();
+    for name in &names {
+        *name_counts.entry(name).or_default() += 1;
+    }
+
+    let mut tokens = vec![None; participants.len()];
+    let mut occupied = MENTION_ALIASES
+        .into_iter()
+        .map(str::to_owned)
+        .collect::<HashSet<_>>();
+    let needs_suffix = |index: usize| {
+        MENTION_ALIASES.contains(&names[index].as_str()) || name_counts[names[index].as_str()] > 1
+    };
+    for (index, name) in names.iter().enumerate() {
+        if !needs_suffix(index) {
+            tokens[index] = Some(name.clone());
+            occupied.insert(name.clone());
+        }
+    }
+
+    let mut disambiguated = participants
+        .iter()
+        .enumerate()
+        .filter(|(index, _)| needs_suffix(*index))
+        .map(|(index, participant)| {
+            (
+                index,
+                names[index].clone(),
+                participant_id_token(participant.id),
+            )
+        })
+        .collect::<Vec<_>>();
+    disambiguated.sort_by(|left, right| {
+        left.1
+            .cmp(&right.1)
+            .then_with(|| left.2.cmp(&right.2))
+            .then_with(|| left.0.cmp(&right.0))
+    });
+
+    let mut suffix_lengths = vec![None; participants.len()];
+    for (index, name, _) in &disambiguated {
+        if suffix_lengths[*index].is_some() {
+            continue;
+        }
+        let group = disambiguated
+            .iter()
+            .filter(|(_, candidate_name, _)| candidate_name == name)
+            .collect::<Vec<_>>();
+        let max_id_length = group.iter().map(|(_, _, id)| id.len()).max().unwrap_or(0);
+        let mut id_length = 8.min(max_id_length);
+        while id_length < max_id_length
+            && (group
+                .iter()
+                .map(|(_, _, id)| &id[..id_length])
+                .collect::<HashSet<_>>()
+                .len()
+                != group.len()
+                || group
+                    .iter()
+                    .any(|(_, _, id)| occupied.contains(&format!("{name}-{}", &id[..id_length]))))
+        {
+            id_length += 1;
+        }
+        for (group_index, _, _) in group {
+            suffix_lengths[*group_index] = Some(id_length);
+        }
+    }
+
+    for (index, name, id) in disambiguated {
+        let mut id_length = suffix_lengths[index].unwrap_or(8).min(id.len());
+        let mut token = format!("{name}-{}", &id[..id_length]);
+        while occupied.contains(&token) && id_length < id.len() {
+            id_length += 1;
+            token = format!("{name}-{}", &id[..id_length]);
+        }
+        let mut duplicate = 2;
+        while occupied.contains(&token) {
+            token = format!("{name}-{id}-{duplicate}");
+            duplicate += 1;
+        }
+        tokens[index] = Some(token.clone());
+        occupied.insert(token);
+    }
+
+    tokens
+        .into_iter()
+        .map(|token| token.unwrap_or_else(|| "participant".to_owned()))
+        .collect()
+}
+
 fn resolve_chat_audience(
     actor: &Actor,
     participants: &[RoomParticipant],
     request: &ChatSend,
 ) -> Result<Vec<Uuid>, RpcError> {
-    let known_participant_ids = participants
+    let participant_tokens = participant_mention_tokens(participants);
+    let known_participants = participants
         .iter()
-        .map(|participant| participant.id)
-        .collect::<HashSet<_>>();
+        .enumerate()
+        .map(|(index, participant)| (participant.id, &participant_tokens[index]))
+        .collect::<HashMap<_, _>>();
+    let mut mentioned_participant_ids = HashSet::new();
+    let mut mentioned_aliases = HashSet::new();
 
     for mention in &request.mentions {
-        if let ChatMention::Participant { id, .. } = mention
-            && !known_participant_ids.contains(id)
-        {
-            return Err(RpcError::unknown_mention_target());
+        match mention {
+            ChatMention::Participant { id, token } => {
+                let Some(canonical_token) = known_participants.get(id) else {
+                    return Err(RpcError::unknown_mention_target());
+                };
+                if !mentioned_participant_ids.insert(*id) || token != *canonical_token {
+                    return Err(RpcError::unknown_mention_target());
+                }
+            }
+            ChatMention::Alias { alias } if !mentioned_aliases.insert(*alias as u8) => {
+                return Err(RpcError::unknown_mention_target());
+            }
+            ChatMention::Alias { .. } => {}
         }
     }
 

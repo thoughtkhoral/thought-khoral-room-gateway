@@ -29,6 +29,28 @@ async fn drain_participant_updates(socket: &mut support::TestSocket) {
     }
 }
 
+async fn assert_request_was_not_persisted(server: &TestServer, room_id: Uuid, request_id: Uuid) {
+    let event_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM room_events WHERE room_id = $1 AND request_id = $2",
+    )
+    .bind(room_id)
+    .bind(request_id)
+    .fetch_one(&server.pool)
+    .await
+    .unwrap();
+    assert_eq!(event_count, 0);
+
+    let ledger_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM room_requests WHERE room_id = $1 AND request_id = $2",
+    )
+    .bind(room_id)
+    .bind(request_id)
+    .fetch_one(&server.pool)
+    .await
+    .unwrap();
+    assert_eq!(ledger_count, 0);
+}
+
 #[tokio::test]
 async fn join_returns_named_participants_and_presence_updates() {
     let server = TestServer::start().await;
@@ -184,7 +206,9 @@ async fn direct_agent_message_is_visible_only_to_the_sender_and_target_agent() {
     let agent_id = Uuid::new_v4();
     let mut sender = server.connect(&server.token(sender_id, "human")).await;
     let mut observer = server.connect(&server.token(observer_id, "human")).await;
-    let mut agent = server.connect(&server.token(agent_id, "agent")).await;
+    let mut agent_options = support::TokenOptions::valid(agent_id, "agent");
+    agent_options.name = Some("Atlas".to_owned());
+    let mut agent = server.connect(&server.token_with(agent_options)).await;
     join(&mut sender, room_id, None).await;
     join(&mut observer, room_id, None).await;
     join(&mut agent, room_id, None).await;
@@ -271,11 +295,15 @@ async fn chat_mentions_resolve_direct_participants_and_persist_normalized_payloa
     let first_target_id = Uuid::new_v4();
     let second_target_id = Uuid::new_v4();
     let mut sender = server.connect(&server.token(sender_id, "human")).await;
+    let mut first_target_options = support::TokenOptions::valid(first_target_id, "human");
+    first_target_options.name = Some("Maya Chen".to_owned());
     let mut first_target = server
-        .connect(&server.token(first_target_id, "human"))
+        .connect(&server.token_with(first_target_options))
         .await;
+    let mut second_target_options = support::TokenOptions::valid(second_target_id, "agent");
+    second_target_options.name = Some("Atlas Planner".to_owned());
     let mut second_target = server
-        .connect(&server.token(second_target_id, "agent"))
+        .connect(&server.token_with(second_target_options))
         .await;
     join(&mut sender, room_id, None).await;
     join(&mut first_target, room_id, None).await;
@@ -385,6 +413,140 @@ async fn chat_mentions_reject_unknown_direct_participant_in_room_delivery() {
     assert_eq!(ledger_count, 0);
 }
 
+// This fails if repeated direct mention identities are accepted with different tokens.
+#[tokio::test]
+async fn chat_mentions_reject_duplicate_direct_participant_without_persistence() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let request_id = Uuid::new_v4();
+    let target_id = Uuid::new_v4();
+    let mut sender = server.connect(&server.token(Uuid::new_v4(), "human")).await;
+    let mut target_options = support::TokenOptions::valid(target_id, "human");
+    target_options.name = Some("Maya Chen".to_owned());
+    let mut target = server.connect(&server.token_with(target_options)).await;
+    join(&mut sender, room_id, None).await;
+    join(&mut target, room_id, None).await;
+    drain_participant_updates(&mut sender).await;
+
+    let mut params = common_params(request_id, room_id);
+    params["text"] = json!("Do not deliver duplicate direct mentions.");
+    params["mentions"] = json!([
+        { "type": "participant", "id": target_id, "token": "maya-chen" },
+        { "type": "participant", "id": target_id, "token": "not-maya" }
+    ]);
+    params["delivery"] = json!("mentioned");
+    send_json(&mut sender, rpc("duplicate-direct", "chat.send", params)).await;
+
+    assert_eq!(recv_json(&mut sender).await["error"]["code"], -32013);
+    assert_request_was_not_persisted(&server, room_id, request_id).await;
+}
+
+// This fails if repeated alias identities are accepted or reach either persistence table.
+#[tokio::test]
+async fn chat_mentions_reject_duplicate_alias_without_persistence() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let request_id = Uuid::new_v4();
+    let mut sender = server.connect(&server.token(Uuid::new_v4(), "human")).await;
+    join(&mut sender, room_id, None).await;
+
+    let mut params = common_params(request_id, room_id);
+    params["text"] = json!("Do not deliver duplicate aliases.");
+    params["mentions"] = json!([
+        { "type": "alias", "alias": "allhumans" },
+        { "type": "alias", "alias": "allhumans" }
+    ]);
+    params["delivery"] = json!("mentioned");
+    send_json(&mut sender, rpc("duplicate-alias", "chat.send", params)).await;
+
+    assert_eq!(recv_json(&mut sender).await["error"]["code"], -32013);
+    assert_request_was_not_persisted(&server, room_id, request_id).await;
+}
+
+// This fails if direct mentions can use a valid-looking token instead of the roster token.
+#[tokio::test]
+async fn chat_mentions_reject_noncanonical_direct_token_in_room_delivery_without_persistence() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let request_id = Uuid::new_v4();
+    let target_id = Uuid::new_v4();
+    let mut sender = server.connect(&server.token(Uuid::new_v4(), "human")).await;
+    let mut target_options = support::TokenOptions::valid(target_id, "human");
+    target_options.name = Some("Maya Chen".to_owned());
+    let mut target = server.connect(&server.token_with(target_options)).await;
+    join(&mut sender, room_id, None).await;
+    join(&mut target, room_id, None).await;
+    drain_participant_updates(&mut sender).await;
+
+    let mut params = common_params(request_id, room_id);
+    params["text"] = json!("Do not accept a truncated roster token.");
+    params["mentions"] = json!([{ "type": "participant", "id": target_id, "token": "maya" }]);
+    params["delivery"] = json!("room");
+    send_json(&mut sender, rpc("wrong-token-room", "chat.send", params)).await;
+
+    assert_eq!(recv_json(&mut sender).await["error"]["code"], -32013);
+    assert_request_was_not_persisted(&server, room_id, request_id).await;
+
+    let mentioned_request_id = Uuid::new_v4();
+    let mut mentioned_params = common_params(mentioned_request_id, room_id);
+    mentioned_params["text"] = json!("Do not accept a truncated roster token privately.");
+    mentioned_params["mentions"] =
+        json!([{ "type": "participant", "id": target_id, "token": "maya" }]);
+    mentioned_params["delivery"] = json!("mentioned");
+    send_json(
+        &mut sender,
+        rpc("wrong-token-mentioned", "chat.send", mentioned_params),
+    )
+    .await;
+
+    assert_eq!(recv_json(&mut sender).await["error"]["code"], -32013);
+    assert_request_was_not_persisted(&server, room_id, mentioned_request_id).await;
+}
+
+// This fails if canonical tokens diverge from UI roster normalization and collision rules.
+#[tokio::test]
+async fn chat_mentions_accept_ui_canonical_normalized_and_disambiguated_tokens() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let sender_id = Uuid::new_v4();
+    let first_id = Uuid::parse_str("12345678-aaaa-4567-8901-abcdef123456").unwrap();
+    let second_id = Uuid::parse_str("12345678-bbbb-4567-8901-abcdef123456").unwrap();
+    let reserved_id = Uuid::parse_str("f4c0ffee-aaaa-4567-8901-abcdef123456").unwrap();
+    let fallback_id = Uuid::parse_str("deadbeef-aaaa-4567-8901-abcdef123456").unwrap();
+    let mut sender = server.connect(&server.token(sender_id, "human")).await;
+    let mut first_options = support::TokenOptions::valid(first_id, "human");
+    first_options.name = Some("M\u{00e4}y\u{00e4} Chen".to_owned());
+    let mut first = server.connect(&server.token_with(first_options)).await;
+    let mut second_options = support::TokenOptions::valid(second_id, "human");
+    second_options.name = Some("maya--chen".to_owned());
+    let mut second = server.connect(&server.token_with(second_options)).await;
+    let mut reserved_options = support::TokenOptions::valid(reserved_id, "human");
+    reserved_options.name = Some("allhumans".to_owned());
+    let mut reserved = server.connect(&server.token_with(reserved_options)).await;
+    let mut fallback_options = support::TokenOptions::valid(fallback_id, "human");
+    fallback_options.name = Some("___".to_owned());
+    let mut fallback = server.connect(&server.token_with(fallback_options)).await;
+    join(&mut sender, room_id, None).await;
+    join(&mut first, room_id, None).await;
+    join(&mut second, room_id, None).await;
+    join(&mut reserved, room_id, None).await;
+    join(&mut fallback, room_id, None).await;
+    drain_participant_updates(&mut sender).await;
+
+    let mut params = common_params(Uuid::new_v4(), room_id);
+    params["text"] = json!("Canonical roster tokens must be accepted.");
+    params["mentions"] = json!([
+        { "type": "participant", "id": first_id, "token": "maya-chen-12345678a" },
+        { "type": "participant", "id": second_id, "token": "maya-chen-12345678b" },
+        { "type": "participant", "id": reserved_id, "token": "allhumans-f4c0ffee" },
+        { "type": "participant", "id": fallback_id, "token": "participant" }
+    ]);
+    params["delivery"] = json!("mentioned");
+    send_json(&mut sender, rpc("canonical-tokens", "chat.send", params)).await;
+
+    assert_eq!(recv_json(&mut sender).await["eventType"], "message.created");
+}
+
 // This fails if allhumans uses display names or includes agents in the targeted audience.
 #[tokio::test]
 async fn chat_mentions_expand_allhumans_by_role_only() {
@@ -474,7 +636,9 @@ async fn chat_mentions_deduplicate_direct_and_alias_targets() {
     let sender_id = Uuid::new_v4();
     let target_id = Uuid::new_v4();
     let mut sender = server.connect(&server.token(sender_id, "human")).await;
-    let mut target = server.connect(&server.token(target_id, "human")).await;
+    let mut target_options = support::TokenOptions::valid(target_id, "human");
+    target_options.name = Some("Maya Chen".to_owned());
+    let mut target = server.connect(&server.token_with(target_options)).await;
     join(&mut sender, room_id, None).await;
     join(&mut target, room_id, None).await;
     recv_json(&mut sender).await;
@@ -502,7 +666,9 @@ async fn chat_mentions_include_the_sender_in_a_targeted_audience() {
     let sender_id = Uuid::new_v4();
     let target_id = Uuid::new_v4();
     let mut sender = server.connect(&server.token(sender_id, "agent")).await;
-    let mut target = server.connect(&server.token(target_id, "human")).await;
+    let mut target_options = support::TokenOptions::valid(target_id, "human");
+    target_options.name = Some("Maya Chen".to_owned());
+    let mut target = server.connect(&server.token_with(target_options)).await;
     join(&mut sender, room_id, None).await;
     join(&mut target, room_id, None).await;
     recv_json(&mut sender).await;
@@ -529,7 +695,9 @@ async fn chat_mentions_keep_room_delivery_global_with_an_empty_audience() {
     let sender_id = Uuid::new_v4();
     let observer_id = Uuid::new_v4();
     let mut sender = server.connect(&server.token(sender_id, "human")).await;
-    let mut observer = server.connect(&server.token(observer_id, "agent")).await;
+    let mut observer_options = support::TokenOptions::valid(observer_id, "agent");
+    observer_options.name = Some("Atlas Planner".to_owned());
+    let mut observer = server.connect(&server.token_with(observer_options)).await;
     join(&mut sender, room_id, None).await;
     join(&mut observer, room_id, None).await;
     recv_json(&mut sender).await;

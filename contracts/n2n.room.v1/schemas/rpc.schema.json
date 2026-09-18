@@ -45,7 +45,6 @@
     "mentions": {
       "type": "array",
       "maxItems": 50,
-      "uniqueItems": true,
       "items": { "$ref": "#/$defs/mention" }
     },
     "delivery": { "enum": ["room", "mentioned"] }
