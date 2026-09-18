@@ -485,11 +485,11 @@ impl GatewayState {
             .commit()
             .await
             .map_err(|_| RpcError::internal_error())?;
-        if !events.is_empty() {
-            if let Some(memory_engine) = self.inner.memory_engine.clone() {
-                for event in &events {
-                    let _ = memory_engine.enqueue_committed_event(event.clone()).await;
-                }
+        if !events.is_empty()
+            && let Some(memory_engine) = self.inner.memory_engine.clone()
+        {
+            for event in &events {
+                let _ = memory_engine.enqueue_committed_event(event.clone()).await;
             }
         }
         Ok(ProcessedRequest {
