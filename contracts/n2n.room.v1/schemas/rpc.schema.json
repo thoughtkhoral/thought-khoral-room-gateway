@@ -18,6 +18,38 @@
     },
     "params": { "type": "object" }
   },
+  "$defs": {
+    "mention": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "participant" },
+            "id": { "type": "string", "format": "uuid" },
+            "token": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+          },
+          "required": ["type", "id", "token"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "alias" },
+            "alias": { "enum": ["allhumans", "allagents"] }
+          },
+          "required": ["type", "alias"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "mentions": {
+      "type": "array",
+      "maxItems": 50,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/mention" }
+    },
+    "delivery": { "enum": ["room", "mentioned"] }
+  },
   "required": ["jsonrpc", "id", "method", "params"],
   "additionalProperties": false,
   "oneOf": [
@@ -55,10 +87,24 @@
         "params": {
           "type": "object",
           "allOf": [
-            { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" }
+            { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" },
+            {
+              "if": {
+                "properties": { "delivery": { "const": "mentioned" } },
+                "required": ["delivery"]
+              },
+              "then": {
+                "required": ["mentions"],
+                "properties": {
+                  "mentions": { "type": "array", "minItems": 1 }
+                }
+              }
+            }
           ],
           "properties": {
-            "text": { "type": "string", "minLength": 1 }
+            "text": { "type": "string", "minLength": 1 },
+            "mentions": { "$ref": "#/$defs/mentions" },
+            "delivery": { "$ref": "#/$defs/delivery" }
           },
           "required": ["text"],
           "unevaluatedProperties": false

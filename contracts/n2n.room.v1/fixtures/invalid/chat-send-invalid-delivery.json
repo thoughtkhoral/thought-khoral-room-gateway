@@ -1,0 +1,13 @@
+{
+  "jsonrpc": "2.0",
+  "id": "chat-invalid-delivery-1",
+  "method": "chat.send",
+  "params": {
+    "contractVersion": "n2n.room.v1",
+    "requestId": "66666666-6666-4666-8666-666666666666",
+    "roomId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "occurredAt": "2026-09-18T12:04:00Z",
+    "text": "This delivery mode is invalid.",
+    "delivery": "direct"
+  }
+}

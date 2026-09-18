@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+pub const MAX_CHAT_MENTIONS: usize = 50;
+
 const ENVELOPE_SCHEMA: &str = include_str!("../contracts/n2n.room.v1/schemas/envelope.schema.json");
 const RPC_SCHEMA: &str = include_str!("../contracts/n2n.room.v1/schemas/rpc.schema.json");
 const ROOM_EVENT_SCHEMA: &str =
@@ -124,6 +126,13 @@ impl RpcError {
         }
     }
 
+    pub(crate) const fn unknown_mention_target() -> Self {
+        Self {
+            code: -32013,
+            message: "Unknown message mention target",
+        }
+    }
+
     pub(crate) const fn internal_error() -> Self {
         Self {
             code: -32603,
@@ -188,6 +197,8 @@ impl ValidatedRequest {
                 "roomId": request.room_id,
                 "occurredAt": request.occurred_at,
                 "text": request.text,
+                "mentions": request.mentions,
+                "delivery": request.delivery,
             }),
             Self::DecisionPropose(request) => json!({
                 "method": "decision.propose",
@@ -258,6 +269,28 @@ pub struct Join {
     pub after_sequence: Option<i64>,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(tag = "type", rename_all = "lowercase", deny_unknown_fields)]
+pub enum ChatMention {
+    Participant { id: Uuid, token: String },
+    Alias { alias: ChatMentionAlias },
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum ChatMentionAlias {
+    AllHumans,
+    AllAgents,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum ChatDelivery {
+    #[default]
+    Room,
+    Mentioned,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ChatSend {
@@ -267,6 +300,10 @@ pub struct ChatSend {
     pub room_id: Uuid,
     pub occurred_at: DateTime<Utc>,
     pub text: String,
+    #[serde(default)]
+    pub mentions: Vec<ChatMention>,
+    #[serde(default)]
+    pub delivery: ChatDelivery,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]

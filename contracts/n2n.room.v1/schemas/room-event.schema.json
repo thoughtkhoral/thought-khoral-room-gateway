@@ -3,6 +3,37 @@
   "$id": "https://n2n.redhat.com/schemas/n2n.room.v1/room-event.schema.json",
   "title": "ThoughtKhoral room v1 persisted room event",
   "type": "object",
+  "$defs": {
+    "mention": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "participant" },
+            "id": { "type": "string", "format": "uuid" },
+            "token": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+          },
+          "required": ["type", "id", "token"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "alias" },
+            "alias": { "enum": ["allhumans", "allagents"] }
+          },
+          "required": ["type", "alias"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "mentions": {
+      "type": "array",
+      "maxItems": 50,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/mention" }
+    }
+  },
   "allOf": [
     { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" },
     {
@@ -61,7 +92,17 @@
       "required": ["id", "role"],
       "additionalProperties": false
     },
-    "payload": { "type": "object" }
+    "payload": {
+      "type": "object",
+      "properties": {
+        "delivery": { "enum": ["room", "mentioned"] },
+        "mentions": { "$ref": "#/$defs/mentions" },
+        "audienceIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        }
+      }
+    }
   },
   "required": ["sequence", "eventId", "eventType", "actor", "payload"],
   "unevaluatedProperties": false

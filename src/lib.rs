@@ -16,7 +16,10 @@ pub use facilitator::{
     MemoryEngineDraftProposal, MemoryProposalValidationError, NewDecisionProposal,
     validate_memory_engine_proposal,
 };
-pub use protocol::{ChatSend, RpcError, ValidatedRequest, validate_request};
+pub use protocol::{
+    ChatDelivery, ChatMention, ChatMentionAlias, ChatSend, MAX_CHAT_MENTIONS, RpcError,
+    ValidatedRequest, validate_request,
+};
 pub use rooms::{GatewayState, WebSocketPolicy, WebSocketPolicyError};
 pub use store::{NewEvent, RoomEvent, StoreError, append_event, events_after};
 pub use ws::{app, gateway_status};

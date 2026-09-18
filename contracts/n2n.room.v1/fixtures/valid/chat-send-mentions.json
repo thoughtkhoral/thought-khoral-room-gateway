@@ -1,0 +1,17 @@
+{
+  "jsonrpc": "2.0",
+  "id": "chat-mentions-1",
+  "method": "chat.send",
+  "params": {
+    "contractVersion": "n2n.room.v1",
+    "requestId": "33333333-3333-4333-8333-333333333333",
+    "roomId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "occurredAt": "2026-09-18T12:01:00Z",
+    "text": "Review this with @maya-chen and @atlas-planner.",
+    "mentions": [
+      { "type": "participant", "id": "11111111-1111-4111-8111-111111111111", "token": "maya-chen" },
+      { "type": "participant", "id": "22222222-2222-4222-8222-222222222222", "token": "atlas-planner" }
+    ],
+    "delivery": "mentioned"
+  }
+}

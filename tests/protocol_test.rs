@@ -1,5 +1,8 @@
 use std::path::Path;
-use thought_khoral_room_gateway::{ValidatedRequest, gateway_status, validate_request};
+use thought_khoral_room_gateway::{
+    ChatDelivery, ChatMention, ChatMentionAlias, MAX_CHAT_MENTIONS, ValidatedRequest,
+    gateway_status, validate_request,
+};
 use uuid::Uuid;
 
 const CHAT_SEND: &str = include_str!("../contracts/n2n.room.v1/fixtures/valid/chat-send.json");
@@ -13,6 +16,14 @@ const DECISION_DELETE: &str =
     include_str!("../contracts/n2n.room.v1/fixtures/valid/decision-delete.json");
 const DECISION_PROPOSE_EMPTY_SOURCES: &str =
     include_str!("../contracts/n2n.room.v1/fixtures/valid/decision-propose-empty-sources.json");
+const CHAT_SEND_MENTIONS: &str =
+    include_str!("../contracts/n2n.room.v1/fixtures/valid/chat-send-mentions.json");
+const CHAT_SEND_ALIASES: &str =
+    include_str!("../contracts/n2n.room.v1/fixtures/valid/chat-send-aliases.json");
+const CHAT_SEND_TOO_MANY_MENTIONS: &str =
+    include_str!("../contracts/n2n.room.v1/fixtures/invalid/chat-send-too-many-mentions.json");
+const CHAT_SEND_INVALID_DELIVERY: &str =
+    include_str!("../contracts/n2n.room.v1/fixtures/invalid/chat-send-invalid-delivery.json");
 
 // This fails if active package, binary, service, or display metadata regresses to a legacy name.
 #[tokio::test]
@@ -43,9 +54,78 @@ fn validates_chat_send_as_a_typed_request() {
                 Uuid::parse_str("22222222-2222-4222-8222-222222222222").unwrap()
             );
             assert_eq!(chat.text, "Use JSON-RPC for room events.");
+            assert!(chat.mentions.is_empty());
+            assert_eq!(chat.delivery, ChatDelivery::Room);
         }
         other => panic!("expected ChatSend, got {other:?}"),
     }
+}
+
+// This fails if direct mentions are not retained as typed participant targets.
+#[test]
+fn validates_chat_send_with_participant_mentions() {
+    let request = validate_request(CHAT_SEND_MENTIONS).expect("participant mentions must validate");
+    let ValidatedRequest::ChatSend(chat) = request else {
+        panic!("expected ChatSend");
+    };
+
+    assert_eq!(chat.delivery, ChatDelivery::Mentioned);
+    assert_eq!(chat.mentions.len(), 2);
+    assert_eq!(
+        chat.mentions[0],
+        ChatMention::Participant {
+            id: Uuid::parse_str("11111111-1111-4111-8111-111111111111").unwrap(),
+            token: "maya-chen".to_owned(),
+        }
+    );
+    assert_eq!(
+        chat.mentions[1],
+        ChatMention::Participant {
+            id: Uuid::parse_str("22222222-2222-4222-8222-222222222222").unwrap(),
+            token: "atlas-planner".to_owned(),
+        }
+    );
+}
+
+// This fails if either supported broadcast alias is parsed as an untyped or wrong target.
+#[test]
+fn validates_chat_send_with_both_alias_mentions() {
+    let request = validate_request(CHAT_SEND_ALIASES).expect("alias mentions must validate");
+    let ValidatedRequest::ChatSend(chat) = request else {
+        panic!("expected ChatSend");
+    };
+
+    assert_eq!(chat.delivery, ChatDelivery::Mentioned);
+    assert_eq!(
+        chat.mentions,
+        vec![
+            ChatMention::Alias {
+                alias: ChatMentionAlias::AllHumans,
+            },
+            ChatMention::Alias {
+                alias: ChatMentionAlias::AllAgents,
+            },
+        ]
+    );
+}
+
+// This fails if the mention limit changes or schema validation allows more than 50 targets.
+#[test]
+fn rejects_chat_send_with_more_than_maximum_mentions() {
+    assert_eq!(MAX_CHAT_MENTIONS, 50);
+    let error = validate_request(CHAT_SEND_TOO_MANY_MENTIONS)
+        .expect_err("a chat request may contain at most 50 mention targets");
+
+    assert_eq!(error.code, -32600);
+}
+
+// This fails if an unsupported delivery mode reaches the typed request boundary.
+#[test]
+fn rejects_chat_send_with_an_invalid_delivery() {
+    let error = validate_request(CHAT_SEND_INVALID_DELIVERY)
+        .expect_err("only room and mentioned delivery modes are supported");
+
+    assert_eq!(error.code, -32600);
 }
 
 #[test]

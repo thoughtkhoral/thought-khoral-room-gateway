@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | `session.authenticate` | `accessToken` | Authenticated connection identity and role. |
 | `room.join` | `roomId`, `requestId`, `occurredAt`, `afterSequence?` | Ordered room snapshot, events after the cursor, and the participant snapshot. |
-| `chat.send` | `roomId`, `requestId`, `occurredAt`, `text` | Normalized `message.created` event. |
+| `chat.send` | `roomId`, `requestId`, `occurredAt`, `text`, `mentions?`, `delivery?` | Normalized `message.created` event. |
 | `decision.propose` | `roomId`, `requestId`, `occurredAt`, `title`, `summary`, `sourceEventIds` | `decision.proposed` event. |
 | `decision.transition` | `roomId`, `requestId`, `occurredAt`, `decisionId`, `action`, `editedTitle?`, `editedSummary?` | `decision.confirmed`, `decision.edited`, or `decision.dismissed` event. |
 | `decision.delete` | `roomId`, `requestId`, `occurredAt`, `decisionId` | `decision.deleted` event. |
@@ -16,6 +16,10 @@
 Only `confirm`, `edit`, and `dismiss` are valid actions. `edit` requires non-empty `editedTitle` and `editedSummary`; the other actions must not supply either edit field.
 
 `decision.propose` accepts an empty `sourceEventIds` array when a decision has no source evidence.
+
+`chat.send` remains room-wide when `delivery` is omitted or set to `room`. For targeted delivery, set `delivery` to `mentioned` and provide one or more `mentions`, up to 50 targets. A participant target has `type: "participant"`, a UUID `id`, and a lower-case hyphenated `token` matching the direct mention token. An alias target has `type: "alias"` and is restricted to the fixed aliases `allhumans` and `allagents`. The request schema enforces this target shape and token boundary; resolving whether a participant is currently addressable is gateway behavior.
+
+The `@allagents` alias targets all known agents and is also visible to and allows all known human participants in the room. A targeted message is replayed only to the resolved audience, while room-wide messages are replayed to all room participants. The gateway returns `-32013` when a direct participant target cannot be resolved.
 
 The gateway may send the JSON-RPC notification `room.participants.updated` without
 an `id`. Its params contain `contractVersion`, `roomId`, and a `participants`
@@ -42,6 +46,7 @@ Failed authentication produces structured error `-32001` and the gateway closes 
 | `-32010` | Invalid state transition. |
 | `-32011` | Expired context packet. |
 | `-32012` | Duplicate request with a different payload. |
+| `-32013` | Mention target not found. |
 
 ## Decision transitions
 

@@ -1,0 +1,17 @@
+{
+  "jsonrpc": "2.0",
+  "id": "chat-aliases-1",
+  "method": "chat.send",
+  "params": {
+    "contractVersion": "n2n.room.v1",
+    "requestId": "44444444-4444-4444-8444-444444444444",
+    "roomId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "occurredAt": "2026-09-18T12:02:00Z",
+    "text": "Notify the room groups.",
+    "mentions": [
+      { "type": "alias", "alias": "allhumans" },
+      { "type": "alias", "alias": "allagents" }
+    ],
+    "delivery": "mentioned"
+  }
+}
