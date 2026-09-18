@@ -1,6 +1,6 @@
 use std::{net::SocketAddr, time::Duration};
 
-use crate::WebSocketPolicy;
+use crate::{WebSocketPolicy, memory_engine_client::MemoryEngineClientConfig};
 
 #[derive(Clone, Debug)]
 pub struct GatewayConfig {
@@ -10,6 +10,7 @@ pub struct GatewayConfig {
     pub oidc_audience: String,
     pub oidc_jwks: String,
     pub websocket_policy: WebSocketPolicy,
+    pub memory_engine: Option<MemoryEngineClientConfig>,
 }
 
 impl GatewayConfig {
@@ -35,6 +36,37 @@ impl GatewayConfig {
                 )
             })?;
 
+        let memory_engine = match (
+            lookup("THOUGHT_KHORAL_MEMORY_ENGINE_URL"),
+            lookup("THOUGHT_KHORAL_MEMORY_ENGINE_SHARED_SECRET"),
+        ) {
+            (None, None) => None,
+            (Some(endpoint), Some(shared_secret))
+                if !endpoint.is_empty() && !shared_secret.is_empty() =>
+            {
+                let timeout = lookup("THOUGHT_KHORAL_MEMORY_ENGINE_TIMEOUT_MS")
+                    .unwrap_or_else(|| "100".to_owned())
+                    .parse::<u64>()
+                    .map(Duration::from_millis)
+                    .map_err(|_| ConfigError("THOUGHT_KHORAL_MEMORY_ENGINE_TIMEOUT_MS"))?;
+                let queue_capacity = lookup("THOUGHT_KHORAL_MEMORY_ENGINE_QUEUE_CAPACITY")
+                    .unwrap_or_else(|| "64".to_owned())
+                    .parse::<usize>()
+                    .map_err(|_| ConfigError("THOUGHT_KHORAL_MEMORY_ENGINE_QUEUE_CAPACITY"))?;
+                Some(MemoryEngineClientConfig {
+                    endpoint,
+                    shared_secret,
+                    timeout,
+                    queue_capacity,
+                })
+            }
+            _ => {
+                return Err(ConfigError(
+                    "THOUGHT_KHORAL_MEMORY_ENGINE_URL and THOUGHT_KHORAL_MEMORY_ENGINE_SHARED_SECRET",
+                ));
+            }
+        };
+
         Ok(Self {
             database_url: required(&lookup, "DATABASE_URL")?,
             listen_address: lookup("THOUGHT_KHORAL_LISTEN_ADDRESS")
@@ -45,6 +77,7 @@ impl GatewayConfig {
             oidc_audience: required(&lookup, "THOUGHT_KHORAL_OIDC_AUDIENCE")?,
             oidc_jwks: required(&lookup, "THOUGHT_KHORAL_OIDC_JWKS")?,
             websocket_policy,
+            memory_engine,
         })
     }
 }

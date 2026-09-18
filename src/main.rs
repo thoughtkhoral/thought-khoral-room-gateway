@@ -1,6 +1,7 @@
 use sqlx::postgres::PgPoolOptions;
 use thought_khoral_room_gateway::{
     AuthValidator, GatewayState, PRODUCT_NAME, SERVICE_NAME, app, config::GatewayConfig,
+    memory_engine_client::MemoryEngineClient,
 };
 
 #[tokio::main]
@@ -16,14 +17,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         listen_address = %listener.local_addr()?,
         "ThoughtKhoral room gateway listening"
     );
-    axum::serve(
-        listener,
-        app(GatewayState::with_websocket_policy(
+    let state = match config.memory_engine {
+        Some(memory_engine) => GatewayState::with_memory_engine_client(
             pool,
             auth,
             config.websocket_policy,
-        )),
-    )
-    .await?;
+            MemoryEngineClient::new(memory_engine),
+        ),
+        None => GatewayState::with_websocket_policy(pool, auth, config.websocket_policy),
+    };
+    axum::serve(listener, app(state)).await?;
     Ok(())
 }

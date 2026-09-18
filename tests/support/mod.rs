@@ -12,7 +12,9 @@ use rsa::{RsaPrivateKey, pkcs1::EncodeRsaPrivateKey};
 use serde::Serialize;
 use serde_json::{Value, json};
 use sqlx::{PgPool, postgres::PgPoolOptions};
-use thought_khoral_room_gateway::{AuthValidator, GatewayState, WebSocketPolicy, app};
+use thought_khoral_room_gateway::{
+    AuthValidator, GatewayState, WebSocketPolicy, app, memory_engine_client::MemoryEngineClient,
+};
 use tokio::{
     net::{TcpListener, TcpStream},
     task::JoinHandle,
@@ -131,6 +133,17 @@ impl TestServer {
     }
 
     pub async fn start_with_authentication_timeout(authentication_timeout: Duration) -> Self {
+        Self::start_with_options(authentication_timeout, None).await
+    }
+
+    pub async fn start_with_memory_engine_client(client: MemoryEngineClient) -> Self {
+        Self::start_with_options(Duration::from_secs(5), Some(client)).await
+    }
+
+    async fn start_with_options(
+        authentication_timeout: Duration,
+        memory_engine: Option<MemoryEngineClient>,
+    ) -> Self {
         let database_url = std::env::var("DATABASE_URL")
             .expect("DATABASE_URL must name a migrated PostgreSQL integration database");
         let pool = PgPoolOptions::new()
@@ -143,7 +156,12 @@ impl TestServer {
             .expect("the generated test JWKS must configure authentication");
         let policy = WebSocketPolicy::new([BROWSER_ORIGIN], authentication_timeout)
             .expect("the browser test policy must be valid");
-        let state = GatewayState::with_websocket_policy(pool.clone(), auth, policy);
+        let state = match memory_engine {
+            Some(memory_engine) => {
+                GatewayState::with_memory_engine_client(pool.clone(), auth, policy, memory_engine)
+            }
+            None => GatewayState::with_websocket_policy(pool.clone(), auth, policy),
+        };
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
         let server_state = state.clone();

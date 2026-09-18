@@ -13,6 +13,7 @@ use uuid::Uuid;
 use crate::{
     auth::{Actor, ActorRole, AuthValidator},
     facilitator::{NewDecisionProposal, propose_from_message},
+    memory_engine_client::MemoryEngineClient,
     protocol::{DecisionAction, DecisionTransition, RpcError, ValidatedRequest},
     store::{
         NewEvent, RoomEvent, append_event_in_transaction, lock_room, prior_request, record_request,
@@ -99,6 +100,7 @@ struct GatewayStateInner {
     websocket_policy: WebSocketPolicy,
     rooms: Mutex<HashMap<Uuid, broadcast::Sender<RoomBroadcast>>>,
     presence: Mutex<HashMap<Uuid, HashMap<Uuid, ParticipantPresence>>>,
+    memory_engine: Option<MemoryEngineClient>,
 }
 
 #[derive(Clone, Debug)]
@@ -158,6 +160,25 @@ impl GatewayState {
                 websocket_policy,
                 rooms: Mutex::new(HashMap::new()),
                 presence: Mutex::new(HashMap::new()),
+                memory_engine: None,
+            }),
+        }
+    }
+
+    pub fn with_memory_engine_client(
+        pool: PgPool,
+        auth: AuthValidator,
+        websocket_policy: WebSocketPolicy,
+        memory_engine: MemoryEngineClient,
+    ) -> Self {
+        Self {
+            inner: Arc::new(GatewayStateInner {
+                pool,
+                auth,
+                websocket_policy,
+                rooms: Mutex::new(HashMap::new()),
+                presence: Mutex::new(HashMap::new()),
+                memory_engine: Some(memory_engine),
             }),
         }
     }
@@ -464,6 +485,13 @@ impl GatewayState {
             .commit()
             .await
             .map_err(|_| RpcError::internal_error())?;
+        if !events.is_empty() {
+            if let Some(memory_engine) = self.inner.memory_engine.clone() {
+                for event in &events {
+                    let _ = memory_engine.enqueue_committed_event(event.clone()).await;
+                }
+            }
+        }
         Ok(ProcessedRequest {
             events,
             duplicate: false,

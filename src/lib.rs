@@ -2,6 +2,7 @@ pub mod auth;
 pub mod config;
 pub mod error;
 pub mod facilitator;
+pub mod memory_engine_client;
 pub mod protocol;
 pub mod rooms;
 pub mod store;
