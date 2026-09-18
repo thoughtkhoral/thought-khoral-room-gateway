@@ -1,0 +1,13 @@
+{
+  "jsonrpc": "2.0",
+  "id": "chat-mentioned-without-targets-1",
+  "method": "chat.send",
+  "params": {
+    "contractVersion": "n2n.room.v1",
+    "requestId": "67676767-6767-4767-8767-676767676767",
+    "roomId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "occurredAt": "2026-09-18T12:05:00Z",
+    "text": "This targeted message has no targets.",
+    "delivery": "mentioned"
+  }
+}

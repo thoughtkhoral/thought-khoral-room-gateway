@@ -24,6 +24,9 @@ const CHAT_SEND_TOO_MANY_MENTIONS: &str =
     include_str!("../contracts/n2n.room.v1/fixtures/invalid/chat-send-too-many-mentions.json");
 const CHAT_SEND_INVALID_DELIVERY: &str =
     include_str!("../contracts/n2n.room.v1/fixtures/invalid/chat-send-invalid-delivery.json");
+const CHAT_SEND_MENTIONED_WITHOUT_TARGETS: &str = include_str!(
+    "../contracts/n2n.room.v1/fixtures/invalid/chat-send-mentioned-without-targets.json"
+);
 
 // This fails if active package, binary, service, or display metadata regresses to a legacy name.
 #[tokio::test]
@@ -124,6 +127,15 @@ fn rejects_chat_send_with_more_than_maximum_mentions() {
 fn rejects_chat_send_with_an_invalid_delivery() {
     let error = validate_request(CHAT_SEND_INVALID_DELIVERY)
         .expect_err("only room and mentioned delivery modes are supported");
+
+    assert_eq!(error.code, -32600);
+}
+
+// This fails if targeted delivery is accepted without at least one mention target.
+#[test]
+fn rejects_chat_send_with_mentioned_delivery_without_targets() {
+    let error = validate_request(CHAT_SEND_MENTIONED_WITHOUT_TARGETS)
+        .expect_err("mentioned delivery requires one or more mention targets");
 
     assert_eq!(error.code, -32600);
 }
