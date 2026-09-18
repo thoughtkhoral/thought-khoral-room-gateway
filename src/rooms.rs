@@ -468,9 +468,7 @@ impl GatewayState {
             ValidatedRequest::DecisionTransition(request) => {
                 transition_decision_in_transaction(&mut transaction, actor, request).await?
             }
-            ValidatedRequest::DecisionDelete(_) => {
-                unreachable!("decision.delete is implemented in the deletion task")
-            }
+            ValidatedRequest::DecisionDelete(_) => return Err(RpcError::unknown_method()),
             ValidatedRequest::Join(_) => unreachable!("join requests returned above"),
             ValidatedRequest::SessionAuthenticate(_) => {
                 unreachable!("session authentication requests returned above")

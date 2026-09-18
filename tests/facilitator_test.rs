@@ -1,43 +1,11 @@
 mod support;
 
-use chrono::Utc;
 use serde_json::json;
 use sqlx::Row;
-use thought_khoral_room_gateway::{RoomEvent, facilitator::FACILITATOR_ACTOR_ID};
+use thought_khoral_room_gateway::facilitator::FACILITATOR_ACTOR_ID;
 use uuid::Uuid;
 
 use support::{TestServer, common_params, join, recv_json, rpc, send_json};
-
-fn message_event(text: &str) -> RoomEvent {
-    RoomEvent {
-        event_id: Uuid::new_v4(),
-        room_id: Uuid::new_v4(),
-        sequence: 1,
-        request_id: Uuid::new_v4(),
-        event_type: "message.created".to_owned(),
-        actor_id: Uuid::new_v4(),
-        actor_role: "human".to_owned(),
-        actor_display_name: Some("Test Human".to_owned()),
-        payload: json!({ "text": text }),
-        occurred_at: Utc::now(),
-    }
-}
-
-// Decision-prefixed text is ordinary chat after the slash-command migration.
-#[test]
-fn decision_prefixed_message_creates_no_proposal() {
-    let event = message_event("  Decision: adopt JSON-RPC for room events.  ");
-    assert_eq!(event.event_type, "message.created");
-}
-
-// This fails if ordinary conversation is accidentally treated as a decision proposal.
-#[test]
-fn ordinary_message_creates_no_proposal() {
-    assert_eq!(
-        message_event("We should discuss the room protocol.").event_type,
-        "message.created"
-    );
-}
 
 // This fails if a legacy Decision: message still creates a second proposal event.
 #[tokio::test]
@@ -75,6 +43,31 @@ async fn facilitator_does_not_broadcast_a_proposal_after_a_prefixed_message() {
         .map(|row| row.try_get::<String, _>("status").unwrap())
         .collect::<Vec<_>>();
     assert!(statuses.is_empty());
+}
+
+#[tokio::test]
+async fn ordinary_message_does_not_broadcast_a_proposal() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let token = server.token(Uuid::new_v4(), "human");
+    let mut socket = server.connect(&token).await;
+    join(&mut socket, room_id, None).await;
+
+    let mut params = common_params(Uuid::new_v4(), room_id);
+    params["text"] = json!("We should discuss the room protocol.");
+    send_json(&mut socket, rpc("chat", "chat.send", params)).await;
+
+    assert_eq!(recv_json(&mut socket).await["eventType"], "message.created");
+    let event_types =
+        sqlx::query("SELECT event_type FROM room_events WHERE room_id = $1 ORDER BY sequence")
+            .bind(room_id)
+            .fetch_all(&server.pool)
+            .await
+            .unwrap()
+            .into_iter()
+            .map(|row| row.try_get::<String, _>("event_type").unwrap())
+            .collect::<Vec<_>>();
+    assert_eq!(event_types, vec!["message.created"]);
 }
 
 // This fails if the fixed gateway facilitator identity can cross the same human-only
