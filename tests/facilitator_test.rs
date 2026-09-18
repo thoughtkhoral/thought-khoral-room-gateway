@@ -3,10 +3,7 @@ mod support;
 use chrono::Utc;
 use serde_json::json;
 use sqlx::Row;
-use thought_khoral_room_gateway::{
-    RoomEvent,
-    facilitator::{FACILITATOR_ACTOR_ID, propose_from_message},
-};
+use thought_khoral_room_gateway::{RoomEvent, facilitator::FACILITATOR_ACTOR_ID};
 use uuid::Uuid;
 
 use support::{TestServer, common_params, join, recv_json, rpc, send_json};
@@ -26,30 +23,25 @@ fn message_event(text: &str) -> RoomEvent {
     }
 }
 
-// This fails if a decision-prefixed persisted message does not retain its provenance,
-// is not attributed to the facilitator agent, or creates a non-draft proposal.
+// Decision-prefixed text is ordinary chat after the slash-command migration.
 #[test]
-fn decision_prefixed_message_creates_an_agent_draft_with_source_event() {
+fn decision_prefixed_message_creates_no_proposal() {
     let event = message_event("  Decision: adopt JSON-RPC for room events.  ");
-
-    let proposal = propose_from_message(&event).expect("a decision message must propose a draft");
-
-    assert_eq!(proposal.title, "adopt JSON-RPC for room events.");
-    assert_eq!(proposal.summary, "adopt JSON-RPC for room events.");
-    assert_eq!(proposal.source_event_ids, vec![event.event_id]);
-    assert_eq!(proposal.actor_role, "agent");
+    assert_eq!(event.event_type, "message.created");
 }
 
 // This fails if ordinary conversation is accidentally treated as a decision proposal.
 #[test]
 fn ordinary_message_creates_no_proposal() {
-    assert!(propose_from_message(&message_event("We should discuss the room protocol.")).is_none());
+    assert_eq!(
+        message_event("We should discuss the room protocol.").event_type,
+        "message.created"
+    );
 }
 
-// This fails if the facilitator uses an unpinned identity, emits an extra authority event,
-// or bypasses the human approval boundary by activating or superseding a decision.
+// This fails if a legacy Decision: message still creates a second proposal event.
 #[tokio::test]
-async fn facilitator_broadcasts_only_a_draft_proposal_after_the_source_message() {
+async fn facilitator_does_not_broadcast_a_proposal_after_a_prefixed_message() {
     let server = TestServer::start().await;
     let room_id = Uuid::new_v4();
     let token = server.token(Uuid::new_v4(), "human");
@@ -61,19 +53,7 @@ async fn facilitator_broadcasts_only_a_draft_proposal_after_the_source_message()
     send_json(&mut socket, rpc("chat", "chat.send", params)).await;
 
     let source = recv_json(&mut socket).await;
-    let proposal = recv_json(&mut socket).await;
     assert_eq!(source["eventType"], "message.created");
-    assert_eq!(proposal["eventType"], "decision.proposed");
-    assert_eq!(
-        proposal["actor"]["id"],
-        "6e326e00-0000-0000-0000-000000000001"
-    );
-    assert_eq!(proposal["actor"]["role"], "agent");
-    assert_eq!(proposal["payload"]["status"], "draft");
-    assert_eq!(
-        proposal["payload"]["sourceEventIds"],
-        json!([source["eventId"]])
-    );
 
     let event_types =
         sqlx::query("SELECT event_type FROM room_events WHERE room_id = $1 ORDER BY sequence")
@@ -84,7 +64,7 @@ async fn facilitator_broadcasts_only_a_draft_proposal_after_the_source_message()
             .into_iter()
             .map(|row| row.try_get::<String, _>("event_type").unwrap())
             .collect::<Vec<_>>();
-    assert_eq!(event_types, vec!["message.created", "decision.proposed"]);
+    assert_eq!(event_types, vec!["message.created"]);
 
     let statuses = sqlx::query("SELECT status FROM decisions WHERE room_id = $1")
         .bind(room_id)
@@ -94,7 +74,7 @@ async fn facilitator_broadcasts_only_a_draft_proposal_after_the_source_message()
         .into_iter()
         .map(|row| row.try_get::<String, _>("status").unwrap())
         .collect::<Vec<_>>();
-    assert_eq!(statuses, vec!["draft"]);
+    assert!(statuses.is_empty());
 }
 
 // This fails if the fixed gateway facilitator identity can cross the same human-only

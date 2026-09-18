@@ -139,6 +139,7 @@ pub enum ValidatedRequest {
     ChatSend(ChatSend),
     DecisionPropose(DecisionPropose),
     DecisionTransition(DecisionTransition),
+    DecisionDelete(DecisionDelete),
 }
 
 impl ValidatedRequest {
@@ -149,6 +150,7 @@ impl ValidatedRequest {
             Self::ChatSend(request) => &request.id,
             Self::DecisionPropose(request) => &request.id,
             Self::DecisionTransition(request) => &request.id,
+            Self::DecisionDelete(request) => &request.id,
         }
     }
 
@@ -159,6 +161,7 @@ impl ValidatedRequest {
             Self::ChatSend(request) => Some(request.room_id),
             Self::DecisionPropose(request) => Some(request.room_id),
             Self::DecisionTransition(request) => Some(request.room_id),
+            Self::DecisionDelete(request) => Some(request.room_id),
         }
     }
 
@@ -169,6 +172,7 @@ impl ValidatedRequest {
             Self::ChatSend(request) => Some(request.request_id),
             Self::DecisionPropose(request) => Some(request.request_id),
             Self::DecisionTransition(request) => Some(request.request_id),
+            Self::DecisionDelete(request) => Some(request.request_id),
         }
     }
 
@@ -205,6 +209,14 @@ impl ValidatedRequest {
                 "action": request.action,
                 "editedTitle": request.edited_title,
                 "editedSummary": request.edited_summary,
+            }),
+            Self::DecisionDelete(request) => json!({
+                "method": "decision.delete",
+                "contractVersion": request.contract_version,
+                "requestId": request.request_id,
+                "roomId": request.room_id,
+                "occurredAt": request.occurred_at,
+                "decisionId": request.decision_id,
             }),
             Self::Join(request) => json!({
                 "method": "room.join",
@@ -284,6 +296,17 @@ pub struct DecisionTransition {
     pub edited_summary: Option<String>,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DecisionDelete {
+    pub id: String,
+    pub contract_version: String,
+    pub request_id: Uuid,
+    pub room_id: Uuid,
+    pub occurred_at: DateTime<Utc>,
+    pub decision_id: Uuid,
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum DecisionAction {
@@ -326,6 +349,7 @@ pub fn validate_request(request: &str) -> Result<ValidatedRequest, RpcError> {
             | "chat.send"
             | "decision.propose"
             | "decision.transition"
+            | "decision.delete"
     ) {
         return Err(RpcError::unknown_method());
     }
@@ -357,6 +381,9 @@ pub fn validate_request(request: &str) -> Result<ValidatedRequest, RpcError> {
             .map(ValidatedRequest::DecisionPropose),
         "decision.transition" => deserialize_request::<DecisionTransition>(params, id)
             .map(ValidatedRequest::DecisionTransition),
+        "decision.delete" => {
+            deserialize_request::<DecisionDelete>(params, id).map(ValidatedRequest::DecisionDelete)
+        }
         _ => Err(RpcError::unknown_method()),
     }
 }

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://n2n.redhat.com/schemas/n2n.room.v1/rpc.schema.json",
-  "title": "N:N room v1 JSON-RPC request",
+  "title": "ThoughtKhoral room v1 JSON-RPC request",
   "type": "object",
   "properties": {
     "jsonrpc": { "const": "2.0" },
@@ -12,7 +12,8 @@
         "room.join",
         "chat.send",
         "decision.propose",
-        "decision.transition"
+        "decision.transition",
+        "decision.delete"
       ]
     },
     "params": { "type": "object" }
@@ -77,7 +78,7 @@
             "summary": { "type": "string", "minLength": 1 },
             "sourceEventIds": {
               "type": "array",
-              "minItems": 1,
+              "minItems": 0,
               "items": { "type": "string", "format": "uuid" }
             }
           },
@@ -117,6 +118,22 @@
               ]
             }
           },
+          "unevaluatedProperties": false
+        }
+      }
+    },
+    {
+      "properties": {
+        "method": { "const": "decision.delete" },
+        "params": {
+          "type": "object",
+          "allOf": [
+            { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" }
+          ],
+          "properties": {
+            "decisionId": { "type": "string", "format": "uuid" }
+          },
+          "required": ["decisionId"],
           "unevaluatedProperties": false
         }
       }

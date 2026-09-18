@@ -9,6 +9,10 @@ const BAD_VERSION: &str =
     include_str!("../contracts/n2n.room.v1/fixtures/invalid/bad-version.json");
 const MISSING_REQUEST_ID: &str =
     include_str!("../contracts/n2n.room.v1/fixtures/invalid/missing-request-id.json");
+const DECISION_DELETE: &str =
+    include_str!("../contracts/n2n.room.v1/fixtures/valid/decision-delete.json");
+const DECISION_PROPOSE_EMPTY_SOURCES: &str =
+    include_str!("../contracts/n2n.room.v1/fixtures/valid/decision-propose-empty-sources.json");
 
 // This fails if active package, binary, service, or display metadata regresses to a legacy name.
 #[tokio::test]
@@ -42,6 +46,28 @@ fn validates_chat_send_as_a_typed_request() {
         }
         other => panic!("expected ChatSend, got {other:?}"),
     }
+}
+
+#[test]
+fn validates_decision_delete_as_a_typed_request() {
+    let request = validate_request(DECISION_DELETE).expect("delete fixture must validate");
+    let ValidatedRequest::DecisionDelete(delete) = request else {
+        panic!("expected DecisionDelete");
+    };
+    assert_eq!(
+        delete.decision_id,
+        Uuid::parse_str("cccccccc-cccc-4ccc-8ccc-cccccccccccc").unwrap()
+    );
+}
+
+#[test]
+fn validates_decision_propose_without_source_evidence() {
+    let request = validate_request(DECISION_PROPOSE_EMPTY_SOURCES)
+        .expect("empty-source proposal fixture must validate");
+    let ValidatedRequest::DecisionPropose(propose) = request else {
+        panic!("expected DecisionPropose");
+    };
+    assert!(propose.source_event_ids.is_empty());
 }
 
 // This fails if the pinned v1.0.2 authentication request is not consumed as a typed request.

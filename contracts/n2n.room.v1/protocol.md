@@ -1,4 +1,4 @@
-# N:N room protocol v1
+# ThoughtKhoral room protocol v1
 
 `n2n.room.v1` defines JSON-RPC 2.0 room requests and normalized, immutable room events. Every request has `jsonrpc: "2.0"`, a non-empty string `id`, a supported `method`, and object `params`. The connection-establishment request `session.authenticate` has only a non-empty `accessToken`; authenticated room-operation payloads include `contractVersion: "n2n.room.v1"`, UUID `requestId`, UUID `roomId`, and RFC 3339 `occurredAt`.
 
@@ -11,8 +11,11 @@
 | `chat.send` | `roomId`, `requestId`, `occurredAt`, `text` | Normalized `message.created` event. |
 | `decision.propose` | `roomId`, `requestId`, `occurredAt`, `title`, `summary`, `sourceEventIds` | `decision.proposed` event. |
 | `decision.transition` | `roomId`, `requestId`, `occurredAt`, `decisionId`, `action`, `editedTitle?`, `editedSummary?` | `decision.confirmed`, `decision.edited`, or `decision.dismissed` event. |
+| `decision.delete` | `roomId`, `requestId`, `occurredAt`, `decisionId` | `decision.deleted` event. |
 
 Only `confirm`, `edit`, and `dismiss` are valid actions. `edit` requires non-empty `editedTitle` and `editedSummary`; the other actions must not supply either edit field.
+
+`decision.propose` accepts an empty `sourceEventIds` array when a decision has no source evidence.
 
 The gateway may send the JSON-RPC notification `room.participants.updated` without
 an `id`. Its params contain `contractVersion`, `roomId`, and a `participants`
@@ -44,6 +47,10 @@ Failed authentication produces structured error `-32001` and the gateway closes 
 
 Only a participant with the `human` role may invoke `decision.transition`. `confirm` changes `draft` to `active`; `dismiss` changes `draft` to `dismissed`; `edit` changes the old draft to `superseded`, creates a new `active` decision with `derivedFromDecisionId` set to the old identifier, and emits both immutable events in one database transaction.
 
+Only a participant with the `human` role may invoke `decision.delete`. The gateway locks the requested decision row, copies its `decisionId`, prior status, title, summary, and source-event IDs into a `decision.deleted` audit event, deletes the row, and commits the deletion, event, and request-ledger record atomically. A missing decision returns `-32004`; a non-human caller returns `-32003`. `dismiss` remains a state transition and is not the physical delete operation.
+
 ## Compatibility
 
-This accepted addition of the pre-authentication `session.authenticate` handshake is an additive `n2n.room.v1` patch and preserves all pre-existing authenticated room methods. Other additive optional fields are minor-compatible. Required-field, enum, method, or semantic changes require a new major contract version.
+`n2n.room.v1` remains a retained compatibility wire value for the ThoughtKhoral project. Existing room requests and events remain compatible, and the deletion method/event and empty-source create rule are additive within this retained contract. The optional event actor `displayName`, participant snapshot, and participant notification are additive fields/messages and do not invalidate existing events or room requests.
+
+This accepted addition of the pre-authentication `session.authenticate` handshake is an additive `n2n.room.v1` patch and preserves all pre-existing authenticated room methods. Other additive optional fields are minor-compatible. Required-field, enum, method, or semantic changes require a new major contract version. A future `thought-khoral.room.v2` protocol is a separate migration and requires its own approved compatibility decision.

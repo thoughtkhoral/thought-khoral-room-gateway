@@ -12,7 +12,6 @@ use uuid::Uuid;
 
 use crate::{
     auth::{Actor, ActorRole, AuthValidator},
-    facilitator::{NewDecisionProposal, propose_from_message},
     memory_engine_client::MemoryEngineClient,
     protocol::{DecisionAction, DecisionTransition, RpcError, ValidatedRequest},
     store::{
@@ -355,8 +354,10 @@ impl GatewayState {
         actor: Actor,
         request: ValidatedRequest,
     ) -> Result<ProcessedRequest, RpcError> {
-        if matches!(request, ValidatedRequest::DecisionTransition(_))
-            && actor.role != ActorRole::Human
+        if matches!(
+            request,
+            ValidatedRequest::DecisionTransition(_) | ValidatedRequest::DecisionDelete(_)
+        ) && actor.role != ActorRole::Human
         {
             return Err(RpcError::forbidden());
         }
@@ -419,12 +420,7 @@ impl GatewayState {
                 )
                 .await
                 .map_err(|_| RpcError::internal_error())?;
-                let mut events = vec![message.clone()];
-                if let Some(proposal) = propose_from_message(&message) {
-                    events
-                        .push(persist_draft_proposal(&mut transaction, &message, proposal).await?);
-                }
-                events
+                vec![message]
             }
             ValidatedRequest::DecisionPropose(request) => {
                 let decision_id = Uuid::new_v4();
@@ -472,6 +468,9 @@ impl GatewayState {
             ValidatedRequest::DecisionTransition(request) => {
                 transition_decision_in_transaction(&mut transaction, actor, request).await?
             }
+            ValidatedRequest::DecisionDelete(_) => {
+                unreachable!("decision.delete is implemented in the deletion task")
+            }
             ValidatedRequest::Join(_) => unreachable!("join requests returned above"),
             ValidatedRequest::SessionAuthenticate(_) => {
                 unreachable!("session authentication requests returned above")
@@ -507,53 +506,6 @@ impl GatewayState {
             .await
             .map(|processed| processed.events)
     }
-}
-
-async fn persist_draft_proposal(
-    transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
-    source: &RoomEvent,
-    proposal: NewDecisionProposal,
-) -> Result<RoomEvent, RpcError> {
-    let decision_id = Uuid::new_v4();
-    sqlx::query(
-        r#"
-        INSERT INTO decisions (
-            decision_id, room_id, status, title, summary,
-            source_event_ids, created_at, updated_at
-        ) VALUES ($1, $2, 'draft', $3, $4, $5, $6, $6)
-        "#,
-    )
-    .bind(decision_id)
-    .bind(source.room_id)
-    .bind(&proposal.title)
-    .bind(&proposal.summary)
-    .bind(&proposal.source_event_ids)
-    .bind(source.occurred_at)
-    .execute(&mut **transaction)
-    .await
-    .map_err(|_| RpcError::internal_error())?;
-
-    append_event_in_transaction(
-        transaction,
-        NewEvent {
-            room_id: source.room_id,
-            request_id: source.request_id,
-            event_type: "decision.proposed".to_owned(),
-            actor_id: proposal.actor_id,
-            actor_role: proposal.actor_role,
-            actor_display_name: Some(proposal.actor_display_name),
-            payload: json!({
-                "decisionId": decision_id,
-                "status": "draft",
-                "title": proposal.title,
-                "summary": proposal.summary,
-                "sourceEventIds": proposal.source_event_ids,
-            }),
-            occurred_at: source.occurred_at,
-        },
-    )
-    .await
-    .map_err(|_| RpcError::internal_error())
 }
 
 async fn transition_decision_in_transaction(
