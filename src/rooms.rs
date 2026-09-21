@@ -12,6 +12,7 @@ use unicode_normalization::UnicodeNormalization;
 use uuid::Uuid;
 
 use crate::{
+    action_items::{ACTION_ITEMS_AGENT_DISPLAY_NAME, ACTION_ITEMS_AGENT_ID, extract_action_items},
     auth::{Actor, ActorRole, AuthValidator},
     memory_engine_client::MemoryEngineClient,
     protocol::{
@@ -339,6 +340,31 @@ fn normalized_chat_payload(request: &ChatSend, audience_ids: &[Uuid]) -> serde_j
     })
 }
 
+fn action_items_task_payload(
+    task_id: Uuid,
+    source_event_id: Uuid,
+    requester_id: Uuid,
+) -> serde_json::Value {
+    json!({
+        "taskId": task_id,
+        "kind": "action-items.v1",
+        "sourceEventId": source_event_id,
+        "requesterId": requester_id,
+        "agentId": ACTION_ITEMS_AGENT_ID,
+    })
+}
+
+fn invokes_action_items(actor: &Actor, request: &ChatSend) -> bool {
+    actor.role == ActorRole::Human
+        && request.delivery == ChatDelivery::Room
+        && request.mentions.iter().any(|mention| {
+            matches!(
+                mention,
+                ChatMention::Participant { id, .. } if *id == ACTION_ITEMS_AGENT_ID
+            )
+        })
+}
+
 #[derive(Clone, Debug)]
 pub(crate) enum RoomBroadcast {
     Event(RoomEvent),
@@ -485,6 +511,15 @@ impl GatewayState {
     ) -> Result<Vec<RoomParticipant>, RpcError> {
         let events = self.replay(room_id, 0).await?;
         let mut participants = HashMap::<Uuid, RoomParticipant>::new();
+        participants.insert(
+            ACTION_ITEMS_AGENT_ID,
+            RoomParticipant {
+                id: ACTION_ITEMS_AGENT_ID,
+                role: "agent".to_owned(),
+                display_name: ACTION_ITEMS_AGENT_DISPLAY_NAME.to_owned(),
+                online: true,
+            },
+        );
         for event in events {
             let role = event.actor_role;
             let display_name = event.actor_display_name.unwrap_or_else(|| {
@@ -640,7 +675,71 @@ impl GatewayState {
                 )
                 .await
                 .map_err(|_| RpcError::internal_error())?;
-                vec![message]
+                let mut events = vec![message.clone()];
+                if invokes_action_items(&actor, &request) {
+                    let task_id = Uuid::new_v4();
+                    let core_payload =
+                        action_items_task_payload(task_id, message.event_id, actor.id);
+                    for event_type in ["agent.task.queued", "agent.task.running"] {
+                        events.push(
+                            append_event_in_transaction(
+                                &mut transaction,
+                                NewEvent {
+                                    room_id,
+                                    request_id,
+                                    event_type: event_type.to_owned(),
+                                    actor_id: ACTION_ITEMS_AGENT_ID,
+                                    actor_role: "agent".to_owned(),
+                                    actor_display_name: Some(
+                                        ACTION_ITEMS_AGENT_DISPLAY_NAME.to_owned(),
+                                    ),
+                                    payload: core_payload.clone(),
+                                    occurred_at: request.occurred_at,
+                                },
+                            )
+                            .await
+                            .map_err(|_| RpcError::internal_error())?,
+                        );
+                    }
+                    let (event_type, payload) = match extract_action_items(&request.text) {
+                        Ok(action_items) => {
+                            let mut payload = core_payload;
+                            payload["result"] = json!({
+                                "actionItems": action_items.into_iter().map(|item| json!({
+                                    "text": item.text,
+                                    "owner": item.owner,
+                                    "due": item.due,
+                                })).collect::<Vec<_>>(),
+                            });
+                            ("agent.task.succeeded", payload)
+                        }
+                        Err(_) => {
+                            let mut payload = core_payload;
+                            payload["failure"] = json!({ "code": "invalid_task_input" });
+                            ("agent.task.failed", payload)
+                        }
+                    };
+                    events.push(
+                        append_event_in_transaction(
+                            &mut transaction,
+                            NewEvent {
+                                room_id,
+                                request_id,
+                                event_type: event_type.to_owned(),
+                                actor_id: ACTION_ITEMS_AGENT_ID,
+                                actor_role: "agent".to_owned(),
+                                actor_display_name: Some(
+                                    ACTION_ITEMS_AGENT_DISPLAY_NAME.to_owned(),
+                                ),
+                                payload,
+                                occurred_at: request.occurred_at,
+                            },
+                        )
+                        .await
+                        .map_err(|_| RpcError::internal_error())?,
+                    );
+                }
+                events
             }
             ValidatedRequest::DecisionPropose(request) => {
                 let decision_id = Uuid::new_v4();

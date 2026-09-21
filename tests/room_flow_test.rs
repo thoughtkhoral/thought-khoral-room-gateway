@@ -2,6 +2,7 @@ mod support;
 
 use serde_json::json;
 use sqlx::Row;
+use thought_khoral_room_gateway::action_items::ACTION_ITEMS_AGENT_ID;
 use uuid::Uuid;
 
 use support::{TestServer, common_params, join, recv_json, rpc, send_json};
@@ -61,11 +62,13 @@ async fn join_returns_named_participants_and_presence_updates() {
     let mut first = server.connect(&server.token_with(first_options)).await;
 
     let joined = join(&mut first, room_id, None).await;
-    assert_eq!(
-        joined["result"]["participants"][0]["displayName"],
-        "Maya Chen"
-    );
-    assert_eq!(joined["result"]["participants"][0]["online"], true);
+    let maya = joined["result"]["participants"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|participant| participant["displayName"] == "Maya Chen")
+        .expect("the joined human must be present in the roster");
+    assert_eq!(maya["online"], true);
 
     let mut message = common_params(Uuid::new_v4(), room_id);
     message["text"] = json!("The join response is complete.");
@@ -82,7 +85,7 @@ async fn join_returns_named_participants_and_presence_updates() {
             .as_array()
             .unwrap()
             .len(),
-        2
+        3
     );
     assert_eq!(
         recv_json(&mut first).await["method"],
@@ -133,6 +136,52 @@ async fn two_humans_receive_the_same_persisted_message_sequence() {
     assert_eq!(
         first_event["sequence"],
         row.try_get::<i64, _>("sequence").unwrap()
+    );
+}
+
+// This fails if a direct mention of the registered agent does not create one
+// replayable lifecycle and structured result alongside the source message.
+#[tokio::test]
+async fn human_action_items_mention_emits_one_task_lifecycle() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let token = server.token(Uuid::new_v4(), "human");
+    let mut socket = server.connect(&token).await;
+    let joined = join(&mut socket, room_id, None).await;
+    assert!(
+        joined["result"]["participants"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|participant| { participant["id"] == ACTION_ITEMS_AGENT_ID.to_string() })
+    );
+
+    let mut params = common_params(Uuid::new_v4(), room_id);
+    params["text"] =
+        json!("@action-items\n- Prepare rollout checklist | owner: Maya | due: Friday");
+    params["mentions"] = json!([{
+        "type": "participant",
+        "id": ACTION_ITEMS_AGENT_ID,
+        "token": "action-items"
+    }]);
+    params["delivery"] = json!("room");
+    send_json(&mut socket, rpc("task", "chat.send", params)).await;
+
+    let message = recv_json(&mut socket).await;
+    let queued = recv_json(&mut socket).await;
+    let running = recv_json(&mut socket).await;
+    let completed = recv_json(&mut socket).await;
+    assert_eq!(message["eventType"], "message.created");
+    assert_eq!(queued["eventType"], "agent.task.queued");
+    assert_eq!(running["eventType"], "agent.task.running");
+    assert_eq!(completed["eventType"], "agent.task.succeeded");
+    assert_eq!(
+        completed["payload"]["result"]["actionItems"][0]["owner"],
+        "Maya"
+    );
+    assert_eq!(
+        queued["payload"]["agentId"],
+        ACTION_ITEMS_AGENT_ID.to_string()
     );
 }
 
@@ -623,7 +672,8 @@ async fn chat_mentions_expand_allagents_to_agents_and_humans() {
             sender_id,
             human_id,
             first_agent_id,
-            second_agent_id
+            second_agent_id,
+            ACTION_ITEMS_AGENT_ID
         ]))
     );
 }
@@ -740,7 +790,7 @@ async fn chat_mentions_keep_sender_when_an_alias_matches_no_participants() {
 
     assert_eq!(
         recv_json(&mut sender).await["payload"]["audienceIds"],
-        json!([sender_id.to_string()])
+        json!(sorted_ids([sender_id, ACTION_ITEMS_AGENT_ID]))
     );
 }
 

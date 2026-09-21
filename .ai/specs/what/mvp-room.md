@@ -25,6 +25,11 @@
   event identifier as provenance. A memory-engine / Cognee implementation of
   the same port is out of this project's runtime until a separately approved
   plan enables it; this gateway must not add a second independent propose path.
+- The gateway registers the deterministic Action Items Agent and, after a
+  human room-wide direct mention, atomically records the source message and
+  replayable task lifecycle
+  events. The executor has no model, tools, filesystem, shell, network, or
+  direct database access and cannot affect decisions or active context.
 
 ## Interfaces
 

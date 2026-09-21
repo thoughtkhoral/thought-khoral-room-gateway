@@ -191,6 +191,10 @@ This project must not embed Cognee, call an unmediated model, or add a second
 independent propose path beside the port. Switching the live implementation
 requires a separately approved memory-engine How and implementation plan.
 
+## Deterministic agent task dispatch
+
+Root [decision 006](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/006-agent-task-dispatch.md) authorizes one registered Action Items Agent. The gateway creates a task only for a human, room-wide direct mention of that registered agent. It atomically persists the source message, `agent.task.queued`, `agent.task.running`, and one terminal task event from its pure executor. The executor receives only message text with its mention removed and cannot access tools, filesystem, shell, network, or active-context transitions. Repeated chat requests remain idempotent through the existing request ledger.
+
 ## Append-only and persistence validation invariants
 
 `room_events` is database-enforced append-only: a follow-on migration installs

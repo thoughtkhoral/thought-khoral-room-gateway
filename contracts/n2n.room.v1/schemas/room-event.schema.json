@@ -33,6 +33,27 @@
       "description": "Structural duplicates are rejected. Contract validation additionally requires participant IDs and aliases to be semantically unique.",
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/mention" }
+    },
+    "actionItem": {
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "owner": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "due": { "type": "string", "minLength": 1, "maxLength": 256 }
+      },
+      "required": ["text"],
+      "additionalProperties": false
+    },
+    "agentTaskCore": {
+      "type": "object",
+      "properties": {
+        "taskId": { "type": "string", "format": "uuid" },
+        "kind": { "const": "action-items.v1" },
+        "sourceEventId": { "type": "string", "format": "uuid" },
+        "requesterId": { "type": "string", "format": "uuid" },
+        "agentId": { "type": "string", "format": "uuid" }
+      },
+      "required": ["taskId", "kind", "sourceEventId", "requesterId", "agentId"]
     }
   },
   "allOf": [
@@ -68,6 +89,24 @@
           }
         }
       }
+    },
+    {
+      "if": { "properties": { "eventType": { "enum": ["agent.task.queued", "agent.task.running"] } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/agentTaskCore" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "agent.task.succeeded" } } },
+      "then": { "properties": { "payload": { "allOf": [
+        { "$ref": "#/$defs/agentTaskCore" },
+        { "type": "object", "properties": { "result": { "type": "object", "properties": { "actionItems": { "type": "array", "maxItems": 20, "items": { "$ref": "#/$defs/actionItem" } } }, "required": ["actionItems"], "additionalProperties": false } }, "required": ["result"] }
+      ] } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "agent.task.failed" } } },
+      "then": { "properties": { "payload": { "allOf": [
+        { "$ref": "#/$defs/agentTaskCore" },
+        { "type": "object", "properties": { "failure": { "type": "object", "properties": { "code": { "enum": ["invalid_task_input", "execution_failed"] } }, "required": ["code"], "additionalProperties": false } }, "required": ["failure"] }
+      ] } } }
     }
   ],
   "properties": {
@@ -80,7 +119,11 @@
         "decision.confirmed",
         "decision.edited",
         "decision.dismissed",
-        "decision.deleted"
+        "decision.deleted",
+        "agent.task.queued",
+        "agent.task.running",
+        "agent.task.succeeded",
+        "agent.task.failed"
       ]
     },
     "actor": {

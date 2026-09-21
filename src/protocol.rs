@@ -121,6 +121,30 @@ mod tests {
 
         assert!(!is_valid_room_event(Uuid::new_v4(), &event));
     }
+
+    #[test]
+    fn accepts_a_persisted_action_items_task_event() {
+        let agent_id = Uuid::from_u128(0x74686f756768746b_686f72616c000002);
+        let event = crate::store::NewEvent {
+            room_id: Uuid::new_v4(),
+            request_id: Uuid::new_v4(),
+            event_type: "agent.task.succeeded".to_owned(),
+            actor_id: agent_id,
+            actor_role: "agent".to_owned(),
+            actor_display_name: None,
+            payload: json!({
+                "taskId": Uuid::new_v4(),
+                "kind": "action-items.v1",
+                "sourceEventId": Uuid::new_v4(),
+                "requesterId": Uuid::new_v4(),
+                "agentId": agent_id,
+                "result": { "actionItems": [] },
+            }),
+            occurred_at: Utc::now(),
+        };
+
+        assert!(is_valid_room_event(Uuid::new_v4(), &event));
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
