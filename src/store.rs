@@ -137,6 +137,15 @@ pub struct AgentTaskStartResult {
     pub events: Vec<RoomEvent>,
 }
 
+/// The internal broker needs to distinguish an idempotent retry from new persisted output so it
+/// never publishes a replay to room subscribers.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct AgentTaskUpdateResult {
+    pub task_id: Uuid,
+    pub events: Vec<RoomEvent>,
+    pub duplicate: bool,
+}
+
 #[derive(Clone)]
 pub struct AgentTaskStore {
     pool: PgPool,
@@ -237,9 +246,11 @@ impl RoomEvent {
 
 #[cfg(test)]
 mod tests {
-    use super::RoomEvent;
-    use chrono::{TimeZone, Utc};
+    use super::{RoomEvent, claim_oldest_queued_agent_task};
+    use chrono::{Duration, TimeZone, Utc};
     use serde_json::json;
+    use sqlx::postgres::PgPoolOptions;
+    use tokio::time::timeout;
     use uuid::Uuid;
 
     #[test]
@@ -258,6 +269,83 @@ mod tests {
         };
 
         assert_eq!(event.to_wire_value()["actor"]["displayName"], "Maya Chen");
+    }
+
+    // This fails if a second worker skips a row lock and claims a later task before the oldest.
+    #[tokio::test]
+    async fn queued_claim_waits_for_the_locked_oldest_task() {
+        let pool = PgPoolOptions::new()
+            .max_connections(3)
+            .connect(
+                &std::env::var("DATABASE_URL")
+                    .expect("DATABASE_URL must name a migrated PostgreSQL database"),
+            )
+            .await
+            .unwrap();
+        let agent_id = Uuid::new_v4();
+        let requester_id = Uuid::new_v4();
+        let older_task_id = Uuid::new_v4();
+        let newer_task_id = Uuid::new_v4();
+        let enqueued_at = Utc::now() - Duration::seconds(2);
+
+        for (task_id, created_at) in [
+            (older_task_id, enqueued_at),
+            (newer_task_id, enqueued_at + Duration::seconds(1)),
+        ] {
+            sqlx::query(
+                r#"
+                INSERT INTO agent_tasks (
+                    task_id, room_id, request_id, requester_id, agent_id, skill_id, input,
+                    context_revision, state, lease_owner, lease_expires_at, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, 'summarize-context', $6, 0, 'queued', NULL, NULL, $7, $7)
+                "#,
+            )
+            .bind(task_id)
+            .bind(Uuid::new_v4())
+            .bind(Uuid::new_v4())
+            .bind(requester_id)
+            .bind(agent_id)
+            .bind("FIFO test task")
+            .bind(created_at)
+            .execute(&pool)
+            .await
+            .unwrap();
+        }
+
+        let mut oldest_lock = pool.begin().await.unwrap();
+        sqlx::query("SELECT task_id FROM agent_tasks WHERE task_id = $1 FOR UPDATE")
+            .bind(older_task_id)
+            .fetch_one(&mut *oldest_lock)
+            .await
+            .unwrap();
+
+        let claim_pool = pool.clone();
+        let mut blocked_claim = tokio::spawn(async move {
+            claim_oldest_queued_agent_task(&claim_pool, agent_id, Uuid::new_v4(), Utc::now())
+                .await
+                .unwrap()
+                .unwrap()
+        });
+        assert!(
+            timeout(
+                Duration::milliseconds(100).to_std().unwrap(),
+                &mut blocked_claim
+            )
+            .await
+            .is_err(),
+            "a strict FIFO claim must wait for the oldest row lock"
+        );
+
+        oldest_lock.commit().await.unwrap();
+        assert_eq!(blocked_claim.await.unwrap().task_id, older_task_id);
+        assert_eq!(
+            claim_oldest_queued_agent_task(&pool, agent_id, Uuid::new_v4(), Utc::now())
+                .await
+                .unwrap()
+                .unwrap()
+                .task_id,
+            newer_task_id
+        );
     }
 }
 
@@ -511,7 +599,7 @@ pub(crate) async fn start_agent_task_in_transaction(
         INSERT INTO agent_tasks (
             task_id, room_id, request_id, requester_id, agent_id, skill_id, input,
             context_revision, state, lease_owner, lease_expires_at, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'queued', NULL, NULL, $9, $9)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'queued', NULL, NULL, NOW(), NOW())
         "#,
     )
     .bind(task_id)
@@ -522,7 +610,6 @@ pub(crate) async fn start_agent_task_in_transaction(
     .bind(start.skill_id.as_str())
     .bind(start.input)
     .bind(context_revision)
-    .bind(start.occurred_at)
     .execute(&mut **transaction)
     .await?;
     if record_idempotency {
@@ -600,6 +687,13 @@ pub(crate) async fn claim_oldest_queued_agent_task(
     now: DateTime<Utc>,
 ) -> Result<Option<AgentTaskLease>, StoreError> {
     let expires_at = now + AGENT_TASK_LEASE_DURATION;
+    let mut transaction = pool.begin().await?;
+    // Claims for one agent share a transaction-scoped lock.  This prevents a concurrent worker
+    // from skipping the head of that agent's queue while it is being claimed.
+    sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1::text, 1))")
+        .bind(agent_id)
+        .execute(&mut *transaction)
+        .await?;
     let row = sqlx::query(
         r#"
         WITH claimable AS (
@@ -610,7 +704,7 @@ pub(crate) async fn claim_oldest_queued_agent_task(
               AND (lease_expires_at IS NULL OR lease_expires_at <= $2)
             ORDER BY created_at ASC, task_id ASC
             LIMIT 1
-            FOR UPDATE SKIP LOCKED
+            FOR UPDATE
         )
         UPDATE agent_tasks
         SET lease_owner = $3, lease_expires_at = $4, state = 'running', updated_at = $2
@@ -623,16 +717,19 @@ pub(crate) async fn claim_oldest_queued_agent_task(
     .bind(now)
     .bind(owner_id)
     .bind(expires_at)
-    .fetch_optional(pool)
+    .fetch_optional(&mut *transaction)
     .await?;
-    row.map(|row| {
-        Ok(AgentTaskLease {
-            task_id: row.try_get("task_id")?,
-            owner_id: row.try_get("lease_owner")?,
-            expires_at: row.try_get("lease_expires_at")?,
+    let lease: Option<AgentTaskLease> = row
+        .map(|row| -> Result<AgentTaskLease, StoreError> {
+            Ok(AgentTaskLease {
+                task_id: row.try_get("task_id")?,
+                owner_id: row.try_get("lease_owner")?,
+                expires_at: row.try_get("lease_expires_at")?,
+            })
         })
-    })
-    .transpose()
+        .transpose()?;
+    transaction.commit().await?;
+    Ok(lease)
 }
 
 pub async fn context_for_lease(
@@ -685,6 +782,18 @@ pub async fn record_agent_task_update(
     lease: &AgentTaskLease,
     update: AgentTaskUpdate,
 ) -> Result<AgentTaskStartResult, StoreError> {
+    let result = record_agent_task_update_with_outcome(pool, lease, update).await?;
+    Ok(AgentTaskStartResult {
+        task_id: result.task_id,
+        events: result.events,
+    })
+}
+
+pub(crate) async fn record_agent_task_update_with_outcome(
+    pool: &PgPool,
+    lease: &AgentTaskLease,
+    update: AgentTaskUpdate,
+) -> Result<AgentTaskUpdateResult, StoreError> {
     let mut transaction = pool.begin().await?;
     let task = sqlx::query(
         r#"
@@ -708,6 +817,7 @@ pub async fn record_agent_task_update(
         return Err(StoreError::InvalidAgentTask);
     };
     lock_room(&mut transaction, task.room_id).await?;
+    let payload = normalized_agent_task_update_payload(&task, update.payload.clone())?;
     if let Some(event_ids) = sqlx::query_scalar::<_, Vec<Uuid>>(
         "SELECT event_ids FROM agent_task_updates WHERE task_id = $1 AND update_id = $2",
     )
@@ -718,9 +828,13 @@ pub async fn record_agent_task_update(
     {
         let events = events_by_id(&mut transaction, &event_ids).await?;
         transaction.rollback().await?;
-        return Ok(AgentTaskStartResult {
+        if !is_matching_agent_task_update(&events, &update, &payload) {
+            return Err(StoreError::ConflictingDuplicate);
+        }
+        return Ok(AgentTaskUpdateResult {
             task_id: task.task_id,
             events,
+            duplicate: true,
         });
     }
     if !matches!(
@@ -731,20 +845,6 @@ pub async fn record_agent_task_update(
         return Err(StoreError::InvalidAgentTask);
     }
     let state = state_for_update(&update.event_type)?;
-    let mut payload = update.payload;
-    let core = json!({
-        "taskId": task.task_id,
-        "agentId": task.agent_id,
-        "requesterId": task.requester_id,
-        "skillId": task.skill_id,
-        "contextRevision": task.context_revision,
-    });
-    let object = payload
-        .as_object_mut()
-        .ok_or(StoreError::InvalidAgentTask)?;
-    for (key, value) in core.as_object().expect("JSON object") {
-        object.insert(key.clone(), value.clone());
-    }
     let event = append_event_in_transaction(
         &mut transaction,
         NewEvent {
@@ -774,10 +874,43 @@ pub async fn record_agent_task_update(
         .execute(&mut *transaction)
         .await?;
     transaction.commit().await?;
-    Ok(AgentTaskStartResult {
+    Ok(AgentTaskUpdateResult {
         task_id: task.task_id,
         events: vec![event],
+        duplicate: false,
     })
+}
+
+fn normalized_agent_task_update_payload(
+    task: &AgentTaskRecord,
+    mut payload: Value,
+) -> Result<Value, StoreError> {
+    let core = json!({
+        "taskId": task.task_id,
+        "agentId": task.agent_id,
+        "requesterId": task.requester_id,
+        "skillId": task.skill_id,
+        "contextRevision": task.context_revision,
+    });
+    let object = payload
+        .as_object_mut()
+        .ok_or(StoreError::InvalidAgentTask)?;
+    for (key, value) in core.as_object().expect("JSON object") {
+        object.insert(key.clone(), value.clone());
+    }
+    Ok(payload)
+}
+
+fn is_matching_agent_task_update(
+    events: &[RoomEvent],
+    update: &AgentTaskUpdate,
+    normalized_payload: &Value,
+) -> bool {
+    events.len() == 1
+        && events[0].event_type == update.event_type
+        && events[0].payload == *normalized_payload
+        // PostgreSQL timestamps are stored at microsecond precision.
+        && events[0].occurred_at.timestamp_micros() == update.occurred_at.timestamp_micros()
 }
 
 fn state_for_update(event_type: &str) -> Result<AgentTaskState, StoreError> {

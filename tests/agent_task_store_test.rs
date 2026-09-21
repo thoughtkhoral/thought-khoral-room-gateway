@@ -90,6 +90,20 @@ async fn task_start_creates_one_requested_event_and_one_queued_record() {
     );
 }
 
+// This fails if an untrusted client occurrence time can reorder the gateway-owned task queue.
+#[tokio::test]
+async fn task_enqueue_timestamp_is_not_backdated_from_client_occurrence_time() {
+    let (store, _) = test_store().await;
+    let mut start = test_task_start();
+    start.occurred_at = Utc::now() - Duration::days(365);
+
+    let task = store.start_agent_task(start.clone()).await.unwrap();
+    let record = store.agent_task(task.task_id).await.unwrap();
+
+    assert!(record.created_at > start.occurred_at);
+    assert!(record.updated_at > start.occurred_at);
+}
+
 // This fails if an active worker lease can be stolen, or an expired one cannot be recovered.
 #[tokio::test]
 async fn expired_lease_can_be_claimed_again_but_live_lease_cannot() {

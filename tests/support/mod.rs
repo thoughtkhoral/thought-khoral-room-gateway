@@ -105,6 +105,16 @@ struct WorkloadClaims {
     exp: i64,
 }
 
+#[derive(Serialize)]
+struct MultiAudienceWorkloadClaims {
+    sub: String,
+    azp: String,
+    iss: String,
+    aud: Vec<String>,
+    iat: i64,
+    exp: i64,
+}
+
 pub struct TokenOptions {
     pub sub: String,
     pub role: String,
@@ -268,6 +278,28 @@ impl TestServer {
         encode(&header, &claims, &self.encoding_key).unwrap()
     }
 
+    pub fn agent_gateway_token_with_audiences(
+        &self,
+        audiences: &[&str],
+        authorized_party: &str,
+    ) -> String {
+        let issued_at = chrono::Utc::now().timestamp();
+        let claims = MultiAudienceWorkloadClaims {
+            sub: "service-account-thought-khoral-agent-gateway".to_owned(),
+            azp: authorized_party.to_owned(),
+            iss: ISSUER.to_owned(),
+            aud: audiences
+                .iter()
+                .map(|audience| (*audience).to_owned())
+                .collect(),
+            iat: issued_at,
+            exp: issued_at + 300,
+        };
+        let mut header = Header::new(Algorithm::RS256);
+        header.kid = Some(KEY_ID.to_owned());
+        encode(&header, &claims, &self.encoding_key).unwrap()
+    }
+
     pub async fn internal_json(
         &self,
         method: &str,
@@ -312,7 +344,7 @@ impl TestServer {
             let body = if body.is_empty() {
                 Value::Null
             } else {
-                serde_json::from_str(body).unwrap()
+                serde_json::from_str(body).unwrap_or_else(|_| Value::String(body.to_owned()))
             };
             (status, body)
         })

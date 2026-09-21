@@ -29,7 +29,7 @@ pub fn app(state: GatewayState) -> Router {
     Router::new()
         .route("/health", get(gateway_status))
         .route("/ws", get(websocket_upgrade))
-        .merge(crate::agent_service::routes())
+        .merge(crate::agent_service::routes(state.clone()))
         .with_state(state)
 }
 

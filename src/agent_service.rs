@@ -1,9 +1,10 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 
 use axum::{
     Json, Router,
-    extract::{Path, State},
+    extract::{Path, Request, State},
     http::{HeaderMap, StatusCode, header::AUTHORIZATION},
+    middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::{get, post},
 };
@@ -19,7 +20,7 @@ use crate::{
     store::{
         AGENT_TASK_LEASE_DURATION, AgentSkillId, AgentTaskContext, AgentTaskLease, AgentTaskUpdate,
         RoomEvent, StoreError, agent_task, claim_oldest_queued_agent_task, context_for_lease,
-        record_agent_task_update,
+        record_agent_task_update_with_outcome,
     },
 };
 
@@ -97,21 +98,18 @@ struct CanonicalRoomContextPacket<'a> {
     active_decisions: &'a [ActiveDecision],
 }
 
-pub(crate) fn routes() -> Router<GatewayState> {
+pub(crate) fn routes(state: GatewayState) -> Router<GatewayState> {
     Router::new()
         .route("/internal/v1/agent-tasks/claim", post(claim))
         .route("/internal/v1/agent-tasks/{task_id}/context", get(context))
         .route("/internal/v1/agent-tasks/{task_id}/updates", post(update))
+        .route_layer(middleware::from_fn_with_state(
+            state,
+            authenticate_agent_gateway,
+        ))
 }
 
-async fn claim(
-    State(state): State<GatewayState>,
-    headers: HeaderMap,
-    Json(request): Json<ClaimRequest>,
-) -> Response {
-    if let Err(status) = authenticate_agent_gateway(&state, &headers) {
-        return status.into_response();
-    }
+async fn claim(State(state): State<GatewayState>, Json(request): Json<ClaimRequest>) -> Response {
     let lease = match claim_oldest_queued_agent_task(
         state.pool(),
         REFERENCE_AGENT_ID,
@@ -132,9 +130,6 @@ async fn context(
     Path(task_id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Response {
-    if let Err(status) = authenticate_agent_gateway(&state, &headers) {
-        return status.into_response();
-    }
     let Some(lease) = matching_live_lease(&state, task_id, &headers).await else {
         return StatusCode::NOT_FOUND.into_response();
     };
@@ -147,9 +142,6 @@ async fn update(
     headers: HeaderMap,
     Json(request): Json<TaskUpdateRequest>,
 ) -> Response {
-    if let Err(status) = authenticate_agent_gateway(&state, &headers) {
-        return status.into_response();
-    }
     let Some(lease) = matching_live_lease(&state, task_id, &headers).await else {
         return StatusCode::NOT_FOUND.into_response();
     };
@@ -161,21 +153,31 @@ async fn update(
     if request.context_revision != context.task.context_revision {
         return StatusCode::CONFLICT.into_response();
     }
+    let packet = match context_packet(context, &lease) {
+        Ok(packet) => packet,
+        Err(()) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    };
+    if !terminal_citations_are_visible(&packet, &request.update) {
+        return StatusCode::UNPROCESSABLE_ENTITY.into_response();
+    }
     let update = AgentTaskUpdate {
         update_id: request.update_id,
         event_type: request.update.event_type,
         payload: request.update.payload,
         occurred_at: request.update.occurred_at,
     };
-    let result = match record_agent_task_update(state.pool(), &lease, update).await {
+    let result = match record_agent_task_update_with_outcome(state.pool(), &lease, update).await {
         Ok(result) => result,
+        Err(StoreError::ConflictingDuplicate) => return StatusCode::CONFLICT.into_response(),
         Err(StoreError::InvalidAgentTask | StoreError::InvalidEvent) => {
             return StatusCode::UNPROCESSABLE_ENTITY.into_response();
         }
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     };
-    for event in &result.events {
-        state.publish(event.clone());
+    if !result.duplicate {
+        for event in &result.events {
+            state.publish(event.clone());
+        }
     }
     Json(serde_json::json!({
         "events": result.events.iter().map(RoomEvent::to_wire_value).collect::<Vec<_>>(),
@@ -183,17 +185,25 @@ async fn update(
     .into_response()
 }
 
-fn authenticate_agent_gateway(state: &GatewayState, headers: &HeaderMap) -> Result<(), StatusCode> {
-    let authorization = headers
+async fn authenticate_agent_gateway(
+    State(state): State<GatewayState>,
+    request: Request,
+    next: Next,
+) -> Response {
+    let authorization = request
+        .headers()
         .get(AUTHORIZATION)
         .and_then(|value| value.to_str().ok());
-    state
+    match state
         .auth()
         .authenticate_agent_gateway_bearer(authorization)
-        .map_err(|error| match error {
-            WorkloadAuthenticationError::Unauthenticated => StatusCode::UNAUTHORIZED,
-            WorkloadAuthenticationError::Forbidden => StatusCode::FORBIDDEN,
-        })
+    {
+        Ok(()) => next.run(request).await,
+        Err(WorkloadAuthenticationError::Unauthenticated) => {
+            StatusCode::UNAUTHORIZED.into_response()
+        }
+        Err(WorkloadAuthenticationError::Forbidden) => StatusCode::FORBIDDEN.into_response(),
+    }
 }
 
 async fn matching_live_lease(
@@ -277,6 +287,38 @@ fn context_packet(
         events,
         active_decisions,
         canonical_sha256,
+    })
+}
+
+fn terminal_citations_are_visible(
+    packet: &RoomContextPacket,
+    update: &NormalizedAgentTaskUpdate,
+) -> bool {
+    if update.event_type != "agent.task.succeeded" {
+        return true;
+    }
+    let Some(citations) = update.payload.pointer("/result/citations") else {
+        return true;
+    };
+    let Some(citations) = citations.as_array() else {
+        return false;
+    };
+    let event_ids = packet
+        .events
+        .iter()
+        .filter_map(|event| event.get("eventId"))
+        .filter_map(Value::as_str)
+        .filter_map(|value| Uuid::parse_str(value).ok());
+    let decision_ids = packet
+        .active_decisions
+        .iter()
+        .map(|decision| decision.decision_id);
+    let visible_ids = event_ids.chain(decision_ids).collect::<HashSet<_>>();
+    citations.iter().all(|citation| {
+        citation
+            .as_str()
+            .and_then(|value| Uuid::parse_str(value).ok())
+            .is_some_and(|citation_id| visible_ids.contains(&citation_id))
     })
 }
 

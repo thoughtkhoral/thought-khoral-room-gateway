@@ -73,9 +73,17 @@ struct Claims {
 
 #[derive(Deserialize)]
 struct WorkloadClaims {
+    aud: WorkloadAudience,
     azp: Option<String>,
     iat: Option<i64>,
     exp: i64,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum WorkloadAudience {
+    One(String),
+    Many(Vec<String>),
 }
 
 pub(crate) fn display_name_for(
@@ -211,6 +219,16 @@ impl AuthValidator {
             .map_err(|_| WorkloadAuthenticationError::Unauthenticated)?
             .claims;
 
+        let audience = match &claims.aud {
+            WorkloadAudience::One(audience) => audience,
+            WorkloadAudience::Many(audiences) => {
+                let _multiple_audiences = audiences;
+                return Err(WorkloadAuthenticationError::Unauthenticated);
+            }
+        };
+        if audience != AGENT_GATEWAY_AUDIENCE {
+            return Err(WorkloadAuthenticationError::Unauthenticated);
+        }
         if claims.azp.as_deref() != Some(AGENT_GATEWAY_CLIENT_ID) {
             return Err(WorkloadAuthenticationError::Forbidden);
         }

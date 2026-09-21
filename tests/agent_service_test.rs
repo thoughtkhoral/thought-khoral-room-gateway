@@ -37,7 +37,7 @@ async fn insert_message(
     audience_id: Uuid,
     text: &str,
     occurred_at: chrono::DateTime<Utc>,
-) {
+) -> Uuid {
     append_event(
         pool,
         NewEvent {
@@ -61,7 +61,8 @@ async fn insert_message(
         },
     )
     .await
-    .unwrap();
+    .unwrap()
+    .event_id
 }
 
 async fn insert_active_decision(pool: &PgPool, room_id: Uuid, occurred_at: chrono::DateTime<Utc>) {
@@ -139,12 +140,15 @@ async fn brokered_context_requires_the_agent_gateway_identity_and_a_matching_liv
     let requester_id = Uuid::new_v4();
     let room_id = Uuid::new_v4();
     let now = Utc::now();
-    // The agent task queue is intentionally global; this makes this test's FIFO candidates older
-    // than unrelated integration-test fixtures that share the migrated database.
-    let task_time = now - Duration::days(36_500);
     let store = AgentTaskStore::new(server.pool.clone(), requester_id, "Requesting Human");
 
-    insert_message(
+    sqlx::query("UPDATE agent_tasks SET state = 'failed', updated_at = NOW() WHERE agent_id = $1 AND state = 'queued'")
+        .bind(REFERENCE_AGENT_ID)
+        .execute(&server.pool)
+        .await
+        .unwrap();
+
+    let _visible_event_id = insert_message(
         &server.pool,
         room_id,
         requester_id,
@@ -153,7 +157,7 @@ async fn brokered_context_requires_the_agent_gateway_identity_and_a_matching_liv
         now - Duration::hours(2),
     )
     .await;
-    insert_message(
+    let hidden_event_id = insert_message(
         &server.pool,
         room_id,
         requester_id,
@@ -165,23 +169,23 @@ async fn brokered_context_requires_the_agent_gateway_identity_and_a_matching_liv
     insert_active_decision(&server.pool, room_id, now - Duration::hours(2)).await;
 
     let wrong_agent_task =
-        insert_ineligible_agent_task(&server.pool, requester_id, task_time - Duration::days(1))
-            .await;
+        insert_ineligible_agent_task(&server.pool, requester_id, now - Duration::days(1)).await;
     let first_reference_task = store
         .start_agent_task(task_start(
             room_id,
             REFERENCE_AGENT_ID,
             "First Reference Agent task.",
-            task_time,
+            now,
         ))
         .await
         .unwrap();
+    tokio::time::sleep(std::time::Duration::from_millis(2)).await;
     let _second_reference_task = store
         .start_agent_task(task_start(
             room_id,
             REFERENCE_AGENT_ID,
             "Second Reference Agent task.",
-            task_time + Duration::days(1),
+            now - Duration::days(365),
         ))
         .await
         .unwrap();
@@ -197,6 +201,17 @@ async fn brokered_context_requires_the_agent_gateway_identity_and_a_matching_liv
         )
         .await;
     assert_eq!(missing_status, 401);
+
+    let (malformed_unauthenticated_status, _) = server
+        .internal_json(
+            "POST",
+            "/internal/v1/agent-tasks/claim",
+            None,
+            None,
+            Some(json!({ "unexpected": "body" })),
+        )
+        .await;
+    assert_eq!(malformed_unauthenticated_status, 401);
 
     let (human_status, _) = server
         .internal_json(
@@ -220,6 +235,21 @@ async fn brokered_context_requires_the_agent_gateway_identity_and_a_matching_liv
         )
         .await;
     assert_eq!(wrong_audience_status, 401);
+
+    let multi_audience = server.agent_gateway_token_with_audiences(
+        &[AUDIENCE, "another-service"],
+        AGENT_GATEWAY_CLIENT_ID,
+    );
+    let (multi_audience_status, _) = server
+        .internal_json(
+            "POST",
+            "/internal/v1/agent-tasks/claim",
+            Some(&multi_audience),
+            None,
+            Some(claim_body.clone()),
+        )
+        .await;
+    assert_eq!(multi_audience_status, 401);
 
     let wrong_authorized_party = server.agent_gateway_token(AUDIENCE, "another-client");
     let (wrong_authorized_party_status, _) = server
@@ -371,11 +401,84 @@ async fn brokered_context_requires_the_agent_gateway_identity_and_a_matching_liv
             &updates_path,
             Some(&gateway_token),
             Some(lease_token),
-            Some(update),
+            Some(update.clone()),
         )
         .await;
     assert_eq!(duplicate_status, 200);
     assert_eq!(duplicate["events"], first_update["events"]);
+
+    let mut conflicting_duplicate = update.clone();
+    conflicting_duplicate["update"]["payload"]["text"] = json!("Conflicting retry payload.");
+    let (conflicting_duplicate_status, _) = server
+        .internal_json(
+            "POST",
+            &updates_path,
+            Some(&gateway_token),
+            Some(lease_token),
+            Some(conflicting_duplicate),
+        )
+        .await;
+    assert_eq!(conflicting_duplicate_status, 409);
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM room_events WHERE room_id = $1")
+            .bind(room_id)
+            .fetch_one(&server.pool)
+            .await
+            .unwrap(),
+        room_event_count + 1
+    );
+
+    let forbidden_terminal_update = json!({
+        "updateId": Uuid::new_v4(),
+        "contextRevision": claim["packet"]["contextRevision"],
+        "update": {
+            "eventType": "agent.task.succeeded",
+            "payload": {
+                "result": {
+                    "kind": "context-summary.v1",
+                    "summary": "This must not cite a hidden event.",
+                    "citations": [hidden_event_id],
+                },
+            },
+            "occurredAt": Utc::now(),
+        },
+    });
+    let (hidden_citation_status, _) = server
+        .internal_json(
+            "POST",
+            &updates_path,
+            Some(&gateway_token),
+            Some(lease_token),
+            Some(forbidden_terminal_update),
+        )
+        .await;
+    assert_eq!(hidden_citation_status, 422);
+
+    let foreign_terminal_update = json!({
+        "updateId": Uuid::new_v4(),
+        "contextRevision": claim["packet"]["contextRevision"],
+        "update": {
+            "eventType": "agent.task.succeeded",
+            "payload": {
+                "result": {
+                    "kind": "context-summary.v1",
+                    "summary": "This must not cite a foreign value.",
+                    "citations": [Uuid::new_v4()],
+                },
+            },
+            "occurredAt": Utc::now(),
+        },
+    });
+    let (foreign_citation_status, _) = server
+        .internal_json(
+            "POST",
+            &updates_path,
+            Some(&gateway_token),
+            Some(lease_token),
+            Some(foreign_terminal_update),
+        )
+        .await;
+    assert_eq!(foreign_citation_status, 422);
     assert_eq!(
         sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM room_events WHERE room_id = $1")
             .bind(room_id)
