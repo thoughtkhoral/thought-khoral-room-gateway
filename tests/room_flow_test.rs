@@ -185,6 +185,46 @@ async fn human_action_items_mention_emits_one_task_lifecycle() {
     );
 }
 
+// This fails if starting an external task runs it inline or omits its durable requested event.
+#[tokio::test]
+async fn human_task_start_emits_one_requested_event_without_inline_execution() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let requester_id = Uuid::new_v4();
+    let mut socket = server.connect(&server.token(requester_id, "human")).await;
+    join(&mut socket, room_id, None).await;
+
+    let request_id = Uuid::new_v4();
+    let mut params = common_params(request_id, room_id);
+    params["agentId"] = json!("74686f75-6768-746b-686f-72616c000003");
+    params["skillId"] = json!("summarize-context");
+    params["input"] = json!("Summarize the room.");
+    send_json(&mut socket, rpc("task", "agent.task.start", params.clone())).await;
+
+    let requested = recv_json(&mut socket).await;
+    assert_eq!(requested["eventType"], "agent.task.requested");
+    assert_eq!(
+        requested["payload"]["requesterId"],
+        requester_id.to_string()
+    );
+    assert_eq!(
+        requested["payload"]["contextRevision"],
+        requested["sequence"]
+    );
+
+    send_json(&mut socket, rpc("task-retry", "agent.task.start", params)).await;
+    assert_eq!(recv_json(&mut socket).await, requested);
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM agent_tasks WHERE room_id = $1 AND request_id = $2",
+    )
+    .bind(room_id)
+    .bind(request_id)
+    .fetch_one(&server.pool)
+    .await
+    .unwrap();
+    assert_eq!(count, 1);
+}
+
 // This fails if an identical retry creates or broadcasts another persisted event.
 #[tokio::test]
 async fn identical_request_retry_returns_the_original_without_rebroadcasting() {

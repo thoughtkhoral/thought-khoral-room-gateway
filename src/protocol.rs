@@ -233,6 +233,7 @@ pub enum ValidatedRequest {
     DecisionPropose(DecisionPropose),
     DecisionTransition(DecisionTransition),
     DecisionDelete(DecisionDelete),
+    AgentTaskStart(crate::store::AgentTaskStart),
 }
 
 impl ValidatedRequest {
@@ -244,6 +245,7 @@ impl ValidatedRequest {
             Self::DecisionPropose(request) => &request.id,
             Self::DecisionTransition(request) => &request.id,
             Self::DecisionDelete(request) => &request.id,
+            Self::AgentTaskStart(request) => &request.id,
         }
     }
 
@@ -255,6 +257,7 @@ impl ValidatedRequest {
             Self::DecisionPropose(request) => Some(request.room_id),
             Self::DecisionTransition(request) => Some(request.room_id),
             Self::DecisionDelete(request) => Some(request.room_id),
+            Self::AgentTaskStart(request) => Some(request.room_id),
         }
     }
 
@@ -266,6 +269,7 @@ impl ValidatedRequest {
             Self::DecisionPropose(request) => Some(request.request_id),
             Self::DecisionTransition(request) => Some(request.request_id),
             Self::DecisionDelete(request) => Some(request.request_id),
+            Self::AgentTaskStart(request) => Some(request.request_id),
         }
     }
 
@@ -312,6 +316,16 @@ impl ValidatedRequest {
                 "roomId": request.room_id,
                 "occurredAt": request.occurred_at,
                 "decisionId": request.decision_id,
+            }),
+            Self::AgentTaskStart(request) => json!({
+                "method": "agent.task.start",
+                "contractVersion": request.contract_version,
+                "requestId": request.request_id,
+                "roomId": request.room_id,
+                "occurredAt": request.occurred_at,
+                "agentId": request.agent_id,
+                "skillId": request.skill_id,
+                "input": request.input,
             }),
             Self::Join(request) => json!({
                 "method": "room.join",
@@ -471,6 +485,7 @@ pub fn validate_request(request: &str) -> Result<ValidatedRequest, RpcError> {
             | "decision.propose"
             | "decision.transition"
             | "decision.delete"
+            | "agent.task.start"
     ) {
         return Err(RpcError::unknown_method());
     }
@@ -505,6 +520,8 @@ pub fn validate_request(request: &str) -> Result<ValidatedRequest, RpcError> {
         "decision.delete" => {
             deserialize_request::<DecisionDelete>(params, id).map(ValidatedRequest::DecisionDelete)
         }
+        "agent.task.start" => deserialize_request::<crate::store::AgentTaskStart>(params, id)
+            .map(ValidatedRequest::AgentTaskStart),
         _ => Err(RpcError::unknown_method()),
     }
 }

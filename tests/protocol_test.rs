@@ -1,6 +1,6 @@
 use std::path::Path;
 use thought_khoral_room_gateway::{
-    ChatDelivery, ChatMention, ChatMentionAlias, MAX_CHAT_MENTIONS, ValidatedRequest,
+    AgentSkillId, ChatDelivery, ChatMention, ChatMentionAlias, MAX_CHAT_MENTIONS, ValidatedRequest,
     gateway_status, validate_request,
 };
 use uuid::Uuid;
@@ -27,6 +27,8 @@ const CHAT_SEND_INVALID_DELIVERY: &str =
 const CHAT_SEND_MENTIONED_WITHOUT_TARGETS: &str = include_str!(
     "../contracts/n2n.room.v1/fixtures/invalid/chat-send-mentioned-without-targets.json"
 );
+const AGENT_TASK_START: &str =
+    include_str!("../contracts/n2n.room.v1/fixtures/valid/agent-task-start.json");
 
 // This fails if active package, binary, service, or display metadata regresses to a legacy name.
 #[tokio::test]
@@ -160,6 +162,18 @@ fn validates_decision_propose_without_source_evidence() {
         panic!("expected DecisionPropose");
     };
     assert!(propose.source_event_ids.is_empty());
+}
+
+// This fails if the pinned external task-start fixture no longer reaches the typed boundary.
+#[test]
+fn validates_external_agent_task_start_as_a_typed_request() {
+    let request = validate_request(AGENT_TASK_START).expect("task-start fixture must validate");
+    let ValidatedRequest::AgentTaskStart(start) = request else {
+        panic!("expected AgentTaskStart");
+    };
+
+    assert_eq!(start.skill_id, AgentSkillId::SummarizeContext);
+    assert_eq!(start.input, "Summarize the room.");
 }
 
 // This fails if the pinned v1.0.2 authentication request is not consumed as a typed request.

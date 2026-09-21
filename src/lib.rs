@@ -22,5 +22,10 @@ pub use protocol::{
     ValidatedRequest, validate_request,
 };
 pub use rooms::{GatewayState, WebSocketPolicy, WebSocketPolicyError};
-pub use store::{NewEvent, RoomEvent, StoreError, append_event, events_after};
+pub use store::{
+    AGENT_TASK_LEASE_DURATION, AgentSkillId, AgentTaskContext, AgentTaskLease, AgentTaskRecord,
+    AgentTaskStart, AgentTaskStartResult, AgentTaskState, AgentTaskStore, AgentTaskUpdate,
+    NewEvent, RoomEvent, StoreError, agent_task, append_event, claim_agent_task, context_for_lease,
+    events_after, record_agent_task_update,
+};
 pub use ws::{app, gateway_status};

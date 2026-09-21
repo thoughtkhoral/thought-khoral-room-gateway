@@ -335,6 +335,32 @@ async fn agent_cannot_delete_a_decision() {
     assert_eq!(count, 1);
 }
 
+// This fails if an automated actor can create work for an external agent.
+#[tokio::test]
+async fn agent_cannot_start_an_external_task() {
+    let server = TestServer::start().await;
+    let room_id = Uuid::new_v4();
+    let mut socket = server.connect(&server.token(Uuid::new_v4(), "agent")).await;
+    join(&mut socket, room_id, None).await;
+    let request_id = Uuid::new_v4();
+    let mut params = common_params(request_id, room_id);
+    params["agentId"] = json!("74686f75-6768-746b-686f-72616c000003");
+    params["skillId"] = json!("summarize-context");
+    params["input"] = json!("Summarize the room.");
+    send_json(&mut socket, rpc("task", "agent.task.start", params)).await;
+
+    assert_eq!(recv_json(&mut socket).await["error"]["code"], -32003);
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM agent_tasks WHERE room_id = $1 AND request_id = $2",
+    )
+    .bind(room_id)
+    .bind(request_id)
+    .fetch_one(&server.pool)
+    .await
+    .unwrap();
+    assert_eq!(count, 0);
+}
+
 // This fails if a valid human cannot activate a draft decision.
 #[tokio::test]
 async fn human_can_confirm_a_draft_decision() {

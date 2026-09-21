@@ -21,6 +21,7 @@ use crate::{
     },
     store::{
         NewEvent, RoomEvent, append_event_in_transaction, lock_room, prior_request, record_request,
+        start_agent_task_in_transaction,
     },
 };
 
@@ -609,7 +610,9 @@ impl GatewayState {
     ) -> Result<ProcessedRequest, RpcError> {
         if matches!(
             request,
-            ValidatedRequest::DecisionTransition(_) | ValidatedRequest::DecisionDelete(_)
+            ValidatedRequest::DecisionTransition(_)
+                | ValidatedRequest::DecisionDelete(_)
+                | ValidatedRequest::AgentTaskStart(_)
         ) && actor.role != ActorRole::Human
         {
             return Err(RpcError::forbidden());
@@ -789,6 +792,18 @@ impl GatewayState {
             }
             ValidatedRequest::DecisionDelete(request) => {
                 delete_decision_in_transaction(&mut transaction, actor, request).await?
+            }
+            ValidatedRequest::AgentTaskStart(request) => {
+                start_agent_task_in_transaction(
+                    &mut transaction,
+                    actor.id,
+                    &actor.display_name,
+                    request,
+                    false,
+                )
+                .await
+                .map_err(|_| RpcError::internal_error())?
+                .events
             }
             ValidatedRequest::Join(_) => unreachable!("join requests returned above"),
             ValidatedRequest::SessionAuthenticate(_) => {
