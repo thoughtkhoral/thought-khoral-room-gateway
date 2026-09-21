@@ -1,0 +1,14 @@
+{
+  "jsonrpc": "2.0",
+  "id": "agent-task-start-1",
+  "method": "agent.task.start",
+  "params": {
+    "contractVersion": "n2n.room.v1",
+    "requestId": "81000000-0000-4000-8000-000000000001",
+    "roomId": "10000000-0000-4000-8000-000000000001",
+    "occurredAt": "2026-09-21T12:00:00Z",
+    "agentId": "74686f75-6768-746b-686f-72616c000003",
+    "skillId": "summarize-context",
+    "input": "Summarize the room."
+  }
+}

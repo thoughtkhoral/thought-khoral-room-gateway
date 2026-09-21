@@ -4,8 +4,13 @@
   "title": "ThoughtKhoral room v1 JSON-RPC request",
   "type": "object",
   "properties": {
-    "jsonrpc": { "const": "2.0" },
-    "id": { "type": "string", "minLength": 1 },
+    "jsonrpc": {
+      "const": "2.0"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
     "method": {
       "enum": [
         "session.authenticate",
@@ -13,10 +18,13 @@
         "chat.send",
         "decision.propose",
         "decision.transition",
-        "decision.delete"
+        "decision.delete",
+        "agent.task.start"
       ]
     },
-    "params": { "type": "object" }
+    "params": {
+      "type": "object"
+    }
   },
   "$defs": {
     "mention": {
@@ -24,20 +32,42 @@
         {
           "type": "object",
           "properties": {
-            "type": { "const": "participant" },
-            "id": { "type": "string", "format": "uuid" },
-            "token": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+            "type": {
+              "const": "participant"
+            },
+            "id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "token": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            }
           },
-          "required": ["type", "id", "token"],
+          "required": [
+            "type",
+            "id",
+            "token"
+          ],
           "additionalProperties": false
         },
         {
           "type": "object",
           "properties": {
-            "type": { "const": "alias" },
-            "alias": { "enum": ["allhumans", "allagents"] }
+            "type": {
+              "const": "alias"
+            },
+            "alias": {
+              "enum": [
+                "allhumans",
+                "allagents"
+              ]
+            }
           },
-          "required": ["type", "alias"],
+          "required": [
+            "type",
+            "alias"
+          ],
           "additionalProperties": false
         }
       ]
@@ -46,36 +76,68 @@
       "type": "array",
       "maxItems": 50,
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/mention" }
+      "items": {
+        "$ref": "#/$defs/mention"
+      }
     },
-    "delivery": { "enum": ["room", "mentioned"] }
+    "delivery": {
+      "enum": [
+        "room",
+        "mentioned"
+      ]
+    },
+    "skillId": {
+      "enum": [
+        "summarize-context",
+        "extract-action-items"
+      ]
+    }
   },
-  "required": ["jsonrpc", "id", "method", "params"],
+  "required": [
+    "jsonrpc",
+    "id",
+    "method",
+    "params"
+  ],
   "additionalProperties": false,
   "oneOf": [
     {
       "properties": {
-        "method": { "const": "session.authenticate" },
+        "method": {
+          "const": "session.authenticate"
+        },
         "params": {
           "type": "object",
           "properties": {
-            "accessToken": { "type": "string", "minLength": 1 }
+            "accessToken": {
+              "type": "string",
+              "minLength": 1
+            }
           },
-          "required": ["accessToken"],
+          "required": [
+            "accessToken"
+          ],
           "additionalProperties": false
         }
       }
     },
     {
       "properties": {
-        "method": { "const": "room.join" },
+        "method": {
+          "const": "room.join"
+        },
         "params": {
           "type": "object",
           "allOf": [
-            { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" }
+            {
+              "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json"
+            }
           ],
           "properties": {
-            "afterSequence": { "type": "integer", "minimum": 0 }
+            "afterSequence": {
+              "type": "integer",
+              "minimum": 0
+            }
           },
           "unevaluatedProperties": false
         }
@@ -83,84 +145,170 @@
     },
     {
       "properties": {
-        "method": { "const": "chat.send" },
+        "method": {
+          "const": "chat.send"
+        },
         "params": {
           "type": "object",
           "allOf": [
-            { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" },
+            {
+              "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json"
+            },
             {
               "if": {
-                "properties": { "delivery": { "const": "mentioned" } },
-                "required": ["delivery"]
+                "properties": {
+                  "delivery": {
+                    "const": "mentioned"
+                  }
+                },
+                "required": [
+                  "delivery"
+                ]
               },
               "then": {
-                "required": ["mentions"],
+                "required": [
+                  "mentions"
+                ],
                 "properties": {
-                  "mentions": { "type": "array", "minItems": 1 }
+                  "mentions": {
+                    "type": "array",
+                    "minItems": 1
+                  }
                 }
               }
             }
           ],
           "properties": {
-            "text": { "type": "string", "minLength": 1 },
-            "mentions": { "$ref": "#/$defs/mentions" },
-            "delivery": { "$ref": "#/$defs/delivery" }
+            "text": {
+              "type": "string",
+              "minLength": 1
+            },
+            "mentions": {
+              "$ref": "#/$defs/mentions"
+            },
+            "delivery": {
+              "$ref": "#/$defs/delivery"
+            }
           },
-          "required": ["text"],
+          "required": [
+            "text"
+          ],
           "unevaluatedProperties": false
         }
       }
     },
     {
       "properties": {
-        "method": { "const": "decision.propose" },
+        "method": {
+          "const": "decision.propose"
+        },
         "params": {
           "type": "object",
           "allOf": [
-            { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" }
+            {
+              "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json"
+            }
           ],
           "properties": {
-            "title": { "type": "string", "minLength": 1 },
-            "summary": { "type": "string", "minLength": 1 },
+            "title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "summary": {
+              "type": "string",
+              "minLength": 1
+            },
             "sourceEventIds": {
               "type": "array",
               "minItems": 0,
-              "items": { "type": "string", "format": "uuid" }
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
             }
           },
-          "required": ["title", "summary", "sourceEventIds"],
+          "required": [
+            "title",
+            "summary",
+            "sourceEventIds"
+          ],
           "unevaluatedProperties": false
         }
       }
     },
     {
       "properties": {
-        "method": { "const": "decision.transition" },
+        "method": {
+          "const": "decision.transition"
+        },
         "params": {
           "type": "object",
           "allOf": [
-            { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" }
+            {
+              "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json"
+            }
           ],
           "properties": {
-            "decisionId": { "type": "string", "format": "uuid" },
-            "action": { "enum": ["confirm", "edit", "dismiss"] },
-            "editedTitle": { "type": "string", "minLength": 1 },
-            "editedSummary": { "type": "string", "minLength": 1 }
+            "decisionId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "action": {
+              "enum": [
+                "confirm",
+                "edit",
+                "dismiss"
+              ]
+            },
+            "editedTitle": {
+              "type": "string",
+              "minLength": 1
+            },
+            "editedSummary": {
+              "type": "string",
+              "minLength": 1
+            }
           },
-          "required": ["decisionId", "action"],
-          "if": { "properties": { "action": { "const": "edit" } } },
+          "required": [
+            "decisionId",
+            "action"
+          ],
+          "if": {
+            "properties": {
+              "action": {
+                "const": "edit"
+              }
+            }
+          },
           "then": {
             "properties": {
               "editedTitle": true,
               "editedSummary": true
             },
-            "required": ["editedTitle", "editedSummary"]
+            "required": [
+              "editedTitle",
+              "editedSummary"
+            ]
           },
           "else": {
             "not": {
               "anyOf": [
-                { "properties": { "editedTitle": true }, "required": ["editedTitle"] },
-                { "properties": { "editedSummary": true }, "required": ["editedSummary"] }
+                {
+                  "properties": {
+                    "editedTitle": true
+                  },
+                  "required": [
+                    "editedTitle"
+                  ]
+                },
+                {
+                  "properties": {
+                    "editedSummary": true
+                  },
+                  "required": [
+                    "editedSummary"
+                  ]
+                }
               ]
             }
           },
@@ -170,16 +318,60 @@
     },
     {
       "properties": {
-        "method": { "const": "decision.delete" },
+        "method": {
+          "const": "decision.delete"
+        },
         "params": {
           "type": "object",
           "allOf": [
-            { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" }
+            {
+              "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json"
+            }
           ],
           "properties": {
-            "decisionId": { "type": "string", "format": "uuid" }
+            "decisionId": {
+              "type": "string",
+              "format": "uuid"
+            }
           },
-          "required": ["decisionId"],
+          "required": [
+            "decisionId"
+          ],
+          "unevaluatedProperties": false
+        }
+      }
+    },
+    {
+      "properties": {
+        "method": {
+          "const": "agent.task.start"
+        },
+        "params": {
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json"
+            }
+          ],
+          "properties": {
+            "agentId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "skillId": {
+              "$ref": "#/$defs/skillId"
+            },
+            "input": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8000
+            }
+          },
+          "required": [
+            "agentId",
+            "skillId",
+            "input"
+          ],
           "unevaluatedProperties": false
         }
       }

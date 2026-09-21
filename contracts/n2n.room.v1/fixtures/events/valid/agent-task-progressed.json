@@ -1,0 +1,23 @@
+{
+  "contractVersion": "n2n.room.v1",
+  "requestId": "82000000-0000-4000-8000-000000000001",
+  "roomId": "10000000-0000-4000-8000-000000000001",
+  "occurredAt": "2026-09-21T12:01:00Z",
+  "sequence": 9,
+  "eventId": "83000000-0000-4000-8000-000000000001",
+  "eventType": "agent.task.progressed",
+  "actor": {
+    "id": "74686f75-6768-746b-686f-72616c000003",
+    "role": "agent"
+  },
+  "payload": {
+    "taskId": "84000000-0000-4000-8000-000000000001",
+    "agentId": "74686f75-6768-746b-686f-72616c000003",
+    "requesterId": "85000000-0000-4000-8000-000000000001",
+    "skillId": "summarize-context",
+    "contextRevision": 4,
+    "phase": "working",
+    "text": "Summarizing the room context.",
+    "percent": 75
+  }
+}

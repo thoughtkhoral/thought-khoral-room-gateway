@@ -54,6 +54,22 @@ const validateContract = (value) => validate(value) && validateMentionIdentities
 const validateRoomEventContract = (value) =>
   validateRoomEvent(value) && validateMentionIdentities(value);
 
+const externalAgentTaskStart = await loadJson("fixtures/valid/agent-task-start.json");
+assert.equal(
+  validateContract(externalAgentTaskStart),
+  true,
+  `agent.task.start must validate: ${ajv.errorsText(validate.errors)}`,
+);
+
+const externalAgentTaskStartWithUnknownSkill = await loadJson(
+  "fixtures/invalid/agent-task-start-unknown-skill.json",
+);
+assert.equal(
+  validateContract(externalAgentTaskStartWithUnknownSkill),
+  false,
+  "agent.task.start must reject an unregistered skill",
+);
+
 const browserAuthentication = {
   jsonrpc: "2.0",
   id: "authenticate-1",

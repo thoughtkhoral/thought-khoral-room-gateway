@@ -14,7 +14,7 @@
 
 ## Interfaces
 
-The project publishes `n2n.room.v1` for browser connection authentication (`session.authenticate`) and authenticated room operations (`room.join`, `chat.send`, `decision.propose`, and `decision.transition`), including their JSON-RPC 2.0 envelopes, `contractVersion`, RFC 4122 `requestId`, and structured error codes. Per the accepted root [browser WebSocket authentication decision](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/002-browser-websocket-authentication.md), `session.authenticate` carries a non-empty OIDC `accessToken` and is the sole request permitted while a browser WebSocket is unauthenticated.
+The project publishes `n2n.room.v1` for browser connection authentication (`session.authenticate`) and authenticated room operations (`room.join`, `chat.send`, `decision.propose`, and `decision.transition`), including their JSON-RPC 2.0 envelopes, `contractVersion`, RFC 4122 `requestId`, and structured error codes. It also publishes additive server-produced `agent.task.queued`, `agent.task.running`, `agent.task.succeeded`, and `agent.task.failed` room events with task provenance and structured action-item results. Per the accepted root [browser WebSocket authentication decision](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/002-browser-websocket-authentication.md), `session.authenticate` carries a non-empty OIDC `accessToken` and is the sole request permitted while a browser WebSocket is unauthenticated.
 
 `session.authenticate` is an additive `n2n.room.v1` patch for browser connection establishment. It preserves the prior authenticated room-operation contract and release history.
 

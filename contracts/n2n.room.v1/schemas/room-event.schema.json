@@ -9,20 +9,42 @@
         {
           "type": "object",
           "properties": {
-            "type": { "const": "participant" },
-            "id": { "type": "string", "format": "uuid" },
-            "token": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+            "type": {
+              "const": "participant"
+            },
+            "id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "token": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            }
           },
-          "required": ["type", "id", "token"],
+          "required": [
+            "type",
+            "id",
+            "token"
+          ],
           "additionalProperties": false
         },
         {
           "type": "object",
           "properties": {
-            "type": { "const": "alias" },
-            "alias": { "enum": ["allhumans", "allagents"] }
+            "type": {
+              "const": "alias"
+            },
+            "alias": {
+              "enum": [
+                "allhumans",
+                "allagents"
+              ]
+            }
           },
-          "required": ["type", "alias"],
+          "required": [
+            "type",
+            "alias"
+          ],
           "additionalProperties": false
         }
       ]
@@ -32,36 +54,465 @@
       "maxItems": 50,
       "description": "Structural duplicates are rejected. Contract validation additionally requires participant IDs and aliases to be semantically unique.",
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/mention" }
+      "items": {
+        "$ref": "#/$defs/mention"
+      }
     },
     "actionItem": {
       "type": "object",
       "properties": {
-        "text": { "type": "string", "minLength": 1, "maxLength": 2000 },
-        "owner": { "type": "string", "minLength": 1, "maxLength": 256 },
-        "due": { "type": "string", "minLength": 1, "maxLength": 256 }
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "due": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
       },
-      "required": ["text"],
+      "required": [
+        "text"
+      ],
       "additionalProperties": false
     },
-    "agentTaskCore": {
+    "legacyAgentTaskCore": {
       "type": "object",
       "properties": {
-        "taskId": { "type": "string", "format": "uuid" },
-        "kind": { "const": "action-items.v1" },
-        "sourceEventId": { "type": "string", "format": "uuid" },
-        "requesterId": { "type": "string", "format": "uuid" },
-        "agentId": { "type": "string", "format": "uuid" }
+        "taskId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "kind": {
+          "const": "action-items.v1"
+        },
+        "sourceEventId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "requesterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "agentId": {
+          "type": "string",
+          "format": "uuid"
+        }
       },
-      "required": ["taskId", "kind", "sourceEventId", "requesterId", "agentId"]
+      "required": [
+        "taskId",
+        "kind",
+        "sourceEventId",
+        "requesterId",
+        "agentId"
+      ]
+    },
+    "skillId": {
+      "enum": [
+        "summarize-context",
+        "extract-action-items"
+      ]
+    },
+    "externalAgentTaskCore": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "agentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "requesterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "skillId": {
+          "$ref": "#/$defs/skillId"
+        },
+        "contextRevision": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "taskId",
+        "agentId",
+        "requesterId",
+        "skillId",
+        "contextRevision"
+      ]
+    },
+    "citationIds": {
+      "type": "array",
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    },
+    "externalTaskResult": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "context-summary.v1"
+            },
+            "summary": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8000
+            },
+            "citations": {
+              "$ref": "#/$defs/citationIds"
+            }
+          },
+          "required": [
+            "kind",
+            "summary",
+            "citations"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "action-items.v1"
+            },
+            "actionItems": {
+              "type": "array",
+              "maxItems": 20,
+              "items": {
+                "$ref": "#/$defs/actionItem"
+              }
+            },
+            "citations": {
+              "$ref": "#/$defs/citationIds"
+            }
+          },
+          "required": [
+            "kind",
+            "actionItems",
+            "citations"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "externalTaskRequestedPayload": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "agentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "requesterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "skillId": {
+          "$ref": "#/$defs/skillId"
+        },
+        "contextRevision": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "taskId",
+        "agentId",
+        "requesterId",
+        "skillId",
+        "contextRevision"
+      ],
+      "additionalProperties": false
+    },
+    "externalTaskProgressedPayload": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "agentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "requesterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "skillId": {
+          "$ref": "#/$defs/skillId"
+        },
+        "contextRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "phase": {
+          "enum": [
+            "accepted",
+            "retrieving-context",
+            "working",
+            "finalizing"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "percent": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "taskId",
+        "agentId",
+        "requesterId",
+        "skillId",
+        "contextRevision",
+        "phase",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "externalTaskAwaitingExternalInputPayload": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "agentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "requesterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "skillId": {
+          "$ref": "#/$defs/skillId"
+        },
+        "contextRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "handoff": {
+          "type": "object",
+          "properties": {
+            "instruction": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            },
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://"
+            },
+            "host": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 253
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "instruction",
+            "url",
+            "host",
+            "expiresAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "taskId",
+        "agentId",
+        "requesterId",
+        "skillId",
+        "contextRevision",
+        "handoff"
+      ],
+      "additionalProperties": false
+    },
+    "externalTaskSucceededPayload": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "agentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "requesterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "skillId": {
+          "$ref": "#/$defs/skillId"
+        },
+        "contextRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "result": {
+          "$ref": "#/$defs/externalTaskResult"
+        }
+      },
+      "required": [
+        "taskId",
+        "agentId",
+        "requesterId",
+        "skillId",
+        "contextRevision",
+        "result"
+      ],
+      "additionalProperties": false
+    },
+    "externalTaskFailedPayload": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "agentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "requesterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "skillId": {
+          "$ref": "#/$defs/skillId"
+        },
+        "contextRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failure": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "enum": [
+                "invalid_task_input",
+                "execution_failed"
+              ]
+            }
+          },
+          "required": [
+            "code"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "taskId",
+        "agentId",
+        "requesterId",
+        "skillId",
+        "contextRevision",
+        "failure"
+      ],
+      "additionalProperties": false
+    },
+    "legacyTaskSucceededPayload": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/legacyAgentTaskCore"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "object",
+              "properties": {
+                "actionItems": {
+                  "type": "array",
+                  "maxItems": 20,
+                  "items": {
+                    "$ref": "#/$defs/actionItem"
+                  }
+                }
+              },
+              "required": [
+                "actionItems"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "result"
+          ]
+        }
+      ]
+    },
+    "legacyTaskFailedPayload": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/legacyAgentTaskCore"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "failure": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "enum": [
+                    "invalid_task_input",
+                    "execution_failed"
+                  ]
+                }
+              },
+              "required": [
+                "code"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "failure"
+          ]
+        }
+      ]
     }
   },
   "allOf": [
-    { "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json" },
+    {
+      "$ref": "https://n2n.redhat.com/schemas/n2n.room.v1/envelope.schema.json"
+    },
     {
       "if": {
         "properties": {
-          "eventType": { "const": "decision.deleted" }
+          "eventType": {
+            "const": "decision.deleted"
+          }
         }
       },
       "then": {
@@ -69,14 +520,29 @@
           "payload": {
             "type": "object",
             "properties": {
-              "decisionId": { "type": "string", "format": "uuid" },
-              "priorStatus": { "type": "string", "minLength": 1 },
-              "title": { "type": "string", "minLength": 1 },
-              "summary": { "type": "string", "minLength": 1 },
+              "decisionId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "priorStatus": {
+                "type": "string",
+                "minLength": 1
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "summary": {
+                "type": "string",
+                "minLength": 1
+              },
               "sourceEventIds": {
                 "type": "array",
                 "minItems": 0,
-                "items": { "type": "string", "format": "uuid" }
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
               }
             },
             "required": [
@@ -91,27 +557,128 @@
       }
     },
     {
-      "if": { "properties": { "eventType": { "enum": ["agent.task.queued", "agent.task.running"] } } },
-      "then": { "properties": { "payload": { "$ref": "#/$defs/agentTaskCore" } } }
+      "if": {
+        "properties": {
+          "eventType": {
+            "enum": [
+              "agent.task.queued",
+              "agent.task.running"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/legacyAgentTaskCore"
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "eventType": { "const": "agent.task.succeeded" } } },
-      "then": { "properties": { "payload": { "allOf": [
-        { "$ref": "#/$defs/agentTaskCore" },
-        { "type": "object", "properties": { "result": { "type": "object", "properties": { "actionItems": { "type": "array", "maxItems": 20, "items": { "$ref": "#/$defs/actionItem" } } }, "required": ["actionItems"], "additionalProperties": false } }, "required": ["result"] }
-      ] } } }
+      "if": {
+        "properties": {
+          "eventType": {
+            "const": "agent.task.requested"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/externalTaskRequestedPayload"
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "eventType": { "const": "agent.task.failed" } } },
-      "then": { "properties": { "payload": { "allOf": [
-        { "$ref": "#/$defs/agentTaskCore" },
-        { "type": "object", "properties": { "failure": { "type": "object", "properties": { "code": { "enum": ["invalid_task_input", "execution_failed"] } }, "required": ["code"], "additionalProperties": false } }, "required": ["failure"] }
-      ] } } }
+      "if": {
+        "properties": {
+          "eventType": {
+            "const": "agent.task.progressed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/externalTaskProgressedPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "eventType": {
+            "const": "agent.task.awaiting_external_input"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/externalTaskAwaitingExternalInputPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "eventType": {
+            "const": "agent.task.succeeded"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/legacyTaskSucceededPayload"
+              },
+              {
+                "$ref": "#/$defs/externalTaskSucceededPayload"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "eventType": {
+            "const": "agent.task.failed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/legacyTaskFailedPayload"
+              },
+              {
+                "$ref": "#/$defs/externalTaskFailedPayload"
+              }
+            ]
+          }
+        }
+      }
     }
   ],
   "properties": {
-    "sequence": { "type": "integer", "minimum": 1 },
-    "eventId": { "type": "string", "format": "uuid" },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
     "eventType": {
       "enum": [
         "message.created",
@@ -122,6 +689,9 @@
         "decision.deleted",
         "agent.task.queued",
         "agent.task.running",
+        "agent.task.requested",
+        "agent.task.progressed",
+        "agent.task.awaiting_external_input",
         "agent.task.succeeded",
         "agent.task.failed"
       ]
@@ -129,25 +699,56 @@
     "actor": {
       "type": "object",
       "properties": {
-        "id": { "type": "string", "format": "uuid" },
-        "role": { "enum": ["human", "agent"] },
-        "displayName": { "type": "string", "minLength": 1, "maxLength": 128 }
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "role": {
+          "enum": [
+            "human",
+            "agent"
+          ]
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
       },
-      "required": ["id", "role"],
+      "required": [
+        "id",
+        "role"
+      ],
       "additionalProperties": false
     },
     "payload": {
       "type": "object",
       "properties": {
-        "delivery": { "enum": ["room", "mentioned"] },
-        "mentions": { "$ref": "#/$defs/mentions" },
+        "delivery": {
+          "enum": [
+            "room",
+            "mentioned"
+          ]
+        },
+        "mentions": {
+          "$ref": "#/$defs/mentions"
+        },
         "audienceIds": {
           "type": "array",
-          "items": { "type": "string", "format": "uuid" }
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
         }
       }
     }
   },
-  "required": ["sequence", "eventId", "eventType", "actor", "payload"],
+  "required": [
+    "sequence",
+    "eventId",
+    "eventType",
+    "actor",
+    "payload"
+  ],
   "unevaluatedProperties": false
 }

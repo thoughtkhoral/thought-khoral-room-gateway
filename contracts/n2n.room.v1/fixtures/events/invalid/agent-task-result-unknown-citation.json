@@ -1,0 +1,25 @@
+{
+  "contractVersion": "n2n.room.v1",
+  "requestId": "86000000-0000-4000-8000-000000000001",
+  "roomId": "10000000-0000-4000-8000-000000000001",
+  "occurredAt": "2026-09-21T12:02:00Z",
+  "sequence": 10,
+  "eventId": "87000000-0000-4000-8000-000000000001",
+  "eventType": "agent.task.succeeded",
+  "actor": {
+    "id": "74686f75-6768-746b-686f-72616c000003",
+    "role": "agent"
+  },
+  "payload": {
+    "taskId": "84000000-0000-4000-8000-000000000001",
+    "agentId": "74686f75-6768-746b-686f-72616c000003",
+    "requesterId": "85000000-0000-4000-8000-000000000001",
+    "skillId": "summarize-context",
+    "contextRevision": 4,
+    "result": {
+      "kind": "context-summary.v1",
+      "summary": "The room agreed to ship the gateway foundation.",
+      "citations": ["unknown-citation"]
+    }
+  }
+}

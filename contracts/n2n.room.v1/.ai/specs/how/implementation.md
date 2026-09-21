@@ -32,3 +32,7 @@ Checked 2026-09-11. Exact installed versions, npm registry tarball URLs, integri
 The selected graph contains only Ajv, the Ajv format extension, and their five locked transitives. No dependency ships in a runtime library or is used to handle untrusted requests outside the development fixture verifier.
 
 The verifier treats the RPC schema as the fixture entry point, registers the envelope and room-event schemas by stable `$id`, and requires every valid fixture to validate and every invalid fixture to fail. Schema and protocol changes remain spec-first and must be released under the compatibility rule in `protocol.md`.
+
+## Agent task event patch
+
+Per root [decision 006](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/006-agent-task-dispatch.md), the retained v1 event schema adds server-produced agent task lifecycle events. Their payloads carry stable task provenance and, on success, structured action items. The patch adds no client RPC method and does not alter `chat.send` compatibility semantics.

@@ -12,6 +12,7 @@
 | `decision.propose` | `roomId`, `requestId`, `occurredAt`, `title`, `summary`, `sourceEventIds` | `decision.proposed` event. |
 | `decision.transition` | `roomId`, `requestId`, `occurredAt`, `decisionId`, `action`, `editedTitle?`, `editedSummary?` | `decision.confirmed`, `decision.edited`, or `decision.dismissed` event. |
 | `decision.delete` | `roomId`, `requestId`, `occurredAt`, `decisionId` | `decision.deleted` event. |
+| `agent.task.start` | `roomId`, `requestId`, `occurredAt`, `agentId`, `skillId`, `input` | Accepted external-agent task. |
 
 Only `confirm`, `edit`, and `dismiss` are valid actions. `edit` requires non-empty `editedTitle` and `editedSummary`; the other actions must not supply either edit field.
 
@@ -20,6 +21,39 @@ Only `confirm`, `edit`, and `dismiss` are valid actions. `edit` requires non-emp
 `chat.send` remains room-wide when `delivery` is omitted or set to `room`. For targeted delivery, set `delivery` to `mentioned` and provide one or more `mentions`, up to 50 targets. A participant target has `type: "participant"`, a UUID `id`, and a lower-case ASCII slug `token` matching the direct mention token; both single-word tokens such as `maya` and hyphen-separated tokens such as `maya-chen` are valid. An alias target has `type: "alias"` and is restricted to the fixed aliases `allhumans` and `allagents`. Mention identities are semantically unique: participant targets are unique by `id`, and alias targets are unique by `alias`, even if their other fields differ. This rule applies to both `chat.send` requests and persisted `message.created` payloads; JSON Schema `uniqueItems` rejects only structurally identical items, so contract validation enforces semantic uniqueness. The request schema enforces this target shape and token boundary; resolving whether a participant is currently addressable is gateway behavior.
 
 The `@allhumans` alias targets all known human participants; agents are not included unless independently mentioned. The `@allagents` alias targets all known agents and is also visible to all known human participants in the room. A targeted message is replayed only to the resolved audience, while room-wide messages are replayed to all room participants. The gateway returns `-32013` when a direct participant target cannot be resolved or its token is not canonical for the current roster.
+
+## Governed external-agent tasks
+
+`agent.task.start` begins a governed external-agent task. Its `skillId` is
+restricted to `summarize-context` or `extract-action-items`, and `input` is a
+non-empty string of at most 8,000 characters. The gateway records the
+additive task-event order `agent.task.requested`, zero or more
+`agent.task.progressed`, optionally `agent.task.awaiting_external_input`, and
+one terminal `agent.task.succeeded` or `agent.task.failed`. Every new event
+has `taskId`, `agentId`, `requesterId`, `skillId`, and `contextRevision`.
+
+Progress is durable only when the task reaches a meaningful change of phase:
+`accepted`, `retrieving-context`, `working`, or `finalizing`. Its `text` is
+bounded to 512 characters and optional `percent` is an integer from 0 through
+100. A terminal event is immutable and never coalesced with another terminal
+event.
+
+Successful external tasks use a bounded discriminated `result`: either
+`context-summary.v1` with `summary` and `citations`, or `action-items.v1` with
+`actionItems` and `citations`. Citation values are UUID names for sources
+visible in the task's context packet; the gateway verifies packet visibility
+before it persists the event. A failure carries only the safe `failure.code`
+(`invalid_task_input` or `execution_failed`).
+
+An `agent.task.awaiting_external_input` event has only the task core and a
+handoff containing an instruction, HTTPS URL, host, and expiry. Browser and
+agent secrets, tokens, credentials, request headers, and callback bodies never
+enter this contract. The handoff is an instruction to a user or external
+system, not an authorization channel.
+
+The existing retained `agent.task.queued`, `agent.task.running`, and
+`agent.task.succeeded` Action Items fixtures remain valid legacy v1 events;
+the governed external-agent shapes are additive and do not reinterpret them.
 
 The gateway may send the JSON-RPC notification `room.participants.updated` without
 an `id`. Its params contain `contractVersion`, `roomId`, and a `participants`
