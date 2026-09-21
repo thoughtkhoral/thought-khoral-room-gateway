@@ -24,7 +24,8 @@ The `@allhumans` alias targets all known human participants; agents are not incl
 
 ## Governed external-agent tasks
 
-`agent.task.start` begins a governed external-agent task. Its `skillId` is
+`agent.task.start` begins a governed external-agent task. Its `agentId` is the
+registered identity `74686f75-6768-746b-686f-72616c000003`; its `skillId` is
 restricted to `summarize-context` or `extract-action-items`, and `input` is a
 non-empty string of at most 8,000 characters. The gateway records the
 additive task-event order `agent.task.requested`, zero or more
@@ -46,7 +47,8 @@ before it persists the event. A failure carries only the safe `failure.code`
 (`invalid_task_input` or `execution_failed`).
 
 An `agent.task.awaiting_external_input` event has only the task core and a
-handoff containing an instruction, HTTPS URL, host, and expiry. Browser and
+handoff containing an instruction, HTTPS URL, host, and expiry. The URL has
+no userinfo, and its host exactly matches the persisted `host`. Browser and
 agent secrets, tokens, credentials, request headers, and callback bodies never
 enter this contract. The handoff is an instruction to a user or external
 system, not an authorization channel.

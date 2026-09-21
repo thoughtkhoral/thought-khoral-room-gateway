@@ -119,6 +119,9 @@
         "extract-action-items"
       ]
     },
+    "registeredExternalAgentId": {
+      "const": "74686f75-6768-746b-686f-72616c000003"
+    },
     "externalAgentTaskCore": {
       "type": "object",
       "properties": {
@@ -127,8 +130,7 @@
           "format": "uuid"
         },
         "agentId": {
-          "type": "string",
-          "format": "uuid"
+          "$ref": "#/$defs/registeredExternalAgentId"
         },
         "requesterId": {
           "type": "string",
@@ -217,8 +219,7 @@
           "format": "uuid"
         },
         "agentId": {
-          "type": "string",
-          "format": "uuid"
+          "$ref": "#/$defs/registeredExternalAgentId"
         },
         "requesterId": {
           "type": "string",
@@ -249,8 +250,7 @@
           "format": "uuid"
         },
         "agentId": {
-          "type": "string",
-          "format": "uuid"
+          "$ref": "#/$defs/registeredExternalAgentId"
         },
         "requesterId": {
           "type": "string",
@@ -301,8 +301,7 @@
           "format": "uuid"
         },
         "agentId": {
-          "type": "string",
-          "format": "uuid"
+          "$ref": "#/$defs/registeredExternalAgentId"
         },
         "requesterId": {
           "type": "string",
@@ -326,7 +325,7 @@
             "url": {
               "type": "string",
               "format": "uri",
-              "pattern": "^https://"
+              "pattern": "^https://(?![^/?#]*@)"
             },
             "host": {
               "type": "string",
@@ -365,8 +364,7 @@
           "format": "uuid"
         },
         "agentId": {
-          "type": "string",
-          "format": "uuid"
+          "$ref": "#/$defs/registeredExternalAgentId"
         },
         "requesterId": {
           "type": "string",
@@ -401,8 +399,7 @@
           "format": "uuid"
         },
         "agentId": {
-          "type": "string",
-          "format": "uuid"
+          "$ref": "#/$defs/registeredExternalAgentId"
         },
         "requesterId": {
           "type": "string",

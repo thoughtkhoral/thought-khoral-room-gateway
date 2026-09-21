@@ -1,0 +1,23 @@
+{
+  "contractVersion": "n2n.room.v1",
+  "requestId": "82000000-0000-4000-8000-000000000004",
+  "roomId": "10000000-0000-4000-8000-000000000001",
+  "occurredAt": "2026-09-21T12:01:00Z",
+  "sequence": 13,
+  "eventId": "83000000-0000-4000-8000-000000000004",
+  "eventType": "agent.task.awaiting_external_input",
+  "actor": { "id": "74686f75-6768-746b-686f-72616c000003", "role": "agent" },
+  "payload": {
+    "taskId": "84000000-0000-4000-8000-000000000004",
+    "agentId": "74686f75-6768-746b-686f-72616c000003",
+    "requesterId": "85000000-0000-4000-8000-000000000001",
+    "skillId": "summarize-context",
+    "contextRevision": 4,
+    "handoff": {
+      "instruction": "Complete the required confirmation.",
+      "url": "https://example.com/confirm",
+      "host": "other.example.com",
+      "expiresAt": "2026-09-21T13:00:00Z"
+    }
+  }
+}

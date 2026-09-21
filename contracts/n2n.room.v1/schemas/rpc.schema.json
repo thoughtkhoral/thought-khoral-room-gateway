@@ -91,6 +91,9 @@
         "summarize-context",
         "extract-action-items"
       ]
+    },
+    "registeredExternalAgentId": {
+      "const": "74686f75-6768-746b-686f-72616c000003"
     }
   },
   "required": [
@@ -355,8 +358,7 @@
           ],
           "properties": {
             "agentId": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/$defs/registeredExternalAgentId"
             },
             "skillId": {
               "$ref": "#/$defs/skillId"

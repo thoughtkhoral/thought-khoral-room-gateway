@@ -50,9 +50,28 @@ const validateMentionIdentities = (value) =>
   hasUniqueMentionIdentities(value.params?.mentions) &&
   hasUniqueMentionIdentities(value.payload?.mentions);
 
+const hasSafeExternalTaskHandoff = (value) => {
+  const handoff = value.payload?.handoff;
+  if (!handoff) return true;
+
+  try {
+    const url = new URL(handoff.url);
+    return (
+      url.protocol === "https:" &&
+      url.username === "" &&
+      url.password === "" &&
+      url.host === handoff.host
+    );
+  } catch {
+    return false;
+  }
+};
+
 const validateContract = (value) => validate(value) && validateMentionIdentities(value);
 const validateRoomEventContract = (value) =>
-  validateRoomEvent(value) && validateMentionIdentities(value);
+  validateRoomEvent(value) &&
+  validateMentionIdentities(value) &&
+  hasSafeExternalTaskHandoff(value);
 
 const externalAgentTaskStart = await loadJson("fixtures/valid/agent-task-start.json");
 assert.equal(
