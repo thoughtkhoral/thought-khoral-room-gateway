@@ -2,6 +2,11 @@ use std::{net::SocketAddr, time::Duration};
 
 use crate::{WebSocketPolicy, memory_engine_client::MemoryEngineClientConfig};
 
+/// The sole Keycloak client allowed to use the HTTP-only internal agent surface.
+pub const AGENT_GATEWAY_CLIENT_ID: &str = "thought-khoral-agent-gateway";
+/// Internal workloads authenticate to the gateway service itself, never to the workspace UI.
+pub const AGENT_GATEWAY_AUDIENCE: &str = "thought-khoral-room-gateway";
+
 #[derive(Clone, Debug)]
 pub struct GatewayConfig {
     pub database_url: String,

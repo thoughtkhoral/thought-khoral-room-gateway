@@ -33,7 +33,7 @@ use tokio_tungstenite::{
 use uuid::Uuid;
 
 const ISSUER: &str = "http://keycloak.test/realms/thought-khoral";
-const AUDIENCE: &str = "thought-khoral-room-gateway";
+pub const AUDIENCE: &str = "thought-khoral-room-gateway";
 const KEY_ID: &str = "integration-key";
 pub const BROWSER_ORIGIN: &str = "http://workspace.test";
 
@@ -93,6 +93,16 @@ struct Claims {
     name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     preferred_username: Option<String>,
+}
+
+#[derive(Serialize)]
+struct WorkloadClaims {
+    sub: String,
+    azp: String,
+    iss: String,
+    aud: String,
+    iat: i64,
+    exp: i64,
 }
 
 pub struct TokenOptions {
@@ -241,6 +251,73 @@ impl TestServer {
             &self.encoding_key
         };
         encode(&header, &claims, key).unwrap()
+    }
+
+    pub fn agent_gateway_token(&self, audience: &str, authorized_party: &str) -> String {
+        let issued_at = chrono::Utc::now().timestamp();
+        let claims = WorkloadClaims {
+            sub: "service-account-thought-khoral-agent-gateway".to_owned(),
+            azp: authorized_party.to_owned(),
+            iss: ISSUER.to_owned(),
+            aud: audience.to_owned(),
+            iat: issued_at,
+            exp: issued_at + 300,
+        };
+        let mut header = Header::new(Algorithm::RS256);
+        header.kid = Some(KEY_ID.to_owned());
+        encode(&header, &claims, &self.encoding_key).unwrap()
+    }
+
+    pub async fn internal_json(
+        &self,
+        method: &str,
+        path: &str,
+        authorization: Option<&str>,
+        lease_token: Option<Uuid>,
+        body: Option<Value>,
+    ) -> (u16, Value) {
+        let address = self.address;
+        let method = method.to_owned();
+        let path = path.to_owned();
+        let authorization = authorization.map(str::to_owned);
+        let lease_token = lease_token.map(|token| token.to_string());
+        let body = body.map(|body| body.to_string()).unwrap_or_default();
+        tokio::task::spawn_blocking(move || {
+            use std::io::{Read, Write};
+
+            let mut stream = std::net::TcpStream::connect(address).unwrap();
+            let mut request = format!(
+                "{method} {path} HTTP/1.1\r\nHost: {address}\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: {}\r\n",
+                body.len()
+            );
+            if let Some(authorization) = authorization {
+                request.push_str(&format!("Authorization: Bearer {authorization}\r\n"));
+            }
+            if let Some(lease_token) = lease_token {
+                request.push_str(&format!("X-Thought-Khoral-Lease-Token: {lease_token}\r\n"));
+            }
+            request.push_str("\r\n");
+            request.push_str(&body);
+            stream.write_all(request.as_bytes()).unwrap();
+
+            let mut response = String::new();
+            stream.read_to_string(&mut response).unwrap();
+            let (head, body) = response.split_once("\r\n\r\n").unwrap();
+            let status = head
+                .lines()
+                .next()
+                .and_then(|line| line.split_whitespace().nth(1))
+                .and_then(|status| status.parse::<u16>().ok())
+                .unwrap();
+            let body = if body.is_empty() {
+                Value::Null
+            } else {
+                serde_json::from_str(body).unwrap()
+            };
+            (status, body)
+        })
+        .await
+        .unwrap()
     }
 
     pub async fn connect(&self, token: &str) -> TestSocket {

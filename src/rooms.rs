@@ -129,6 +129,24 @@ impl RoomParticipant {
 
 const MENTION_ALIASES: [&str; 2] = ["allhumans", "allagents"];
 
+/// Governs both WebSocket replay and agent context packets. A packet must never contain an event
+/// that its invoking human could not have received in the room.
+pub(crate) fn event_visible_to(event: &RoomEvent, actor: Uuid) -> bool {
+    match event.payload.get("delivery").and_then(Value::as_str) {
+        Some("mentioned") => event
+            .payload
+            .get("audienceIds")
+            .and_then(Value::as_array)
+            .is_some_and(|audience_ids| {
+                audience_ids.iter().any(|audience_id| {
+                    audience_id.as_str().and_then(|id| id.parse::<Uuid>().ok()) == Some(actor)
+                })
+            }),
+        Some("room") | None => true,
+        Some(_) => true,
+    }
+}
+
 fn normalized_participant_name(display_name: &str) -> String {
     let slug = display_name
         .nfkd()
@@ -433,6 +451,10 @@ impl GatewayState {
 
     pub(crate) fn websocket_policy(&self) -> &WebSocketPolicy {
         &self.inner.websocket_policy
+    }
+
+    pub(crate) fn pool(&self) -> &PgPool {
+        &self.inner.pool
     }
 
     pub(crate) fn room_channel(

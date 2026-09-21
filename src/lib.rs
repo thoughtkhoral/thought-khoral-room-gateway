@@ -1,4 +1,5 @@
 pub mod action_items;
+pub mod agent_service;
 pub mod auth;
 pub mod config;
 pub mod error;
@@ -12,6 +13,9 @@ pub mod ws;
 pub const PRODUCT_NAME: &str = "ThoughtKhoral";
 pub const SERVICE_NAME: &str = "thought-khoral-room-gateway";
 
+pub use agent_service::{
+    ClaimRequest, ContextResponse, NormalizedAgentTaskUpdate, RoomContextPacket, TaskUpdateRequest,
+};
 pub use auth::{Actor, ActorRole, AuthConfigurationError, AuthValidator};
 pub use facilitator::{
     MemoryEngineDraftProposal, MemoryProposalValidationError, NewDecisionProposal,

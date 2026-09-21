@@ -22,14 +22,14 @@ use crate::{
     PRODUCT_NAME, SERVICE_NAME,
     auth::Actor,
     protocol::{RpcError, ValidatedRequest, validate_request},
-    rooms::{GatewayState, RoomBroadcast, RoomParticipant},
-    store::RoomEvent,
+    rooms::{GatewayState, RoomBroadcast, RoomParticipant, event_visible_to},
 };
 
 pub fn app(state: GatewayState) -> Router {
     Router::new()
         .route("/health", get(gateway_status))
         .route("/ws", get(websocket_upgrade))
+        .merge(crate::agent_service::routes())
         .with_state(state)
 }
 
@@ -462,22 +462,6 @@ async fn replay_in_order(
         *last_sequence = event.sequence;
     }
     Ok(())
-}
-
-fn event_visible_to(event: &RoomEvent, actor: Uuid) -> bool {
-    match event.payload.get("delivery").and_then(Value::as_str) {
-        Some("mentioned") => event
-            .payload
-            .get("audienceIds")
-            .and_then(Value::as_array)
-            .is_some_and(|audience_ids| {
-                audience_ids.iter().any(|audience_id| {
-                    audience_id.as_str().and_then(|id| id.parse::<Uuid>().ok()) == Some(actor)
-                })
-            }),
-        Some("room") | None => true,
-        Some(_) => true,
-    }
 }
 
 fn log_rejection(actor: &Actor, room_id: Uuid, request_id: Uuid, error: &RpcError) {

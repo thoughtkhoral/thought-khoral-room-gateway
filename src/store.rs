@@ -590,6 +590,51 @@ pub async fn claim_agent_task(
     .transpose()
 }
 
+/// Atomically claims the oldest queued task for one registered external agent.  Selection and
+/// lease acquisition share one statement so competing agent-gateway processes cannot observe and
+/// then steal the same task.
+pub(crate) async fn claim_oldest_queued_agent_task(
+    pool: &PgPool,
+    agent_id: Uuid,
+    owner_id: Uuid,
+    now: DateTime<Utc>,
+) -> Result<Option<AgentTaskLease>, StoreError> {
+    let expires_at = now + AGENT_TASK_LEASE_DURATION;
+    let row = sqlx::query(
+        r#"
+        WITH claimable AS (
+            SELECT task_id
+            FROM agent_tasks
+            WHERE agent_id = $1
+              AND state = 'queued'
+              AND (lease_expires_at IS NULL OR lease_expires_at <= $2)
+            ORDER BY created_at ASC, task_id ASC
+            LIMIT 1
+            FOR UPDATE SKIP LOCKED
+        )
+        UPDATE agent_tasks
+        SET lease_owner = $3, lease_expires_at = $4, state = 'running', updated_at = $2
+        FROM claimable
+        WHERE agent_tasks.task_id = claimable.task_id
+        RETURNING agent_tasks.task_id, agent_tasks.lease_owner, agent_tasks.lease_expires_at
+        "#,
+    )
+    .bind(agent_id)
+    .bind(now)
+    .bind(owner_id)
+    .bind(expires_at)
+    .fetch_optional(pool)
+    .await?;
+    row.map(|row| {
+        Ok(AgentTaskLease {
+            task_id: row.try_get("task_id")?,
+            owner_id: row.try_get("lease_owner")?,
+            expires_at: row.try_get("lease_expires_at")?,
+        })
+    })
+    .transpose()
+}
+
 pub async fn context_for_lease(
     pool: &PgPool,
     lease: &AgentTaskLease,
