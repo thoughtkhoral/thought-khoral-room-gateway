@@ -142,7 +142,7 @@ async fn brokered_context_requires_the_agent_gateway_identity_and_a_matching_liv
     let now = Utc::now();
     let store = AgentTaskStore::new(server.pool.clone(), requester_id, "Requesting Human");
 
-    sqlx::query("UPDATE agent_tasks SET state = 'failed', updated_at = NOW() WHERE agent_id = $1 AND state = 'queued'")
+    sqlx::query("UPDATE agent_tasks SET state = 'failed', updated_at = NOW() WHERE agent_id = $1 AND state IN ('queued', 'running', 'awaiting_external_input')")
         .bind(REFERENCE_AGENT_ID)
         .execute(&server.pool)
         .await
@@ -180,7 +180,7 @@ async fn brokered_context_requires_the_agent_gateway_identity_and_a_matching_liv
         .await
         .unwrap();
     tokio::time::sleep(std::time::Duration::from_millis(2)).await;
-    let _second_reference_task = store
+    let second_reference_task = store
         .start_agent_task(task_start(
             room_id,
             REFERENCE_AGENT_ID,
@@ -270,7 +270,7 @@ async fn brokered_context_requires_the_agent_gateway_identity_and_a_matching_liv
             "/internal/v1/agent-tasks/claim",
             Some(&gateway_token),
             None,
-            Some(claim_body),
+            Some(claim_body.clone()),
         )
         .await;
     assert_eq!(claim_status, 200);
@@ -406,6 +406,57 @@ async fn brokered_context_requires_the_agent_gateway_identity_and_a_matching_liv
         .await;
     assert_eq!(duplicate_status, 200);
     assert_eq!(duplicate["events"], first_update["events"]);
+
+    // The real polling route must recover both abandoned running tasks and
+    // awaiting-input tasks, while invalidating the old lease capability.
+    let mut current_lease = lease_token;
+    for state in ["running", "awaiting_external_input"] {
+        sqlx::query("UPDATE agent_tasks SET state = $1, lease_expires_at = NOW() - INTERVAL '1 second' WHERE task_id = $2")
+            .bind(state).bind(task_id).execute(&server.pool).await.unwrap();
+        // A restarted poll from the same worker must revoke its old capability.
+        let owner = Uuid::parse_str(claim_body["leaseOwner"].as_str().unwrap()).unwrap();
+        let (status, recovered) = server
+            .internal_json(
+                "POST",
+                "/internal/v1/agent-tasks/claim",
+                Some(&gateway_token),
+                None,
+                Some(json!({"leaseOwner": owner})),
+            )
+            .await;
+        assert_eq!(status, 200);
+        assert_eq!(recovered["packet"]["taskId"], json!(task_id));
+        assert_ne!(
+            recovered["packet"]["taskId"],
+            json!(second_reference_task.task_id)
+        );
+        assert_eq!(
+            server
+                .internal_json(
+                    "GET",
+                    &context_path,
+                    Some(&gateway_token),
+                    Some(current_lease),
+                    None
+                )
+                .await
+                .0,
+            404
+        );
+        current_lease = Uuid::parse_str(recovered["leaseToken"].as_str().unwrap()).unwrap();
+        let (replay_status, replay) = server
+            .internal_json(
+                "POST",
+                &updates_path,
+                Some(&gateway_token),
+                Some(current_lease),
+                Some(update.clone()),
+            )
+            .await;
+        assert_eq!(replay_status, 200);
+        assert_eq!(replay["events"], first_update["events"]);
+    }
+    let lease_token = current_lease;
 
     let mut conflicting_duplicate = update.clone();
     conflicting_duplicate["update"]["payload"]["text"] = json!("Conflicting retry payload.");

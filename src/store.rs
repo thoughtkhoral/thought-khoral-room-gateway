@@ -677,7 +677,7 @@ pub async fn claim_agent_task(
     .transpose()
 }
 
-/// Atomically claims the oldest queued task for one registered external agent.  Selection and
+/// Atomically claims the oldest eligible task for one registered external agent. Selection and
 /// lease acquisition share one statement so competing agent-gateway processes cannot observe and
 /// then steal the same task.
 pub(crate) async fn claim_oldest_queued_agent_task(
@@ -700,7 +700,7 @@ pub(crate) async fn claim_oldest_queued_agent_task(
             SELECT task_id
             FROM agent_tasks
             WHERE agent_id = $1
-              AND state = 'queued'
+              AND state IN ('queued', 'running', 'awaiting_external_input')
               AND (lease_expires_at IS NULL OR lease_expires_at <= $2)
             ORDER BY created_at ASC, task_id ASC
             LIMIT 1
@@ -844,6 +844,9 @@ pub(crate) async fn record_agent_task_update_with_outcome(
         transaction.rollback().await?;
         return Err(StoreError::InvalidAgentTask);
     }
+    if update.event_type == "agent.task.awaiting_external_input" {
+        validate_agent_handoff(&task, lease, &payload)?;
+    }
     let state = state_for_update(&update.event_type)?;
     let event = append_event_in_transaction(
         &mut transaction,
@@ -896,9 +899,49 @@ fn normalized_agent_task_update_payload(
         .as_object_mut()
         .ok_or(StoreError::InvalidAgentTask)?;
     for (key, value) in core.as_object().expect("JSON object") {
+        if object.get(key).is_some_and(|provided| provided != value) {
+            return Err(StoreError::InvalidAgentTask);
+        }
         object.insert(key.clone(), value.clone());
     }
     Ok(payload)
+}
+
+fn validate_agent_handoff(
+    task: &AgentTaskRecord,
+    lease: &AgentTaskLease,
+    payload: &Value,
+) -> Result<(), StoreError> {
+    // This foundation admits one registered agent and one registered handoff
+    // host. The lease and normalized envelope bind task and context revision.
+    let handoff = &payload["handoff"];
+    let instruction = handoff["instruction"]
+        .as_str()
+        .ok_or(StoreError::InvalidAgentTask)?;
+    let url = handoff["url"]
+        .as_str()
+        .and_then(|value| url::Url::parse(value).ok())
+        .ok_or(StoreError::InvalidAgentTask)?;
+    let expiry = handoff["expiresAt"]
+        .as_str()
+        .and_then(|value| DateTime::parse_from_rfc3339(value).ok())
+        .ok_or(StoreError::InvalidAgentTask)?;
+    if task.agent_id != Uuid::from_u128(0x74686f756768746b_686f72616c000003)
+        || instruction.trim().is_empty()
+        || instruction != instruction.trim()
+        || url.scheme() != "https"
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || url.fragment().is_some()
+        || url.host_str() != Some("reference-agent.thought-khoral.local")
+        || handoff["host"].as_str() != url.host_str()
+        || url.port_or_known_default() != Some(443)
+        || expiry <= Utc::now()
+        || expiry > lease.expires_at
+    {
+        return Err(StoreError::InvalidAgentTask);
+    }
+    Ok(())
 }
 
 fn is_matching_agent_task_update(

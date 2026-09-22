@@ -70,6 +70,93 @@ fn test_success_update() -> AgentTaskUpdate {
     }
 }
 
+#[tokio::test]
+async fn handoff_policy_is_enforced_before_persistence() {
+    let (store, _) = test_store().await;
+    let task = store.start_agent_task(test_task_start()).await.unwrap();
+    let lease = store
+        .claim_agent_task(task.task_id, first_lease_owner(), Utc::now())
+        .await
+        .unwrap()
+        .unwrap();
+    let valid = json!({"handoff": {
+        "instruction": "Confirm the requested action.",
+        "url": "https://reference-agent.thought-khoral.local/continue",
+        "host": "reference-agent.thought-khoral.local",
+        "expiresAt": Utc::now() + Duration::seconds(30),
+    }});
+    let mut invalid = Vec::new();
+    for url in [
+        "http://reference-agent.thought-khoral.local/continue",
+        "https://user@reference-agent.thought-khoral.local/continue",
+        "https://evil.example/continue",
+        "https://reference-agent.thought-khoral.local/continue#secret",
+    ] {
+        let mut payload = valid.clone();
+        payload["handoff"]["url"] = json!(url);
+        invalid.push(payload);
+    }
+    let mut unregistered = valid.clone();
+    let mut blank_instruction = valid.clone();
+    blank_instruction["handoff"]["instruction"] = json!("   ");
+    invalid.push(blank_instruction);
+    unregistered["handoff"]["url"] = json!("https://evil.example/continue");
+    unregistered["handoff"]["host"] = json!("evil.example");
+    invalid.push(unregistered);
+    for expiry in [
+        Utc::now() - Duration::seconds(1),
+        lease.expires_at + Duration::seconds(1),
+    ] {
+        let mut payload = valid.clone();
+        payload["handoff"]["expiresAt"] = json!(expiry);
+        invalid.push(payload);
+    }
+    let mut wrong_task = valid.clone();
+    wrong_task["taskId"] = json!(Uuid::new_v4());
+    invalid.push(wrong_task);
+    let mut wrong_revision = valid.clone();
+    wrong_revision["contextRevision"] = json!(999999);
+    invalid.push(wrong_revision);
+    for payload in invalid {
+        assert!(
+            store
+                .record_agent_task_update(
+                    &lease,
+                    AgentTaskUpdate {
+                        update_id: Uuid::new_v4(),
+                        event_type: "agent.task.awaiting_external_input".to_owned(),
+                        payload: payload.clone(),
+                        occurred_at: Utc::now(),
+                    }
+                )
+                .await
+                .is_err(),
+            "must reject {payload}"
+        );
+    }
+    assert_eq!(
+        store
+            .room_event_count(task.events[0].room_id)
+            .await
+            .unwrap(),
+        1
+    );
+    assert!(
+        store
+            .record_agent_task_update(
+                &lease,
+                AgentTaskUpdate {
+                    update_id: Uuid::new_v4(),
+                    event_type: "agent.task.awaiting_external_input".to_owned(),
+                    payload: valid,
+                    occurred_at: Utc::now(),
+                }
+            )
+            .await
+            .is_ok()
+    );
+}
+
 // This fails if task creation omits either the immutable requested event or its queued record.
 #[tokio::test]
 async fn task_start_creates_one_requested_event_and_one_queued_record() {

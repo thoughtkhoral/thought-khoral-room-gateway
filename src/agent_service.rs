@@ -109,11 +109,14 @@ pub(crate) fn routes(state: GatewayState) -> Router<GatewayState> {
         ))
 }
 
-async fn claim(State(state): State<GatewayState>, Json(request): Json<ClaimRequest>) -> Response {
+async fn claim(State(state): State<GatewayState>, Json(_request): Json<ClaimRequest>) -> Response {
+    // The client's stable worker ID is not a lease capability. Mint a fresh
+    // token even when that same worker reclaims an expired task, so an old
+    // in-flight request cannot acquire the renewed lease's authority.
     let lease = match claim_oldest_queued_agent_task(
         state.pool(),
         REFERENCE_AGENT_ID,
-        request.lease_owner,
+        Uuid::new_v4(),
         Utc::now(),
     )
     .await
