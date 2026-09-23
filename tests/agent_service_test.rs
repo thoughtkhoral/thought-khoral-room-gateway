@@ -236,21 +236,6 @@ async fn brokered_context_requires_the_agent_gateway_identity_and_a_matching_liv
         .await;
     assert_eq!(wrong_audience_status, 401);
 
-    let multi_audience = server.agent_gateway_token_with_audiences(
-        &[AUDIENCE, "another-service"],
-        AGENT_GATEWAY_CLIENT_ID,
-    );
-    let (multi_audience_status, _) = server
-        .internal_json(
-            "POST",
-            "/internal/v1/agent-tasks/claim",
-            Some(&multi_audience),
-            None,
-            Some(claim_body.clone()),
-        )
-        .await;
-    assert_eq!(multi_audience_status, 401);
-
     let wrong_authorized_party = server.agent_gateway_token(AUDIENCE, "another-client");
     let (wrong_authorized_party_status, _) = server
         .internal_json(
@@ -538,4 +523,21 @@ async fn brokered_context_requires_the_agent_gateway_identity_and_a_matching_liv
             .unwrap(),
         room_event_count + 1
     );
+
+    // OAuth audience arrays are valid when they include this resource; the
+    // separate `azp` check above still pins the workload client identity.
+    let multi_audience = server.agent_gateway_token_with_audiences(
+        &[AUDIENCE, "another-service"],
+        AGENT_GATEWAY_CLIENT_ID,
+    );
+    let (multi_audience_status, _) = server
+        .internal_json(
+            "POST",
+            "/internal/v1/agent-tasks/claim",
+            Some(&multi_audience),
+            None,
+            Some(claim_body),
+        )
+        .await;
+    assert_eq!(multi_audience_status, 200);
 }

@@ -219,14 +219,17 @@ impl AuthValidator {
             .map_err(|_| WorkloadAuthenticationError::Unauthenticated)?
             .claims;
 
-        let audience = match &claims.aud {
-            WorkloadAudience::One(audience) => audience,
-            WorkloadAudience::Many(audiences) => {
-                let _multiple_audiences = audiences;
-                return Err(WorkloadAuthenticationError::Unauthenticated);
-            }
+        // OAuth permits either a scalar audience or an audience array. A
+        // resource server must require *its* audience, not reject a token
+        // merely because Keycloak also includes a default resource such as
+        // `account`. `azp` below still pins the issuing workload client.
+        let has_expected_audience = match &claims.aud {
+            WorkloadAudience::One(audience) => audience == AGENT_GATEWAY_AUDIENCE,
+            WorkloadAudience::Many(audiences) => audiences
+                .iter()
+                .any(|audience| audience == AGENT_GATEWAY_AUDIENCE),
         };
-        if audience != AGENT_GATEWAY_AUDIENCE {
+        if !has_expected_audience {
             return Err(WorkloadAuthenticationError::Unauthenticated);
         }
         if claims.azp.as_deref() != Some(AGENT_GATEWAY_CLIENT_ID) {
