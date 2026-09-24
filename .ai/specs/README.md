@@ -14,9 +14,12 @@ See the [root specification index](https://github.com/thoughtkhoral/thought-khor
 
 ## Facilitator draft-proposal port
 
-The gateway owns the facilitator port and the live `Decision:` implementation.
-Cognee occupies that port later from `thought-khoral-memory-engine` and is not
-a runtime of this project. See root [decision 005](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/005-room-scoped-poc-memory.md)
+The gateway owns the facilitator port, but the legacy `Decision:` prefix
+parser is not active. A human uses `/decisions` for governed mutations;
+Cognee may occupy the derived-draft port later from
+`thought-khoral-memory-engine` and is not a runtime of this project. See root
+[decision 005](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/005-room-scoped-poc-memory.md),
+[decision 008](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/008-slash-decisions-and-facilitator-boundary.md),
 and the [memory-engine POC What](https://github.com/thoughtkhoral/thought-khoral-memory-engine/blob/main/.ai/specs/what/poc-room-scoped-memory.md).
 
 ## Room lifecycle compatibility boundary

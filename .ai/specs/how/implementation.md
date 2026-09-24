@@ -6,6 +6,21 @@ Implementation begins only after the relevant task is approved. The gateway must
 
 The accepted local [ThoughtKhoral identity decision](../decisions/002-thoughtkhoral-identity.md) renames this project to `thought-khoral-room-gateway`. The `n2n.room.v1` wire value, vendored compatibility archive, database identifiers, and persisted values remain unchanged.
 
+## Slash decisions and facilitator boundary
+
+Root [decision 008](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/008-slash-decisions-and-facilitator-boundary.md)
+and accepted local [decision 003](../decisions/003-slash-decisions-crud.md)
+supersede the legacy `Decision:` parser requirement in root decision 005.
+`chat.send` persists prefixed text only as ordinary chat. The gateway still
+owns the propose-only facilitator port for future drafts derived from
+persisted events, but no automatic prefix parser is active. A human's
+`/decisions` workflow invokes `decision.propose`, `decision.transition`, or
+`decision.delete` through the authenticated room boundary. Delete locks the
+room decision, appends a complete `decision.deleted` audit snapshot, removes
+the current row, and records request idempotency in one transaction. It never
+deletes the immutable room-event history or grants an agent active-context
+authority.
+
 ## Runtime identity and configuration
 
 The Cargo package, library crate, and executable are named
@@ -169,27 +184,28 @@ close behavior; neither logs credentials or raw room content.
 
 ## Facilitator draft-proposal port
 
-The gateway owns the facilitator **port**. After a room event is persisted, the
-gateway asks that port for zero or more drafts, records any result as
-`decision.proposed` in the same authorization and persistence boundary, and
-never lets that path invoke `decision.transition`. Human-only
-`decision.transition` remains the sole path to active context.
+The gateway owns the facilitator **port** for drafts derived from persisted
+room events. Any future implementation may return zero or more drafts which
+the gateway records as `decision.proposed` in its authorization and
+persistence boundary; that path may never invoke `decision.transition`.
+Human-only `decision.transition` remains the activation path, while
+human-only `decision.delete` removes a current row with an immutable audit
+event. Human `decision.propose` from `/decisions` is explicit creation, not
+an automatic derived-draft implementation of this port.
 
-The live implementation is the deterministic `Decision:` parser. After a
-`chat.send` has been normalized and persisted as `message.created`, the
-gateway may inspect that persisted event locally. Only trimmed text beginning
-with `Decision:` and followed by a non-empty title produces a second persisted
-event, `decision.proposed`. The proposal is a draft attributed to the fixed
-gateway agent, cites exactly the triggering message event ID in
-`sourceEventIds`, and is published only after the transaction commits. This
-implementation makes no model, tool, operating-system, or non-gateway-database
-call.
+The deterministic `Decision:` prefix parser is retired under root
+[decision 008](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/008-slash-decisions-and-facilitator-boundary.md).
+A `chat.send` containing that prefix persists only `message.created`; it
+does not produce a second proposal event. No automatic prefix-derived draft
+is active in the current gateway.
 
 A later Cognee / memory-engine implementation may occupy the same port under
-root [decision 005](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/005-room-scoped-poc-memory.md).
+root [decision 005](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/005-room-scoped-poc-memory.md)
+as amended by decision 008.
 This project must not embed Cognee, call an unmediated model, or add a second
-independent propose path beside the port. Switching the live implementation
-requires a separately approved memory-engine How and implementation plan.
+independent propose path beside the port. Activating a memory-derived
+implementation requires a separately approved memory-engine How and
+implementation plan.
 
 ## Deterministic agent task dispatch
 

@@ -12,19 +12,21 @@
 - For an allowed browser Origin, the gateway accepts only `session.authenticate` before binding a fully validated OIDC identity, and closes authentication failures or timeouts without admitting a room operation.
 - It persists ordered immutable room events before broadcasting them and supports replay after a sequence cursor.
 - It returns the room participant snapshot from `room.join` and broadcasts ephemeral participant presence updates, using trusted OIDC display-name claims when available and a role-plus-short-ID fallback otherwise.
-- Only a human participant can confirm, edit, or dismiss a draft decision; no proposal affects active context without that action.
+- Only a human participant can confirm, edit, or dismiss a draft decision or
+  delete an existing decision. Deletion removes the current row but retains a
+  complete immutable audit event; no agent proposal affects active context.
 - The gateway owns the facilitator draft-proposal port. After a persisted room
   event, that port may return zero or more drafts which the gateway records as
   `decision.proposed`. The port must not invoke a decision transition, write
   active context, or call an external model, tool, or operating-system command
   inside this process. See root [decision 005](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/005-room-scoped-poc-memory.md).
-- The live implementation of that port is the deterministic `Decision:` parser:
-  it may derive a draft only from a persisted `message.created` event whose
-  trimmed text starts with `Decision:` and has a non-empty remainder. It
-  attributes that proposal to the gateway agent and retains the triggering
-  event identifier as provenance. A memory-engine / Cognee implementation of
-  the same port is out of this project's runtime until a separately approved
-  plan enables it; this gateway must not add a second independent propose path.
+- The former deterministic `Decision:` parser is retired: prefixed text is
+  ordinary chat. The facilitator port remains the only path for future
+  memory-derived drafts from persisted events; a memory-engine / Cognee
+  implementation is out of this project's runtime until a separately
+  approved plan enables it. Human `/decisions` creation uses governed
+  `decision.propose` directly and is not a second derived-draft proposer.
+  See root [decision 008](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/008-slash-decisions-and-facilitator-boundary.md).
 - The gateway registers the deterministic Action Items Agent and, after a
   human room-wide direct mention, atomically records the source message and
   replayable task lifecycle
@@ -39,7 +41,16 @@
 
 ## Interfaces
 
-The gateway consumes the `n2n.room.v1` contract method `session.authenticate` for browser connection establishment and the authenticated methods `room.join`, `chat.send`, `decision.propose`, `decision.transition`, and `agent.task.start`. It exposes their normalized events, participant snapshots/updates, and errors over its WebSocket, governed by [root Decision 002](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/002-browser-websocket-authentication.md) and the accepted [local browser profile](../decisions/002-browser-session-authentication.md). Its separate authenticated internal task interface supports lease claim, context retrieval, and normalized update submission; it does not expose a browser A2A endpoint.
+The gateway consumes the `n2n.room.v1` contract method
+`session.authenticate` for browser connection establishment and the
+authenticated methods `room.join`, `chat.send`, `decision.propose`,
+`decision.transition`, `decision.delete`, and `agent.task.start`. It exposes
+their normalized events, participant snapshots/updates, and errors over its
+WebSocket, governed by [root Decision 002](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/002-browser-websocket-authentication.md)
+and the accepted [local browser profile](../decisions/002-browser-session-authentication.md).
+Its separate authenticated internal task interface supports lease claim,
+context retrieval, and normalized update submission; it does not expose a
+browser A2A endpoint.
 
 ## Explicit exclusions
 

@@ -53,6 +53,16 @@ before they can be renamed.
 For the complete boundary and local decisions, see [the local specification
 index](.ai/specs/README.md).
 
+## Decision management
+
+Human participants use the workspace `/decisions` workflow for governed
+Create, Update, and Delete actions. `decision.delete` physically removes the
+current decision row while retaining its `decision.deleted` audit event and
+request-ledger entry. A chat message beginning with `Decision:` is ordinary
+chat; it does not trigger an automatic facilitator proposal. The gateway keeps
+the propose-only facilitator port for a separately approved memory-derived
+draft implementation. See [the slash-decisions decision](.ai/specs/decisions/003-slash-decisions-crud.md).
+
 ## Local A2A task mediation
 
 The earlier `@action-items` mention invokes the in-process deterministic
