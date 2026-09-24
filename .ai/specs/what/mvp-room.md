@@ -30,14 +30,22 @@
   replayable task lifecycle
   events. The executor has no model, tools, filesystem, shell, network, or
   direct database access and cannot affect decisions or active context.
+- For the separate local A2A reference task, the gateway authorizes a human
+  `agent.task.start` for one pinned agent and two skills, leases the task to an
+  authenticated worker, and assembles a task-bound snapshot of the full
+  ordered history visible to both requester and agent plus active decisions.
+  It validates context revision, lease, update identity, citations, and
+  terminal state before persisting and broadcasting normalized task events.
 
 ## Interfaces
 
-The gateway consumes the `n2n.room.v1` contract method `session.authenticate` for browser connection establishment and the authenticated methods `room.join`, `chat.send`, `decision.propose`, and `decision.transition`. It exposes their normalized events, participant snapshots/updates, and errors over its WebSocket, governed by [root Decision 002](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/002-browser-websocket-authentication.md) and the accepted [local browser profile](../decisions/002-browser-session-authentication.md).
+The gateway consumes the `n2n.room.v1` contract method `session.authenticate` for browser connection establishment and the authenticated methods `room.join`, `chat.send`, `decision.propose`, `decision.transition`, and `agent.task.start`. It exposes their normalized events, participant snapshots/updates, and errors over its WebSocket, governed by [root Decision 002](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/002-browser-websocket-authentication.md) and the accepted [local browser profile](../decisions/002-browser-session-authentication.md). Its separate authenticated internal task interface supports lease claim, context retrieval, and normalized update submission; it does not expose a browser A2A endpoint.
 
 ## Explicit exclusions
 
 This project does not own contract definitions, provide a browser UI, compose
 local infrastructure, grant agents database credentials or shell access,
-integrate Cognee or other memory-engine runtimes in this process, or integrate
-external agent runtimes, A2A, or MCP services.
+integrate Cognee or other memory-engine runtimes in this process, or host
+external agent runtimes, A2A transport, or MCP services. Remote agent
+admission remains deferred; the local reference path is mediated by the
+separate agent gateway.

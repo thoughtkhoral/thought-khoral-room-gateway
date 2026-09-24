@@ -195,6 +195,10 @@ requires a separately approved memory-engine How and implementation plan.
 
 Root [decision 006](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/006-agent-task-dispatch.md) authorizes one registered Action Items Agent. The gateway creates a task only for a human, room-wide direct mention of that registered agent. It atomically persists the source message, `agent.task.queued`, `agent.task.running`, and one terminal task event from its pure executor. The executor receives only message text with its mention removed and cannot access tools, filesystem, shell, network, or active-context transitions. Repeated chat requests remain idempotent through the existing request ledger.
 
+## Mediated local A2A task service
+
+Root [decision 007](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/007-a2a-agent-gateway-foundation.md) adds a separate, human-initiated `agent.task.start` path for the pinned local reference agent and two allowed skills. The room gateway remains the room authorization, event-persistence, delivery, and active-decision authority. Its authenticated internal `/internal/v1/agent-tasks` interface allows the agent gateway to claim a bounded lease, retrieve a full ordered snapshot filtered to the requester-and-agent authorized audience, and submit normalized progress, optional external-input waiting, or one terminal update. The packet binds task, room, requester, agent, skill, context revision, issue/expiry, and provenance; hidden targeted messages are excluded. A fresh lease token is required on context and update calls. The gateway rejects stale revisions, expired or mismatched leases, duplicate/late terminals, and citations outside the packet before persisting a room event. Neither the agent gateway nor reference agent receives room database credentials or authority to change active decisions.
+
 ## Append-only and persistence validation invariants
 
 `room_events` is database-enforced append-only: a follow-on migration installs

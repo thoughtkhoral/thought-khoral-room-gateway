@@ -53,6 +53,19 @@ before they can be renamed.
 For the complete boundary and local decisions, see [the local specification
 index](.ai/specs/README.md).
 
+## Local A2A task mediation
+
+The earlier `@action-items` mention invokes the in-process deterministic
+Action Items Agent. Separately, a human `agent.task.start` invokes one pinned
+local A2A reference agent with either `summarize-context` or
+`extract-action-items`. The room gateway owns the durable task, authorizes and
+filters the full ordered room-context snapshot, issues a bounded worker lease,
+and validates cited results and terminal state before persisting room events.
+The agent gateway uses a separate authenticated internal task interface; it
+does not receive database credentials or active-decision authority. The local
+platform and [A2A foundation specification](https://github.com/thoughtkhoral/thought-khoral-agent-gateway/blob/main/.ai/specs/what/a2a-agent-gateway-foundation.md)
+describe the reference integration. Remote agent admission is not enabled.
+
 ## Message mentions and delivery
 
 The gateway is authoritative for mention delivery. It validates every direct

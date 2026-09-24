@@ -17,4 +17,7 @@ integrate the authenticated room gateway.
   index.
 - Documentation does not imply that the gateway owns the shared contract or
   production deployment.
+- Documentation distinguishes the in-process mention-triggered Action Items
+  Agent from the authenticated internal task service for the local A2A
+  reference agent, including context and persistence authority boundaries.
 - Changes follow the organization issue-first contribution workflow.
