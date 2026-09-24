@@ -12,6 +12,13 @@
 - For an allowed browser Origin, the gateway accepts only `session.authenticate` before binding a fully validated OIDC identity, and closes authentication failures or timeouts without admitting a room operation.
 - It persists ordered immutable room events before broadcasting them and supports replay after a sequence cursor.
 - It returns the room participant snapshot from `room.join` and broadcasts ephemeral participant presence updates, using trusted OIDC display-name claims when available and a role-plus-short-ID fallback otherwise.
+- It validates direct chat mentions against canonical tokens from the current
+  room roster before persistence. Room-wide messages reach all participants;
+  mentioned-only messages reach the resolved targets and sender. Fixed
+  `@allhumans` and `@allagents` aliases expand by role, with all humans able to
+  supervise `@allagents` messages. Live delivery, replay, and agent context
+  snapshots exclude messages outside an actor's persisted audience without
+  renumbering global room events.
 - Only a human participant can confirm, edit, or dismiss a draft decision or
   delete an existing decision. Deletion removes the current row but retains a
   complete immutable audit event; no agent proposal affects active context.
@@ -51,6 +58,9 @@ and the accepted [local browser profile](../decisions/002-browser-session-authen
 Its separate authenticated internal task interface supports lease claim,
 context retrieval, and normalized update submission; it does not expose a
 browser A2A endpoint.
+
+The gateway is authoritative for `chat.send` mention resolution and
+`message.created` audience persistence under the root [message delivery design](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/message-mentions-and-delivery.md).
 
 ## Explicit exclusions
 

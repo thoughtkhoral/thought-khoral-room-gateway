@@ -207,6 +207,26 @@ independent propose path beside the port. Activating a memory-derived
 implementation requires a separately approved memory-engine How and
 implementation plan.
 
+## Message mention resolution and visibility
+
+Before `append_event`, validate every direct participant ID and token against
+the current room roster. Canonical tokens derive from normalized display
+names; duplicate names and names reserved for `allhumans`/`allagents` receive
+a deterministic participant-ID suffix. Reject structurally identical duplicate
+targets as invalid requests (`-32600`); reject unknown, stale, semantically
+duplicate, or noncanonical targets with `-32013`, including when delivery is
+room-wide. Neither rejection persists an event or request-ledger row.
+
+`room` is the default delivery and produces an empty `audienceIds` list.
+`mentioned` requires a target; resolve it to a sorted list containing the
+sender, direct participant IDs, all human IDs for `allhumans`, and all agent
+and human IDs for `allagents`. Persist the normalized mention fields,
+delivery, and audience with `message.created`. Filter live broadcast, ordered
+replay, and agent task context through the persisted audience. Hidden events
+still advance the global sequence and reconnect cursor. A direct Action Items
+Agent mention dispatches work only for a human room-wide message, never for
+mentioned-only delivery or an alias. See the root [message delivery design](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/message-mentions-and-delivery.md).
+
 ## Deterministic agent task dispatch
 
 Root [decision 006](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/decisions/006-agent-task-dispatch.md) authorizes one registered Action Items Agent. The gateway creates a task only for a human, room-wide direct mention of that registered agent. It atomically persists the source message, `agent.task.queued`, `agent.task.running`, and one terminal task event from its pure executor. The executor receives only message text with its mention removed and cannot access tools, filesystem, shell, network, or active-context transitions. Repeated chat requests remain idempotent through the existing request ledger.
