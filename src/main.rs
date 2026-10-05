@@ -26,6 +26,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ),
         None => GatewayState::with_websocket_policy(pool, auth, config.websocket_policy),
     };
+    state
+        .configure_conversations(config.conversation_policy, None)
+        .await?;
     axum::serve(listener, app(state)).await?;
     Ok(())
 }

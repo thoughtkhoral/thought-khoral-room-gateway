@@ -219,30 +219,9 @@ pub fn validate_turn_request(request: &Value) -> Result<Value, ConversationError
     Ok(request.clone())
 }
 
-/// Private until Task 3 exposes the context port. The HTTP boundary must reject
-/// duplicate object keys before constructing a Value; a Value cannot retain them.
-pub(crate) fn canonical_bytes(value: &Value) -> Result<Vec<u8>, ConversationError> {
-    if !safe_numbers(value) {
-        return Err(ConversationError::ContextMismatch);
-    }
-    // serde_json's Map uses sorted ASCII keys without preserve_order. Sort explicitly
-    // so enabling that feature transitively cannot change the protocol bytes.
-    fn sorted(value: &Value) -> Value {
-        match value {
-            Value::Object(map) => {
-                let mut keys: Vec<_> = map.keys().collect();
-                keys.sort_unstable();
-                Value::Object(
-                    keys.into_iter()
-                        .map(|key| (key.clone(), sorted(&map[key])))
-                        .collect(),
-                )
-            }
-            Value::Array(values) => Value::Array(values.iter().map(sorted).collect()),
-            _ => value.clone(),
-        }
-    }
-    serde_json::to_vec(&sorted(value)).map_err(|_| ConversationError::ContextMismatch)
+#[cfg(test)]
+fn canonical_bytes(value: &Value) -> Result<Vec<u8>, ConversationError> {
+    crate::conversation_context::canonical_context_bytes(value)
 }
 
 #[cfg(test)]

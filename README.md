@@ -90,7 +90,7 @@ for live broadcast and replay while global room sequence numbers continue to
 advance. The vendored `n2n.room.v1` contract documents the wire fields and is
 pinned in [`contracts/lock.json`](contracts/lock.json).
 
-## Codex conversation storage
+## Codex conversation routes and storage
 
 The approved [conversation design](.ai/specs/how/codex-room-participation.md)
 adds an independent contract pin in
@@ -107,5 +107,16 @@ Conversation policy defaults to disabled. `THOUGHT_KHORAL_CODEX_POLICY_JSON`
 parses the closed deployment policy described in the governing design. An
 enabled policy requires reviewed policy, guidance and catalog revisions plus
 allowed model/effort pairs and defaults. Configuration errors fail startup.
-This storage unit exposes no conversation HTTP or workload routes; those and
-the independent Codex worker remain subsequent implementation tasks.
+The separate `/api/agent-conversations/v1` browser routes now accept turns and
+expose conversation, task and mediated catalog views. The
+`/internal/agent-conversations/v1` routes use admitted workload authentication
+for claims, frozen context, updates, authority and receipt recovery. Migration
+`0007_conversation_lifecycle.sql` stores normalized lifecycle projections and
+immutable replay records. Accepted replies atomically commit one ordinary room
+message, its acknowledgement, the cursor and disclosed-source manifest.
+
+The catalog port requires the later agent-gateway adapter; an absent bridge
+rejects new work. The executable currently supplies no bridge and keeps policy
+disabled by default. The independent Codex worker and provider verification
+remain later tasks. HTTP integration tests use synthetic isolated PostgreSQL
+schemas and a fake external catalog, with no provider calls.
