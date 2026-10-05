@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thoughtkhoral/thought-khoral-contracts/schemas/agent-conversation-v1/error.schema.json",
+  "title": "ThoughtKhoral agent conversation v1 error",
+  "type": "object",
+  "properties": {
+    "profileVersion": {
+      "const": "thought-khoral.agent-conversation.v1"
+    },
+    "code": {
+      "enum": [
+        "invalid_task_input",
+        "forbidden",
+        "conversation_busy",
+        "conversation_stale",
+        "context_mismatch",
+        "context_too_large",
+        "runtime_unavailable",
+        "authentication_required",
+        "session_unavailable",
+        "timeout",
+        "conversation_interrupted",
+        "execution_failed",
+        "duplicate_conflict"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 512
+    },
+    "requestId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "profileVersion",
+    "code",
+    "message",
+    "requestId"
+  ],
+  "additionalProperties": false
+}

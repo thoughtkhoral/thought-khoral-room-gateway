@@ -25,6 +25,27 @@ use crate::{
     },
 };
 
+/// Current room permission port: validated human identity, without invented membership.
+/// A future room ACL must replace this port and invalidate affected generations.
+pub(crate) fn authorize_conversation_turn(
+    actor: &Actor,
+    requested_expiry: chrono::DateTime<chrono::Utc>,
+    now: chrono::DateTime<chrono::Utc>,
+    minimum_remaining: chrono::Duration,
+) -> Result<chrono::DateTime<chrono::Utc>, crate::conversation_protocol::ConversationError> {
+    use crate::conversation_protocol::ConversationError;
+    if actor.role != ActorRole::Human {
+        return Err(ConversationError::Forbidden);
+    }
+    let token_expiry = chrono::DateTime::from_timestamp(actor.expires_at, 0)
+        .ok_or(ConversationError::AuthenticationRequired)?;
+    let expiry = requested_expiry.min(token_expiry);
+    if expiry < now + minimum_remaining {
+        return Err(ConversationError::AuthenticationRequired);
+    }
+    Ok(expiry)
+}
+
 #[derive(Clone)]
 pub struct GatewayState {
     inner: Arc<GatewayStateInner>,

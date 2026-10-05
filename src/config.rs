@@ -16,6 +16,7 @@ pub struct GatewayConfig {
     pub oidc_jwks: String,
     pub websocket_policy: WebSocketPolicy,
     pub memory_engine: Option<MemoryEngineClientConfig>,
+    pub conversation_policy: crate::conversation_store::ConversationPolicy,
 }
 
 impl GatewayConfig {
@@ -72,6 +73,17 @@ impl GatewayConfig {
             }
         };
 
+        let conversation_policy = match lookup("THOUGHT_KHORAL_CODEX_POLICY_JSON") {
+            None => crate::conversation_store::ConversationPolicy::default(),
+            Some(value) => {
+                serde_json::from_str::<crate::conversation_store::ConversationPolicy>(&value)
+                    .map_err(|_| ConfigError("THOUGHT_KHORAL_CODEX_POLICY_JSON"))?
+            }
+        };
+        conversation_policy
+            .validate()
+            .map_err(|_| ConfigError("THOUGHT_KHORAL_CODEX_POLICY_JSON"))?;
+
         Ok(Self {
             database_url: required(&lookup, "DATABASE_URL")?,
             listen_address: lookup("THOUGHT_KHORAL_LISTEN_ADDRESS")
@@ -83,6 +95,7 @@ impl GatewayConfig {
             oidc_jwks: required(&lookup, "THOUGHT_KHORAL_OIDC_JWKS")?,
             websocket_policy,
             memory_engine,
+            conversation_policy,
         })
     }
 }
@@ -114,6 +127,33 @@ fn required(
 #[cfg(test)]
 mod tests {
     use super::GatewayConfig;
+
+    #[test]
+    fn conversation_policy_is_disabled_without_explicit_configuration_and_invalid_json_fails_closed()
+     {
+        let baseline = |name: &str| match name {
+            "DATABASE_URL" => Some("postgres://database.test/test".to_owned()),
+            "THOUGHT_KHORAL_ALLOWED_ORIGINS" => Some("https://workspace.test".to_owned()),
+            "THOUGHT_KHORAL_OIDC_ISSUER" => Some("https://identity.test".to_owned()),
+            "THOUGHT_KHORAL_OIDC_AUDIENCE" => Some("thought-khoral-room-gateway".to_owned()),
+            "THOUGHT_KHORAL_OIDC_JWKS" => Some("{\"keys\":[]}".to_owned()),
+            _ => None,
+        };
+        assert!(
+            !GatewayConfig::from_lookup(baseline)
+                .unwrap()
+                .conversation_policy
+                .enabled
+        );
+        let invalid = GatewayConfig::from_lookup(|name| {
+            if name == "THOUGHT_KHORAL_CODEX_POLICY_JSON" {
+                Some("{invalid-json}".to_owned())
+            } else {
+                baseline(name)
+            }
+        });
+        assert!(invalid.is_err());
+    }
 
     // This fails if the gateway stops consuming the ThoughtKhoral configuration namespace.
     #[test]

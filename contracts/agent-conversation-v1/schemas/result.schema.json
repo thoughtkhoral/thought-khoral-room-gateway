@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thoughtkhoral/thought-khoral-contracts/schemas/agent-conversation-v1/result.schema.json",
+  "title": "ThoughtKhoral agent conversation v1 result",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "const": "conversation-reply.v1"
+    },
+    "conversationId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "generation": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "assistantText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 65536
+    },
+    "consumedRevision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "contextDigest": {
+      "type": "string",
+      "minLength": 64,
+      "pattern": "^[0-9a-f]{64}$",
+      "maxLength": 64
+    },
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "format": "uuid",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "minItems": 0,
+      "maxItems": 100,
+      "uniqueItems": true
+    },
+    "effectiveSettings": {
+      "anyOf": [
+        {
+          "$ref": "turn.schema.json#/$defs/effectiveSettings"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "usage": {
+      "anyOf": [
+        {
+          "$ref": "turn.schema.json#/$defs/usage"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "kind",
+    "conversationId",
+    "generation",
+    "assistantText",
+    "consumedRevision",
+    "contextDigest",
+    "citations",
+    "effectiveSettings",
+    "usage"
+  ],
+  "additionalProperties": false
+}

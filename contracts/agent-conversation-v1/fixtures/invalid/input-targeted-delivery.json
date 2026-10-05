@@ -1,0 +1,70 @@
+{
+  "profileVersion": "thought-khoral.agent-conversation.v1",
+  "taskId": "00000006-1111-4111-8111-000000000006",
+  "roomId": "00000002-1111-4111-8111-000000000002",
+  "requesterId": "00000004-1111-4111-8111-000000000004",
+  "agentId": "74686f75-6768-746b-686f-72616c000004",
+  "skillId": "chat",
+  "conversation": {
+    "id": "00000005-1111-4111-8111-000000000005",
+    "generation": 1,
+    "mode": "new"
+  },
+  "triggerEventId": "00000007-1111-4111-8111-000000000007",
+  "context": {
+    "kind": "baseline",
+    "baseRevision": 0,
+    "revision": 5,
+    "policyRevision": "policy-1",
+    "entries": [
+      {
+        "eventId": "0000000a-1111-4111-8111-00000000000a",
+        "sequence": 1,
+        "authorId": "00000003-1111-4111-8111-000000000003",
+        "authorRole": "human",
+        "occurredAt": "2026-10-05T12:00:00Z",
+        "displayName": "Maya",
+        "text": "Use the blue example.",
+        "delivery": "mentioned"
+      },
+      {
+        "eventId": "0000000b-1111-4111-8111-00000000000b",
+        "sequence": 3,
+        "authorId": "00000004-1111-4111-8111-000000000004",
+        "authorRole": "human",
+        "occurredAt": "2026-10-05T12:00:01Z",
+        "text": "The example is green."
+      },
+      {
+        "eventId": "00000007-1111-4111-8111-000000000007",
+        "sequence": 5,
+        "authorId": "00000004-1111-4111-8111-000000000004",
+        "authorRole": "human",
+        "occurredAt": "2026-10-05T12:00:02Z",
+        "text": "@codex-agent What did Maya propose?"
+      }
+    ],
+    "activeDecisions": [
+      {
+        "decisionId": "0000000c-1111-4111-8111-00000000000c",
+        "title": "Example color",
+        "summary": "Use green.",
+        "sourceEventIds": [
+          "0000000a-1111-4111-8111-00000000000a",
+          "0000000b-1111-4111-8111-00000000000b"
+        ]
+      }
+    ],
+    "nativeReplyBindings": [],
+    "digest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62"
+  },
+  "guidanceRevision": "fixed-1",
+  "issuedAt": "2026-10-05T12:00:03Z",
+  "expiresAt": "2026-10-05T12:03:03Z",
+  "authorizationExpiresAt": "2026-10-05T12:05:00Z",
+  "leaseOwner": "mediator-test",
+  "leaseExpiresAt": "2026-10-05T12:05:00Z",
+  "model": "model-a",
+  "reasoningEffort": "effort-medium",
+  "catalogRevision": "catalog-1"
+}

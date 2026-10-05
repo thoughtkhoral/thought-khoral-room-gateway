@@ -2,6 +2,8 @@ pub mod action_items;
 pub mod agent_service;
 pub mod auth;
 pub mod config;
+pub mod conversation_protocol;
+pub mod conversation_store;
 pub mod error;
 pub mod facilitator;
 pub mod memory_engine_client;

@@ -31,3 +31,13 @@ unchanged for that lifecycle work: there is no `room.leave` RPC, durable room
 membership, kick operation, or history deletion. See the [workspace UI
 lifecycle specification](https://github.com/thoughtkhoral/thought-khoral-workspace-ui/blob/main/.ai/specs/what/mvp-ui.md)
 and [platform lifecycle specification](https://github.com/thoughtkhoral/thought-khoral-platform/blob/main/.ai/specs/what/local-mvp.md).
+
+## Approved Codex room-participation extension
+
+- [What: codex room participation](what/codex-room-participation.md)
+- [How: codex room participation](how/codex-room-participation.md)
+- [Coordinated implementation plan](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/codex-room-conversations-implementation-plan.md)
+
+Approved by the maintainer on 2026-10-05 under [issue 1](https://github.com/thoughtkhoral/thought-khoral-room-gateway/issues/1).
+Implementation follows the coordinated plan and its artifact/dependency gates.
+Existing runtime behavior is unchanged until the relevant tasks pass verification.

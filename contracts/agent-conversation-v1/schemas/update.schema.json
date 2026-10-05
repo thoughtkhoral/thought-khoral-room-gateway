@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thoughtkhoral/thought-khoral-contracts/schemas/agent-conversation-v1/update.schema.json",
+  "title": "ThoughtKhoral agent conversation v1 update",
+  "type": "object",
+  "properties": {
+    "profileVersion": {
+      "const": "thought-khoral.agent-conversation.v1"
+    },
+    "updateId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "ordinal": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "taskId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "generation": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "contextDigest": {
+      "type": "string",
+      "minLength": 64,
+      "pattern": "^[0-9a-f]{64}$",
+      "maxLength": 64
+    },
+    "kind": {
+      "enum": [
+        "progress",
+        "settings",
+        "usage",
+        "completed",
+        "failed"
+      ]
+    },
+    "data": {}
+  },
+  "required": [
+    "profileVersion",
+    "updateId",
+    "ordinal",
+    "taskId",
+    "generation",
+    "contextDigest",
+    "kind",
+    "data"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "properties": {
+        "kind": {
+          "const": "progress"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "phase": {
+              "enum": [
+                "accepted",
+                "working",
+                "finalizing"
+              ]
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          "required": [
+            "phase",
+            "text"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "settings"
+        },
+        "data": {
+          "$ref": "turn.schema.json#/$defs/effectiveSettings"
+        }
+      }
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "usage"
+        },
+        "data": {
+          "$ref": "turn.schema.json#/$defs/usage"
+        }
+      }
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "completed"
+        },
+        "data": {
+          "$ref": "turn.schema.json#/$defs/reply"
+        }
+      }
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "failed"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "enum": [
+                "invalid_task_input",
+                "forbidden",
+                "conversation_busy",
+                "conversation_stale",
+                "context_mismatch",
+                "context_too_large",
+                "runtime_unavailable",
+                "authentication_required",
+                "session_unavailable",
+                "timeout",
+                "conversation_interrupted",
+                "execution_failed",
+                "duplicate_conflict"
+              ]
+            }
+          },
+          "required": [
+            "code"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}
