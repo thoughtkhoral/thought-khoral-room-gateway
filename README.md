@@ -115,11 +115,12 @@ for claims, frozen context, updates, authority and receipt recovery. Migration
 immutable replay records. Accepted replies atomically commit one ordinary room
 message, its acknowledgement, the cursor and disclosed-source manifest.
 
-The catalog port requires the later agent-gateway adapter; an absent bridge
-rejects new work. The executable currently supplies no bridge and keeps policy
-disabled by default. The independent Codex worker and provider verification
-remain later tasks. HTTP integration tests use synthetic isolated PostgreSQL
-schemas and a fake external catalog, with no provider calls.
+The executable supplies the fixed authenticated agent-gateway catalog bridge
+when the Codex policy is explicitly enabled with its dedicated bearer secret;
+an absent or unavailable bridge rejects new work. Policy stays disabled by
+default. Provider verification remains separately gated. HTTP integration tests
+use synthetic isolated PostgreSQL schemas and a fake external catalog; bridge
+tests use a real synthetic HTTP listener, with no provider calls.
 
 The opt-in Codex policy requires a dedicated catalog bridge bearer secret. The
 fixed mediator endpoint, bounds, local pagination and dependency review are
