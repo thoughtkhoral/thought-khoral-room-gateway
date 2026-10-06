@@ -284,7 +284,11 @@ async fn body(request: Request) -> Result<Value, ConversationError> {
     let bytes = to_bytes(request.into_body(), 1_048_576)
         .await
         .map_err(|_| ConversationError::ContextTooLarge)?;
-    let mut decoder = serde_json::Deserializer::from_slice(&bytes);
+    parse_strict_json(&bytes)
+}
+
+pub(crate) fn parse_strict_json(bytes: &[u8]) -> Result<Value, ConversationError> {
+    let mut decoder = serde_json::Deserializer::from_slice(bytes);
     let value = StrictValue::deserialize(&mut decoder)
         .map_err(|_| ConversationError::InvalidTaskInput)?
         .0;

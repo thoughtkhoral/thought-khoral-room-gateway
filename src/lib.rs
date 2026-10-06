@@ -1,6 +1,7 @@
 pub mod action_items;
 pub mod agent_service;
 pub mod auth;
+pub mod catalog_bridge;
 pub mod config;
 pub mod conversation_context;
 pub mod conversation_protocol;

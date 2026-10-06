@@ -220,3 +220,49 @@ no catalog bridge and policy defaults to disabled. Task 4 implements the
 independent app-server adapter; Task 6 connects the mediator/catalog bridge.
 Publication, provider use and activation retain their separate gates. Browser
 Leave and durable room membership were not added.
+
+## Task 6 broker catalog bridge checkpoint — 2026-10-06
+
+The executable creates the reviewed `CatalogQuery` bridge only when the Codex
+policy is explicitly enabled. Enabling requires the dedicated
+`THOUGHT_KHORAL_CODEX_CATALOG_BRIDGE_SECRET`: 32–4096 ASCII bearer-token bytes
+(alphanumeric or `-._~+/=`), distinct from detectable existing worker invocation,
+reference agent, OAuth client and memory engine shared credentials. Disabled
+policy creates no bridge and requires no secret. The opaque secret has no
+serialization and only redacted Debug; its Authorization header is sensitive.
+
+The sole destination is
+`http://thought-khoral-agent-gateway:9092/internal/agent-conversations/v1/models`.
+GET carries no query or body, uses no proxy, follows no redirects, and has a
+two-second connect/five-second total deadline. DNS resolves only the fixed
+service hostname; loopback DNS injection is compiled for tests only. Response
+reads reject declared or streamed bodies above 1 MiB. Strict JSON parsing
+preserves duplicate-key and integer rules and validates the published closed
+CatalogPage before exposure. Upstream always supplies the full page, maximum
+100 models with no upstream cursor. Local opaque pagination obeys limits 1–100;
+its maximum 1024 cursor entries bind SHA-256 of the validated full page and
+an offset. Unknown cursors fail before network access; changed content or
+revision invalidates continuation. Existing browser policy validation still
+checks catalog revision, duplicate models/efforts, default effort membership
+and deployment selection allowlists. No provider or worker invocation credential
+is supplied to this bridge.
+
+The direct HTTP dependency is exactly reqwest 0.13.5, matching the mediator
+lock. Default features are disabled because the fixed internal endpoint is
+HTTP; no TLS/provider transport is introduced. New packages below come from
+crates.io with Cargo.lock archive SHA-256 provenance and registry Cargo.toml
+license declarations. Existing locked package versions remain unchanged.
+
+| Package | Version | License | Archive SHA-256 |
+| --- | --- | --- | --- |
+| base64 | 0.23.1 | MIT OR Apache-2.0 | ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5 |
+| ipnet | 2.12.2 | MIT OR Apache-2.0 | 791930b43c0d5973160d90a8f3894509f2b273430f5c5c73b668636d0287c5c0 |
+| reqwest | 0.13.5 | MIT OR Apache-2.0 | 16a1cfa75cc186dd73d5818e510e042e40927bccc9c236b061cea97e1eb08029 |
+| tower-http | 0.6.11 | MIT | 4cfcf7e2740e6fc6d4d688b4ef00650406bb94adf4731e43c096c3a19fe40840 |
+| try-lock | 0.2.5 | MIT | e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b |
+| want | 0.3.1 | MIT | bfa7760aed19e106de2c7c0b581b509f2f25d3dacaf737cb82ac61bc6d760b0e |
+| wasm-bindgen-futures | 0.4.78 | MIT OR Apache-2.0 | 6ef4c5d3d2cdf5c54f4231181768f5510842e350db025faf1f7163b1030ed928 |
+| web-sys | 0.3.105 | MIT OR Apache-2.0 | 9fbddc4a036f00ec4f18c83445bd3115cb306a91da554919a099d9222fe4a7f8 |
+
+Verification is recorded in the accompanying Task 6 report; provider calls,
+service activation, publication and deployment remain separately gated.

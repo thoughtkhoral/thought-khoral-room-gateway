@@ -16,6 +16,7 @@ pub struct GatewayConfig {
     pub oidc_jwks: String,
     pub websocket_policy: WebSocketPolicy,
     pub memory_engine: Option<MemoryEngineClientConfig>,
+    pub catalog_bridge_secret: Option<crate::catalog_bridge::CatalogBridgeSecret>,
     pub conversation_policy: crate::conversation_store::ConversationPolicy,
 }
 
@@ -84,7 +85,30 @@ impl GatewayConfig {
             .validate()
             .map_err(|_| ConfigError("THOUGHT_KHORAL_CODEX_POLICY_JSON"))?;
 
+        let catalog_bridge_secret = if conversation_policy.enabled {
+            let secret = required(&lookup, "THOUGHT_KHORAL_CODEX_CATALOG_BRIDGE_SECRET")?;
+            for name in [
+                "THOUGHT_KHORAL_MEMORY_ENGINE_SHARED_SECRET",
+                "THOUGHT_KHORAL_AGENT_GATEWAY_CLIENT_SECRET",
+                "THOUGHT_KHORAL_CLIENT_SECRET",
+                "THOUGHT_KHORAL_CODEX_INVOCATION_SECRET",
+                "THOUGHT_KHORAL_REFERENCE_AGENT_INBOUND_SECRET",
+                "THOUGHT_KHORAL_REFERENCE_AGENT_SHARED_SECRET",
+                "THOUGHT_KHORAL_REFERENCE_AGENT_SECRET",
+            ] {
+                if lookup(name).as_deref() == Some(secret.as_str()) {
+                    return Err(ConfigError("THOUGHT_KHORAL_CODEX_CATALOG_BRIDGE_SECRET"));
+                }
+            }
+            Some(
+                crate::catalog_bridge::CatalogBridgeSecret::new(secret)
+                    .map_err(|_| ConfigError("THOUGHT_KHORAL_CODEX_CATALOG_BRIDGE_SECRET"))?,
+            )
+        } else {
+            None
+        };
         Ok(Self {
+            catalog_bridge_secret,
             database_url: required(&lookup, "DATABASE_URL")?,
             listen_address: lookup("THOUGHT_KHORAL_LISTEN_ADDRESS")
                 .unwrap_or_else(|| "127.0.0.1:8080".to_owned())
@@ -153,6 +177,59 @@ mod tests {
             }
         });
         assert!(invalid.is_err());
+    }
+
+    #[test]
+    fn enabled_catalog_requires_a_distinct_valid_secret() {
+        let baseline = |name: &str| {
+            match name {
+            "DATABASE_URL" => Some("postgres://database.test/test".to_owned()),
+            "THOUGHT_KHORAL_ALLOWED_ORIGINS" => Some("https://workspace.test".to_owned()),
+            "THOUGHT_KHORAL_OIDC_ISSUER" => Some("https://identity.test".to_owned()),
+            "THOUGHT_KHORAL_OIDC_AUDIENCE" => Some("room".to_owned()),
+            "THOUGHT_KHORAL_OIDC_JWKS" => Some("{\"keys\":[]}".to_owned()),
+            "THOUGHT_KHORAL_CODEX_POLICY_JSON" => Some(r#"{"enabled":true,"policyRevision":"p","guidanceRevision":"g","catalogRevision":"c","model":"m","reasoningEffort":"low","models":[{"id":"m","reasoningEfforts":["low"]}]}"#.to_owned()),
+            _ => None,
+        }
+        };
+        assert!(GatewayConfig::from_lookup(baseline).is_err());
+        for secret in ["", "short", "bad\nheader"] {
+            assert!(
+                GatewayConfig::from_lookup(|name| {
+                    if name == "THOUGHT_KHORAL_CODEX_CATALOG_BRIDGE_SECRET" {
+                        Some(secret.into())
+                    } else {
+                        baseline(name)
+                    }
+                })
+                .is_err()
+            );
+        }
+        let secret = "catalog-bridge-distinct-test-secret";
+        assert!(
+            GatewayConfig::from_lookup(|name| {
+                if name == "THOUGHT_KHORAL_CODEX_CATALOG_BRIDGE_SECRET" {
+                    Some(secret.into())
+                } else {
+                    baseline(name)
+                }
+            })
+            .is_ok()
+        );
+        assert!(
+            GatewayConfig::from_lookup(|name| {
+                if matches!(
+                    name,
+                    "THOUGHT_KHORAL_CODEX_CATALOG_BRIDGE_SECRET"
+                        | "THOUGHT_KHORAL_AGENT_GATEWAY_CLIENT_SECRET"
+                ) {
+                    Some(secret.into())
+                } else {
+                    baseline(name)
+                }
+            })
+            .is_err()
+        );
     }
 
     // This fails if the gateway stops consuming the ThoughtKhoral configuration namespace.

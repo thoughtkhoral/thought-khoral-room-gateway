@@ -120,3 +120,8 @@ rejects new work. The executable currently supplies no bridge and keeps policy
 disabled by default. The independent Codex worker and provider verification
 remain later tasks. HTTP integration tests use synthetic isolated PostgreSQL
 schemas and a fake external catalog, with no provider calls.
+
+The opt-in Codex policy requires a dedicated catalog bridge bearer secret. The
+fixed mediator endpoint, bounds, local pagination and dependency review are
+defined by the [Task 6 design checkpoint](.ai/specs/how/codex-room-participation.md#task-6-broker-catalog-bridge-checkpoint--2026-10-06).
+Default configuration remains disabled.
