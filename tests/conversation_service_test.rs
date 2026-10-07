@@ -1538,6 +1538,57 @@ async fn defaults_auth_scope_and_error_mapping() {
 }
 
 #[tokio::test]
+async fn defaults_malformed_utf8_room_path_returns_closed_error_without_writes() {
+    malformed_utf8_defaults_path_rejected("room").await;
+}
+
+#[tokio::test]
+async fn defaults_malformed_utf8_agent_path_returns_closed_error_without_writes() {
+    malformed_utf8_defaults_path_rejected("agent").await;
+}
+
+async fn malformed_utf8_defaults_path_rejected(parameter: &str) {
+    let server = server().await;
+    let room = Uuid::new_v4();
+    let token = server.token(Uuid::new_v4(), "human");
+    let agent_token = server.token(Uuid::new_v4(), "agent");
+    let before = counts(&server).await;
+    assert_eq!(before, vec![0; 8]);
+    let path = defaults_path(room);
+    for malformed in [match parameter {
+        "room" => path.replace(&room.to_string(), "%FF"),
+        "agent" => path.replace(&CODEX_AGENT_ID.to_string(), "%FF"),
+        _ => unreachable!(),
+    }] {
+        // Authentication and origin denial still take precedence over extraction.
+        assert_profile_error(
+            &http(&server, "GET", &malformed, None, &[], None).await,
+            401,
+            "authentication_required",
+        );
+        assert_profile_error(
+            &http(&server, "GET", &malformed, Some(&agent_token), &[], None).await,
+            403,
+            "forbidden",
+        );
+        let denied = http(
+            &server,
+            "GET",
+            &malformed,
+            Some(&token),
+            &[("Origin", "http://untrusted.test")],
+            None,
+        )
+        .await;
+        assert_profile_error(&denied, 403, "forbidden");
+        assert!(!denied.2.contains("access-control-allow-origin"));
+        let result = http(&server, "GET", &malformed, Some(&token), &[], None).await;
+        assert_profile_error(&result, 400, "invalid_task_input");
+        assert_eq!(counts(&server).await, before);
+    }
+}
+
+#[tokio::test]
 async fn defaults_catalog_and_expiry_bounds() {
     let server = server().await;
     let room = Uuid::new_v4();

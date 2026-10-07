@@ -396,11 +396,12 @@ async fn turn(
 async fn defaults(
     State(state): State<GatewayState>,
     Extension(actor): Extension<Actor>,
-    Path((room, agent)): Path<(String, String)>,
+    path: Result<Path<(String, String)>, axum::extract::rejection::PathRejection>,
     request: Request,
 ) -> Response {
     response(
         async move {
+            let Path((room, agent)) = path.map_err(|_| ConversationError::InvalidTaskInput)?;
             no_query(&request)?;
             let room_id = canonical_uuid(&room)?;
             let agent_id = canonical_uuid(&agent)?;
