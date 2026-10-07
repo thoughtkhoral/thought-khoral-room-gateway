@@ -60,3 +60,11 @@ After explicit user authorization, the reviewed broker candidate at
 `2e7d23b467c572819f498c3b9bf14d74a62dc821` was merged into local `main`.
 The candidate remains unreleased; publication, provider use, service activation,
 and push are still separate gates. Verification is recorded in the owning How.
+
+## Current POC publication checkpoint — 2026-10-07
+
+The reviewed room conversation broker and defaults-discovery integration is
+pushed to GitHub `main` at `d70d0e3d99de4bc1bfb3ff74bb8c993457a12f2a`. The
+provider-free room/database and catalog checks recorded in the owning How passed.
+Packaged-stack and separately authorized live verification remain open; this
+experimental POC is not claimed production-ready.

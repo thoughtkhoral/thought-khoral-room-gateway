@@ -471,3 +471,10 @@ live-reference-agent test using an isolated migrated PostgreSQL database:
 this exact broker source, including the 12 actual UI settings lifecycle phases,
 recovery barriers, and 24 synthetic native turns. The temporary PostgreSQL
 container was removed after verification.
+
+### Pushed POC checkpoint — 2026-10-07
+
+The reviewed broker and defaults-discovery implementation is pushed to GitHub
+`main` in `d70d0e3d99de4bc1b1fb3ff74bb8c993457a12f2a`. Provider-free checks are
+recorded above. Packaged-stack and separately authorized live verification
+remain open; this checkpoint does not claim production readiness.
