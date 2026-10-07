@@ -1,0 +1,11 @@
+{
+  "value": {
+    "z": "é",
+    "a": [
+      1,
+      "x\n"
+    ]
+  },
+  "canonical": "{\"a\":[1,\"x\\n\"],\"z\":\"é\"}",
+  "digest": "2df8e483d3fd2ba632fc6fc52fbe4198b6c01c8db1e2a99ec99041bbe0c64c62"
+}

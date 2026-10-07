@@ -1,0 +1,33 @@
+{
+  "profileVersion": "thought-khoral.agent-conversation.v1",
+  "roomId": "00000002-1111-4111-8111-000000000002",
+  "agentId": "74686f75-6768-746b-686f-72616c000004",
+  "conversation": {
+    "id": "00000005-1111-4111-8111-000000000005",
+    "generation": 1,
+    "state": "ready",
+    "activeTaskId": null,
+    "consumedRevision": 5,
+    "policyRevision": "policy-1",
+    "guidanceRevision": "fixed-1",
+    "selectedSettings": {
+      "model": "model-a",
+      "reasoningEffort": "effort-medium",
+      "catalogRevision": "catalog-1"
+    },
+    "effectiveSettings": {
+      "model": "model-a",
+      "reasoningEffort": "effort-medium",
+      "confirmation": "confirmed",
+      "reroutedModel": null
+    },
+    "usage": {
+      "lastTotalTokens": 120,
+      "modelContextWindow": 1000,
+      "reportedAt": "2026-10-05T12:00:05Z",
+      "model": "model-a",
+      "freshness": "fresh"
+    },
+    "threadId": "private"
+  }
+}

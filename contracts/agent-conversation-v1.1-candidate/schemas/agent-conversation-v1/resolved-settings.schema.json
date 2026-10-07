@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thoughtkhoral/thought-khoral-contracts/schemas/agent-conversation-v1/resolved-settings.schema.json",
+  "title": "ResolvedSettingsView",
+  "type": "object",
+  "properties": {
+    "profileVersion": {
+      "const": "thought-khoral.agent-conversation.v1"
+    },
+    "roomId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "agentId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "selectedSettings": {
+      "$ref": "turn.schema.json#/$defs/selectedSettings"
+    }
+  },
+  "required": [
+    "profileVersion",
+    "roomId",
+    "agentId",
+    "selectedSettings"
+  ],
+  "additionalProperties": false
+}

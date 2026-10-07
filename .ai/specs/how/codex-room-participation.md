@@ -379,8 +379,8 @@ isolated consumers may pin a reproducible local candidate from an exact committe
 contracts revision, verified archive and per-file SHA-256 values, clearly marked
 unreleased. This exception is only for this amendment's local pre-publication
 development and synthetic testing. Published v1.0 provenance/bytes remain intact.
-No release publication, shipped interoperability, merge, push, provider use or
-service activation is authorized. Whole milestone/Task9 acceptance remains open.
+This local merge does not authorize release publication, shipped interoperability,
+push, provider use or service activation. Whole milestone/Task9 acceptance remains open.
 
 ## Defaults discovery local synthetic checkpoint — 2026-10-07
 
@@ -455,3 +455,19 @@ changing the retained room-event contract. The candidate was included in the
 reviewed composed synthetic run; the default branch still retains its prior
 runtime, and no candidate contract release, packaged-stack verification or
 authorized live-provider check has occurred. See the [coordinated checkpoint](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/codex-room-conversations-implementation-plan.md).
+
+### Local main integration checkpoint — 2026-10-07
+
+The reviewed defaults broker candidate at source commit
+`2e7d23b467c572819f498c3b9bf14d74a62dc821` is integrated into this repository's
+local `main` under the user's explicit merge authorization. The merge preserves
+the published v1.0 vendor and pins the unreleased v1.1 candidate locally; it does
+not publish the candidate or authorize provider use, activation, or push.
+
+Fresh serial verification passed with 158 tests and one intentionally ignored
+live-reference-agent test using an isolated migrated PostgreSQL database:
+`DATABASE_URL=<temporary local test URL> cargo test --locked --offline --
+--test-threads=1`. The provider-free composed candidate smoke also passed against
+this exact broker source, including the 12 actual UI settings lifecycle phases,
+recovery barriers, and 24 synthetic native turns. The temporary PostgreSQL
+container was removed after verification.

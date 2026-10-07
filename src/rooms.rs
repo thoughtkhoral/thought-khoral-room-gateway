@@ -25,6 +25,27 @@ use crate::{
     },
 };
 
+/// Current room permission port: validated human identity, without invented membership.
+/// A future room ACL must replace this port and invalidate affected generations.
+pub(crate) fn authorize_conversation_turn(
+    actor: &Actor,
+    requested_expiry: chrono::DateTime<chrono::Utc>,
+    now: chrono::DateTime<chrono::Utc>,
+    minimum_remaining: chrono::Duration,
+) -> Result<chrono::DateTime<chrono::Utc>, crate::conversation_protocol::ConversationError> {
+    use crate::conversation_protocol::ConversationError;
+    if actor.role != ActorRole::Human {
+        return Err(ConversationError::Forbidden);
+    }
+    let token_expiry = chrono::DateTime::from_timestamp(actor.expires_at, 0)
+        .ok_or(ConversationError::AuthenticationRequired)?;
+    let expiry = requested_expiry.min(token_expiry);
+    if expiry < now + minimum_remaining {
+        return Err(ConversationError::AuthenticationRequired);
+    }
+    Ok(expiry)
+}
+
 #[derive(Clone)]
 pub struct GatewayState {
     inner: Arc<GatewayStateInner>,
@@ -100,6 +121,7 @@ impl std::fmt::Display for WebSocketPolicyError {
 impl std::error::Error for WebSocketPolicyError {}
 
 struct GatewayStateInner {
+    conversations: tokio::sync::RwLock<crate::conversation_service::ConversationIntegration>,
     pool: PgPool,
     auth: AuthValidator,
     websocket_policy: WebSocketPolicy,
@@ -198,12 +220,24 @@ fn participant_mention_tokens(participants: &[RoomParticipant]) -> Vec<String> {
         .into_iter()
         .map(str::to_owned)
         .collect::<HashSet<_>>();
+    let pinned_codex = |index: usize| {
+        participants[index].id == crate::conversation_protocol::CODEX_AGENT_ID
+            && participants[index].role == "agent"
+    };
+    occupied.insert("codex-agent".to_owned());
     let needs_suffix = |index: usize| {
-        MENTION_ALIASES.contains(&names[index].as_str()) || name_counts[names[index].as_str()] > 1
+        !pinned_codex(index)
+            && (names[index] == "codex-agent"
+                || MENTION_ALIASES.contains(&names[index].as_str())
+                || name_counts[names[index].as_str()] > 1)
     };
     for (index, name) in names.iter().enumerate() {
         if !needs_suffix(index) {
-            tokens[index] = Some(name.clone());
+            tokens[index] = Some(if pinned_codex(index) {
+                "codex-agent".to_owned()
+            } else {
+                name.clone()
+            });
             occupied.insert(name.clone());
         }
     }
@@ -278,11 +312,10 @@ fn participant_mention_tokens(participants: &[RoomParticipant]) -> Vec<String> {
         .collect()
 }
 
-fn resolve_chat_audience(
-    actor: &Actor,
+fn validate_mentions(
     participants: &[RoomParticipant],
-    request: &ChatSend,
-) -> Result<Vec<Uuid>, RpcError> {
+    mentions: &[ChatMention],
+) -> Result<(), RpcError> {
     let participant_tokens = participant_mention_tokens(participants);
     let known_participants = participants
         .iter()
@@ -292,7 +325,7 @@ fn resolve_chat_audience(
     let mut mentioned_participant_ids = HashSet::new();
     let mut mentioned_aliases = HashSet::new();
 
-    for mention in &request.mentions {
+    for mention in mentions {
         match mention {
             ChatMention::Participant { id, token } => {
                 let Some(canonical_token) = known_participants.get(id) else {
@@ -308,6 +341,16 @@ fn resolve_chat_audience(
             ChatMention::Alias { .. } => {}
         }
     }
+
+    Ok(())
+}
+
+fn resolve_chat_audience(
+    actor: &Actor,
+    participants: &[RoomParticipant],
+    request: &ChatSend,
+) -> Result<Vec<Uuid>, RpcError> {
+    validate_mentions(participants, &request.mentions)?;
 
     if request.delivery == ChatDelivery::Room {
         return Ok(Vec::new());
@@ -406,6 +449,25 @@ pub(crate) struct ProcessedRequest {
 }
 
 impl GatewayState {
+    pub async fn configure_conversations(
+        &self,
+        policy: crate::conversation_store::ConversationPolicy,
+        catalog: Option<Arc<dyn crate::conversation_service::CatalogQuery>>,
+    ) -> Result<(), crate::conversation_protocol::ConversationError> {
+        let integration = crate::conversation_service::ConversationIntegration::new(
+            self.inner.pool.clone(),
+            policy,
+            catalog,
+        )?;
+        *self.inner.conversations.write().await = integration;
+        Ok(())
+    }
+    pub(crate) async fn conversations(
+        &self,
+    ) -> tokio::sync::RwLockReadGuard<'_, crate::conversation_service::ConversationIntegration>
+    {
+        self.inner.conversations.read().await
+    }
     pub fn new(pool: PgPool, auth: AuthValidator) -> Self {
         Self::with_websocket_policy(pool, auth, WebSocketPolicy::deny_all())
     }
@@ -417,6 +479,9 @@ impl GatewayState {
     ) -> Self {
         Self {
             inner: Arc::new(GatewayStateInner {
+                conversations: tokio::sync::RwLock::new(
+                    crate::conversation_service::ConversationIntegration::disabled(pool.clone()),
+                ),
                 pool,
                 auth,
                 websocket_policy,
@@ -435,6 +500,9 @@ impl GatewayState {
     ) -> Self {
         Self {
             inner: Arc::new(GatewayStateInner {
+                conversations: tokio::sync::RwLock::new(
+                    crate::conversation_service::ConversationIntegration::disabled(pool.clone()),
+                ),
                 pool,
                 auth,
                 websocket_policy,
@@ -528,6 +596,102 @@ impl GatewayState {
         }
     }
 
+    pub(crate) async fn validate_conversation_mentions(
+        &self,
+        tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+        room: Uuid,
+        mentions: &Value,
+    ) -> Result<(), crate::conversation_protocol::ConversationError> {
+        use crate::conversation_protocol::{CODEX_AGENT_ID, ConversationError};
+        let mentions: Vec<ChatMention> = serde_json::from_value(mentions.clone())
+            .map_err(|_| ConversationError::InvalidTaskInput)?;
+        // Only additional direct targets need the roster. Never load room payloads.
+        if !mentions.iter().any(
+            |mention| matches!(mention, ChatMention::Participant{id,..} if *id != CODEX_AGENT_ID),
+        ) {
+            return Ok(());
+        }
+        let rows = sqlx::query("SELECT DISTINCT ON(actor_id) actor_id,actor_role,CASE WHEN octet_length(actor_display_name)<=8000 THEN actor_display_name ELSE NULL END AS actor_display_name,COALESCE(octet_length(actor_display_name),0)>8000 AS oversized FROM room_events WHERE room_id=$1 ORDER BY actor_id,sequence DESC LIMIT 2001").bind(room).fetch_all(&mut **tx).await?;
+        if rows.len() > 2000 {
+            return Err(ConversationError::ContextTooLarge);
+        }
+        let mut participants = HashMap::new();
+        for row in rows {
+            if row.get::<bool, _>("oversized") {
+                return Err(ConversationError::ContextTooLarge);
+            }
+            let id: Uuid = row.get("actor_id");
+            let role: String = row.get("actor_role");
+            let display_name = row
+                .get::<Option<String>, _>("actor_display_name")
+                .unwrap_or_else(|| {
+                    format!(
+                        "{} {}",
+                        if role == "human" { "Human" } else { "Agent" },
+                        &id.to_string()[..8]
+                    )
+                });
+            participants.insert(
+                id,
+                RoomParticipant {
+                    id,
+                    role,
+                    display_name,
+                    online: false,
+                },
+            );
+        }
+        {
+            let presence = self
+                .inner
+                .presence
+                .lock()
+                .expect("room presence map is not poisoned");
+            if let Some(room_presence) = presence.get(&room) {
+                if room_presence.len() > 2000 {
+                    return Err(ConversationError::ContextTooLarge);
+                }
+                for (id, entry) in room_presence {
+                    if entry.display_name.len() > 8000 {
+                        return Err(ConversationError::ContextTooLarge);
+                    }
+                    participants.insert(
+                        *id,
+                        RoomParticipant {
+                            id: *id,
+                            role: entry.role.clone(),
+                            display_name: entry.display_name.clone(),
+                            online: entry.connections > 0,
+                        },
+                    );
+                }
+            }
+        }
+        if participants.len() > 2000 {
+            return Err(ConversationError::ContextTooLarge);
+        }
+        participants.insert(
+            ACTION_ITEMS_AGENT_ID,
+            RoomParticipant {
+                id: ACTION_ITEMS_AGENT_ID,
+                role: "agent".into(),
+                display_name: ACTION_ITEMS_AGENT_DISPLAY_NAME.into(),
+                online: true,
+            },
+        );
+        participants.insert(
+            CODEX_AGENT_ID,
+            RoomParticipant {
+                id: CODEX_AGENT_ID,
+                role: "agent".into(),
+                display_name: "Codex Agent".into(),
+                online: true,
+            },
+        );
+        validate_mentions(&participants.into_values().collect::<Vec<_>>(), &mentions)
+            .map_err(|_| ConversationError::InvalidTaskInput)
+    }
+
     pub(crate) async fn participant_snapshot(
         &self,
         room_id: Uuid,
@@ -581,6 +745,17 @@ impl GatewayState {
                     },
                 );
             }
+        }
+        if self.inner.conversations.read().await.store.policy().enabled {
+            participants.insert(
+                crate::conversation_protocol::CODEX_AGENT_ID,
+                RoomParticipant {
+                    id: crate::conversation_protocol::CODEX_AGENT_ID,
+                    role: "agent".to_owned(),
+                    display_name: "Codex Agent".to_owned(),
+                    online: true,
+                },
+            );
         }
         let mut participants = participants.into_values().collect::<Vec<_>>();
         participants.sort_by(|left, right| {

@@ -26,6 +26,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ),
         None => GatewayState::with_websocket_policy(pool, auth, config.websocket_policy),
     };
+    let catalog = config
+        .catalog_bridge_secret
+        .map(|secret| {
+            thought_khoral_room_gateway::catalog_bridge::CatalogBridge::new(secret).map(|bridge| {
+                std::sync::Arc::new(bridge)
+                    as std::sync::Arc<
+                        dyn thought_khoral_room_gateway::conversation_service::CatalogQuery,
+                    >
+            })
+        })
+        .transpose()?;
+    state
+        .configure_conversations(config.conversation_policy, catalog)
+        .await?;
     axum::serve(listener, app(state)).await?;
     Ok(())
 }

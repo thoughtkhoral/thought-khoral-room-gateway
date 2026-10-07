@@ -53,3 +53,10 @@ The [approved design](https://github.com/thoughtkhoral/thought-khoral-codex-agen
 independent optional controls, with verified unreleased candidate contract pins.
 Implementation and synthetic verification follow the amendment plan; publication,
 provider use, activation, merge and push retain their separate gates.
+
+## Local main integration checkpoint — 2026-10-07
+
+After explicit user authorization, the reviewed broker candidate at
+`2e7d23b467c572819f498c3b9bf14d74a62dc821` was merged into local `main`.
+The candidate remains unreleased; publication, provider use, service activation,
+and push are still separate gates. Verification is recorded in the owning How.

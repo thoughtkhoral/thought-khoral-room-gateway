@@ -1,0 +1,14 @@
+{
+  "profileVersion": "thought-khoral.agent-conversation.v1",
+  "roomId": "00000002-1111-4111-8111-000000000002",
+  "taskId": "00000006-1111-4111-8111-000000000006",
+  "conversationId": "00000005-1111-4111-8111-000000000005",
+  "generation": 1,
+  "triggerEventId": "00000007-1111-4111-8111-000000000007",
+  "contextRevision": 5,
+  "selectedSettings": {
+    "model": "model-a",
+    "reasoningEffort": "effort-medium",
+    "catalogRevision": "catalog-1"
+  }
+}

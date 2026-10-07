@@ -1,0 +1,25 @@
+{
+  "kind": "conversation-reply.v1",
+  "conversationId": "00000005-1111-4111-8111-000000000005",
+  "generation": 1,
+  "assistantText": "Maya proposed blue; Leo corrected it to green.",
+  "consumedRevision": 5,
+  "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+  "citations": [
+    "0000000a-1111-4111-8111-00000000000a",
+    "0000000b-1111-4111-8111-00000000000b"
+  ],
+  "effectiveSettings": {
+    "model": "model-a",
+    "reasoningEffort": "effort-medium",
+    "confirmation": "confirmed",
+    "reroutedModel": null
+  },
+  "usage": {
+    "lastTotalTokens": 120,
+    "modelContextWindow": null,
+    "reportedAt": "2026-10-05T12:00:05Z",
+    "model": "model-a",
+    "freshness": "unavailable"
+  }
+}

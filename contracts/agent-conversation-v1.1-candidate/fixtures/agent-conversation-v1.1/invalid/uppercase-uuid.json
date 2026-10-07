@@ -1,0 +1,10 @@
+{
+  "profileVersion": "thought-khoral.agent-conversation.v1",
+  "roomId": "22222222-2222-4222-8222-222222222222",
+  "agentId": "74686F75-6768-746B-686F-72616C000004",
+  "selectedSettings": {
+    "model": "model-b",
+    "reasoningEffort": "effort-high",
+    "catalogRevision": "catalog-1"
+  }
+}

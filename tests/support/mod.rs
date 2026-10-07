@@ -153,16 +153,21 @@ impl TestServer {
     }
 
     pub async fn start_with_authentication_timeout(authentication_timeout: Duration) -> Self {
-        Self::start_with_options(authentication_timeout, None).await
+        Self::start_with_options(authentication_timeout, None, false).await
     }
 
     pub async fn start_with_memory_engine_client(client: MemoryEngineClient) -> Self {
-        Self::start_with_options(Duration::from_secs(5), Some(client)).await
+        Self::start_with_options(Duration::from_secs(5), Some(client), false).await
+    }
+
+    pub async fn start_isolated() -> Self {
+        Self::start_with_options(Duration::from_secs(5), None, true).await
     }
 
     async fn start_with_options(
         authentication_timeout: Duration,
         memory_engine: Option<MemoryEngineClient>,
+        isolated: bool,
     ) -> Self {
         let database_url = std::env::var("DATABASE_URL")
             .expect("DATABASE_URL must name a migrated PostgreSQL integration database");
@@ -171,6 +176,42 @@ impl TestServer {
             .connect(&database_url)
             .await
             .expect("the integration database must be reachable");
+
+        let pool = if isolated {
+            let schema = format!("conversation_test_{}", Uuid::new_v4().simple());
+            sqlx::query(&format!("CREATE SCHEMA {schema}"))
+                .execute(&pool)
+                .await
+                .unwrap();
+            let isolated_pool = PgPoolOptions::new()
+                .max_connections(8)
+                .after_connect(move |connection, _| {
+                    let query = format!("SET search_path TO {schema}");
+                    Box::pin(async move {
+                        sqlx::query(&query).execute(connection).await?;
+                        Ok(())
+                    })
+                })
+                .connect(&database_url)
+                .await
+                .unwrap();
+            let mut paths = std::fs::read_dir("migrations")
+                .unwrap()
+                .map(|entry| entry.unwrap().path())
+                .filter(|path| path.extension().is_some_and(|extension| extension == "sql"))
+                .collect::<Vec<_>>();
+            paths.sort();
+            for path in paths {
+                sqlx::raw_sql(&std::fs::read_to_string(path).unwrap())
+                    .execute(&isolated_pool)
+                    .await
+                    .unwrap();
+            }
+            pool.close().await;
+            isolated_pool
+        } else {
+            pool
+        };
 
         let auth = AuthValidator::new(ISSUER, AUDIENCE, &TEST_KEYS.jwks)
             .expect("the generated test JWKS must configure authentication");
