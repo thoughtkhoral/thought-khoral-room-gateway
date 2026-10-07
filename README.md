@@ -9,6 +9,8 @@ ThoughtKhoral room events.
 MVP / active development. The gateway owns the authenticated room boundary; it
 does not define the shared contract or provide the local platform composition.
 
+For the cross-project Codex conversation status and remaining gates, see the [shared status guide](https://github.com/thoughtkhoral/thought-khoral/blob/main/docs/codex-conversation-status.md).
+
 ## Build and verify
 
 Requires Rust 1.88 or newer and a PostgreSQL-compatible development database for

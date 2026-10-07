@@ -4,6 +4,8 @@ Parent requirements in the ThoughtKhoral root `.ai/specs/` apply here. This proj
 
 See the [root specification index](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/README.md).
 
+For the coordinated Codex conversation status across all projects, see the [shared status guide](https://github.com/thoughtkhoral/thought-khoral/blob/main/docs/codex-conversation-status.md).
+
 ## Local areas
 
 - [What: MVP room gateway](what/mvp-room.md)
