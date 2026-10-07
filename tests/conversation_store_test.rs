@@ -589,3 +589,74 @@ async fn ready_generation_requires_a_committed_positive_cursor() {
     let result=sqlx::query("UPDATE agent_conversations SET state='ready',active_task_id=NULL,consumed_revision=0 WHERE conversation_id=$1").bind(Uuid::parse_str(accepted["conversationId"].as_str().unwrap()).unwrap()).execute(&pool).await;
     assert!(result.is_err());
 }
+
+#[tokio::test]
+async fn omitted_continuation_preserves_shared_pair_across_humans_and_store_reload() {
+    let pool = database().await;
+    let room = Uuid::new_v4();
+    let maya = actor();
+    let mut configured = policy();
+    configured
+        .models
+        .push(serde_json::from_value(json!({"id":"model-b","reasoningEfforts":["high"]})).unwrap());
+    let store = ConversationStore::new(pool.clone())
+        .with_policy(configured.clone())
+        .unwrap();
+    let mut input = request(room);
+    input["settings"] =
+        json!({"model":"model-b","reasoningEffort":"high","catalogRevision":"catalog-1"});
+    let first = reserve(&store, &maya, &input).await.unwrap();
+    acknowledged_reply(&pool, &first).await;
+    configured.reasoning_effort = "low".into();
+    configured.catalog_revision = "catalog-2".into();
+    let reloaded = ConversationStore::new(pool.clone())
+        .with_policy(configured)
+        .unwrap();
+    assert_eq!(
+        reserve(&reloaded, &maya, &input).await.unwrap(),
+        first,
+        "immutable replay precedes changed defaults/catalog"
+    );
+    let mut next = request(room);
+    next["conversation"] =
+        json!({"mode":"continue","id":first["conversationId"],"generation":first["generation"]});
+    let second = reserve(&reloaded, &actor(), &next).await.unwrap();
+    assert_eq!(
+        second["selectedSettings"],
+        json!({"model":"model-b","reasoningEffort":"high","catalogRevision":"catalog-2"})
+    );
+    let frozen = task(&pool, &second).await.get::<Value, _>("frozen_input");
+    assert_eq!(frozen["model"], "model-b");
+    assert_eq!(frozen["reasoningEffort"], "high");
+    acknowledged_reply(&pool, &second).await;
+    let fresh = reserve(&reloaded, &actor(), &request(room)).await.unwrap();
+    assert_eq!(
+        fresh["selectedSettings"],
+        json!({"model":"model-a","reasoningEffort":"low","catalogRevision":"catalog-2"})
+    );
+}
+
+#[tokio::test]
+async fn removed_shared_pair_is_rejected_without_default_fallback() {
+    let pool = database().await;
+    let room = Uuid::new_v4();
+    let store = ConversationStore::new(pool.clone())
+        .with_policy(policy())
+        .unwrap();
+    let mut first = request(room);
+    first["settings"] =
+        json!({"model":"model-a","reasoningEffort":"low","catalogRevision":"catalog-1"});
+    let accepted = reserve(&store, &actor(), &first).await.unwrap();
+    acknowledged_reply(&pool, &accepted).await;
+    let mut narrowed = policy();
+    narrowed.models[0].reasoning_efforts = vec!["medium".into()];
+    let narrowed = ConversationStore::new(pool.clone())
+        .with_policy(narrowed)
+        .unwrap();
+    let mut next = request(room);
+    next["conversation"] = json!({"mode":"continue","id":accepted["conversationId"],"generation":accepted["generation"]});
+    assert_eq!(
+        reserve(&narrowed, &actor(), &next).await,
+        Err(ConversationError::InvalidTaskInput)
+    );
+}

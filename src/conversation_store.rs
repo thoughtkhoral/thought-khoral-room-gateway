@@ -246,7 +246,22 @@ impl ConversationStore {
             }
             (Uuid::new_v4(), previous + 1, 0)
         };
-        let settings = self.policy.resolve_settings(request.get("settings"))?;
+        // Accepted choices are shared continuation defaults. Refresh only their
+        // catalog revision; current policy/catalog still validate the exact pair.
+        let shared = if mode == "continue" {
+            let previous: Value = current
+                .as_ref()
+                .ok_or(ConversationError::ConversationStale)?
+                .try_get("selected_settings")?;
+            Some(
+                json!({"model":previous["model"],"reasoningEffort":previous["reasoningEffort"],"catalogRevision":self.policy.catalog_revision}),
+            )
+        } else {
+            None
+        };
+        let settings = self
+            .policy
+            .resolve_settings(request.get("settings").or(shared.as_ref()))?;
         if let Some(catalog) = catalog {
             tokio::time::timeout(
                 std::time::Duration::from_secs(5),

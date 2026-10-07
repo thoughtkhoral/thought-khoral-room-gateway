@@ -79,8 +79,12 @@ closed object `{id, reasoningEfforts}`. Enabling requires nonempty revisions
 and option IDs of at most 128 Unicode scalars, unique model/effort IDs, an
 allowed default pair, and at most 100 models/efforts per model. Submitted
 settings must match the current catalog revision and an allowed pair; omission
-uses current configured defaults. Stored replay is compared before resolving
-these mutable defaults.
+preserves the current ready conversation’s accepted model/effort pair for
+continuation, revalidated against current policy and catalog. Explicit New
+without settings uses current deployment defaults. Removed shared settings fail
+without fallback. Stored replay is compared before resolving mutable defaults,
+so its original accepted pair and catalog revision remain immutable. This
+clarifies the approved parent shared-default requirement; no override applies.
 
 Optional lower bounds are `maxContextBytes` (default 1,048,576), `maxRecords`
 (default 2,000 transcript entries plus native-reply bindings),
