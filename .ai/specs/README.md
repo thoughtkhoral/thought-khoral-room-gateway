@@ -41,3 +41,7 @@ and [platform lifecycle specification](https://github.com/thoughtkhoral/thought-
 Approved by the maintainer on 2026-10-05 under [issue 1](https://github.com/thoughtkhoral/thought-khoral-room-gateway/issues/1).
 Implementation follows the coordinated plan and its artifact/dependency gates.
 Existing runtime behavior is unchanged until the relevant tasks pass verification.
+
+## Approved defaults-discovery amendment — 2026-10-07
+
+See the [owning How](how/codex-room-participation.md) for approved local defaults-discovery work and unreleased candidate artifact boundaries.

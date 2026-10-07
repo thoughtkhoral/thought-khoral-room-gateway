@@ -270,3 +270,76 @@ license declarations. Existing locked package versions remain unchanged.
 
 Verification is recorded in the accompanying Task 6 report; provider calls,
 service activation, publication and deployment remain separately gated.
+
+## Approved defaults-discovery amendment — 2026-10-07
+
+The maintainer approved the [visible server defaults design](https://github.com/thoughtkhoral/thought-khoral-codex-agent/blob/main/.ai/specs/how/default-settings-discovery-proposal.md) in
+this conversation on 2026-10-07 after an explicit specification approval request.
+It authorizes coordinated local implementation and synthetic verification of
+the additive authenticated defaults query and independently optional model/effort
+controls, including the F1 initial/reset effort-only deadlock. The accepted
+design is the governing amendment to earlier default-visibility wording.
+
+The contracts owner defines `ResolvedSettingsView` at
+`GET /api/agent-conversations/v1/rooms/{roomId}/agents/{agentId}/defaults` in
+new immutable artifact `thought-khoral-agent-conversation-v1.1.0`, retaining the
+v1 profile/namespace and all existing published v1.0 schema/fixture bytes.
+The broker validates authenticated room/agent authority, current admission,
+catalog revision, policy-default pair and five-second bound before responding.
+The read has no task/event/conversation/lease/native-state mutation, exposes no
+effective-settings confirmation, credentials or private/native identifiers,
+uses the existing safe ProfileError/HTTP mapping and `Cache-Control: no-store`.
+There is no inferred catalog-order model or inference fallback.
+
+The UI resolves and displays the concrete explicit next-turn pair when absent
+or explicitly New/reset; restored continuation uses accepted shared settings.
+Both capabilities allow both controls; effort-only keeps the resolved model
+read-only; model-only keeps the displayed model-specific catalog default effort
+read-only; neither capability retains the settings-free path. Unsupported
+controls stay uneditable and no hidden control blocks a valid required choice.
+Catalog/pair mismatch requires bounded refresh or an explicit unavailable state.
+A still-valid explicit pair is not replaced after a deployment-default-only change.
+
+As a scoped exception to the earlier published-artifact-first execution order,
+isolated consumers may pin a reproducible local candidate from an exact committed
+contracts revision, verified archive and per-file SHA-256 values, clearly marked
+unreleased. This exception is only for this amendment's local pre-publication
+development and synthetic testing. Published v1.0 provenance/bytes remain intact.
+No release publication, shipped interoperability, merge, push, provider use or
+service activation is authorized. Whole milestone/Task9 acceptance remains open.
+
+
+### Defaults-discovery broker implementation checkpoint — 2026-10-07
+
+The isolated broker implementation pins unreleased candidate contracts commit
+`1ea828f28725ddaaefa21d083473f9abbd777975` beside the untouched published vendor.
+The independent lock SHA-256 is
+`7914d32eae2487879a68405b5095a6b9aa91355f87529c43f4055844821902a9`.
+Only its new resolved-settings schema is registered; its references resolve
+through existing released schema IDs. Integrity tests require the closed lock
+provenance, exact regular-file set and all payload hashes, reject symlinks and
+temporary lock/payload/extra-file tampering, and compare all 135 published
+schema/fixture bytes through the candidate's unflattened layout.
+
+The authenticated GET/OPTIONS defaults route uses the existing human room
+authority port with zero required turn lifetime, including an expiry recheck
+after the catalog await. A never-used canonical room needs no stored row.
+The existing deployment resolver and bounded catalog traversal run under one
+integration read guard, with a five-second total traversal deadline. Resolution
+failures return the existing closed `runtime_unavailable` error; canonical
+unknown agents return `session_unavailable`. Browser responses, including
+early denied origins, carry `Cache-Control: no-store` with existing CORS rules.
+No admission, settings algorithm, reservation, lease or replay behavior changes.
+
+Synthetic verification passes 156 tests with one existing live reference-agent
+test ignored, using the dedicated migrated PostgreSQL database and serial
+`cargo test --locked --offline -- --test-threads=1 --nocapture`. The first
+default-concurrency full run stopped at the unchanged catalog bridge fixture
+with `AddrInUse` on its shared port 9092 (14 passed, one failed); no passing
+default-concurrency run is claimed. Formatting, all-targets offline Clippy with
+warnings denied, exact candidate/published pins and whitespace checks pass.
+Fresh defaults reads and all failure cases preserve zero counts across all
+seven affected tables and leased tasks. Explicit B/high survives an A/medium
+default-only change; catalog/policy removal rejects new work, and accepted
+replay retains its original pair. Existing omitted-New/continuation regressions
+remain unchanged and pass. No provider use, activation or publication occurred.

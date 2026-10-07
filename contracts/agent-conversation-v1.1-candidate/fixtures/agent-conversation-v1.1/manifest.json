@@ -1,0 +1,211 @@
+[
+  {
+    "path": "valid/resolved-settings.json",
+    "schema": "resolved-settings",
+    "valid": true,
+    "context": {
+      "roomId": "22222222-2222-4222-8222-222222222222",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "catalogRevision": "catalog-1",
+      "models": [
+        {
+          "id": "model-a",
+          "efforts": [
+            "effort-medium"
+          ]
+        },
+        {
+          "id": "model-b",
+          "efforts": [
+            "effort-high"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "path": "invalid/unknown-field.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/effective-settings.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/missing-settings.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/null-settings.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/partial-settings.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/wrong-room.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "room-binding",
+    "context": {
+      "roomId": "22222222-2222-4222-8222-222222222222",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "catalogRevision": "catalog-1",
+      "models": [
+        {
+          "id": "model-a",
+          "efforts": [
+            "effort-medium"
+          ]
+        },
+        {
+          "id": "model-b",
+          "efforts": [
+            "effort-high"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "path": "invalid/wrong-agent.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "agent-binding",
+    "context": {
+      "roomId": "22222222-2222-4222-8222-222222222222",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "catalogRevision": "catalog-1",
+      "models": [
+        {
+          "id": "model-a",
+          "efforts": [
+            "effort-medium"
+          ]
+        },
+        {
+          "id": "model-b",
+          "efforts": [
+            "effort-high"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "path": "invalid/stale-catalog.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "catalog-stale",
+    "context": {
+      "roomId": "22222222-2222-4222-8222-222222222222",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "catalogRevision": "catalog-1",
+      "models": [
+        {
+          "id": "model-a",
+          "efforts": [
+            "effort-medium"
+          ]
+        },
+        {
+          "id": "model-b",
+          "efforts": [
+            "effort-high"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "path": "invalid/unsupported-model.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "unsupported-settings",
+    "context": {
+      "roomId": "22222222-2222-4222-8222-222222222222",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "catalogRevision": "catalog-1",
+      "models": [
+        {
+          "id": "model-a",
+          "efforts": [
+            "effort-medium"
+          ]
+        },
+        {
+          "id": "model-b",
+          "efforts": [
+            "effort-high"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "path": "invalid/unsupported-effort.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "unsupported-settings",
+    "context": {
+      "roomId": "22222222-2222-4222-8222-222222222222",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "catalogRevision": "catalog-1",
+      "models": [
+        {
+          "id": "model-a",
+          "efforts": [
+            "effort-medium"
+          ]
+        },
+        {
+          "id": "model-b",
+          "efforts": [
+            "effort-high"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "path": "invalid/uppercase-uuid.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/overlong-model.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/overlong-effort.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/overlong-revision.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/duplicate-key.json",
+    "schema": "resolved-settings",
+    "valid": false,
+    "reason": "json-duplicate"
+  }
+]

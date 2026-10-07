@@ -100,7 +100,10 @@ impl ConversationPolicy {
         }
         self.resolve_settings(None).map(|_| ())
     }
-    fn resolve_settings(&self, settings: Option<&Value>) -> Result<Value, ConversationError> {
+    pub(crate) fn resolve_settings(
+        &self,
+        settings: Option<&Value>,
+    ) -> Result<Value, ConversationError> {
         let defaults = json!({"model":self.model,"reasoningEffort":self.reasoning_effort,"catalogRevision":self.catalog_revision});
         let selected = settings.unwrap_or(&defaults);
         if selected["catalogRevision"] != self.catalog_revision

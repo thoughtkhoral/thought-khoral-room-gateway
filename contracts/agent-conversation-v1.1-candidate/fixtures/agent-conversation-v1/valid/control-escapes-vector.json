@@ -1,0 +1,7 @@
+{
+  "value": {
+    "a": "\b\f\n\r\t\u0000\u001f\"\\"
+  },
+  "canonical": "{\"a\":\"\\b\\f\\n\\r\\t\\u0000\\u001f\\\"\\\\\"}",
+  "digest": "6ddf23be230be7f634eefea9944744b946c2e14bbc11bd637c6202be71f251e6"
+}

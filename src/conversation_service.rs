@@ -91,6 +91,10 @@ pub(crate) fn routes(state: GatewayState) -> Router<GatewayState> {
             get(models).options(preflight),
         )
         .route(
+            "/rooms/{room}/agents/{agent}/defaults",
+            get(defaults).options(preflight),
+        )
+        .route(
             "/rooms/{room}/tasks/{task}",
             get(task_view).options(preflight),
         )
@@ -152,7 +156,11 @@ async fn authenticate_browser(
             .as_ref()
             .is_none_or(|origin| !state.websocket_policy().allows_origin(origin))
     {
-        return profile_error(ConversationError::Forbidden);
+        let mut result = profile_error(ConversationError::Forbidden);
+        result
+            .headers_mut()
+            .insert("cache-control", HeaderValue::from_static("no-store"));
+        return result;
     }
     let mut result = if request.method() == Method::OPTIONS {
         let method = request
@@ -384,6 +392,63 @@ async fn turn(
             (StatusCode::ACCEPTED, Json(outcome.accepted)).into_response()
         }
     }
+}
+async fn defaults(
+    State(state): State<GatewayState>,
+    Extension(actor): Extension<Actor>,
+    Path((room, agent)): Path<(String, String)>,
+    request: Request,
+) -> Response {
+    response(
+        async move {
+            no_query(&request)?;
+            let room_id = canonical_uuid(&room)?;
+            let agent_id = canonical_uuid(&agent)?;
+            if agent_id != CODEX_AGENT_ID {
+                return Err(ConversationError::SessionUnavailable);
+            }
+            let token_expiry = chrono::DateTime::from_timestamp(actor.expires_at, 0)
+                .ok_or(ConversationError::AuthenticationRequired)?;
+            crate::rooms::authorize_conversation_turn(
+                &actor,
+                token_expiry,
+                Utc::now(),
+                chrono::Duration::zero(),
+            )?;
+            // Keep one integration snapshot throughout the read; no room row or
+            // membership is required by the existing authenticated-human authority.
+            let integration = state.conversations().await;
+            let policy = integration.store.policy();
+            if !policy.enabled {
+                return Err(ConversationError::RuntimeUnavailable);
+            }
+            let catalog = integration
+                .catalog
+                .as_deref()
+                .ok_or(ConversationError::RuntimeUnavailable)?;
+            let selected = policy
+                .resolve_settings(None)
+                .map_err(|_| ConversationError::RuntimeUnavailable)?;
+            tokio::time::timeout(
+                std::time::Duration::from_secs(5),
+                validate_catalog_selection(catalog, policy, &selected),
+            )
+            .await
+            .map_err(|_| ConversationError::RuntimeUnavailable)?
+            .map_err(|_| ConversationError::RuntimeUnavailable)?;
+            crate::rooms::authorize_conversation_turn(
+                &actor,
+                token_expiry,
+                Utc::now(),
+                chrono::Duration::zero(),
+            )?;
+            let view = json!({"profileVersion":PROFILE_VERSION,"roomId":room_id,
+            "agentId":agent_id,"selectedSettings":selected});
+            validate_profile_value("resolved-settings", &view)?;
+            Ok(view)
+        }
+        .await,
+    )
 }
 async fn conversation(
     State(state): State<GatewayState>,

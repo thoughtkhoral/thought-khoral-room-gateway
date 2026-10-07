@@ -108,7 +108,18 @@ parses the closed deployment policy described in the governing design. An
 enabled policy requires reviewed policy, guidance and catalog revisions plus
 allowed model/effort pairs and defaults. Configuration errors fail startup.
 The separate `/api/agent-conversations/v1` browser routes now accept turns and
-expose conversation, task and mediated catalog views. The
+expose conversation, task and mediated catalog views. The additive
+`GET /api/agent-conversations/v1/rooms/{roomId}/agents/{agentId}/defaults`
+resolves the current enabled deployment model/effort pair against the mediated
+catalog in five seconds, under current human authority. It accepts no query,
+works for a valid unused room, creates no stored rows, and returns the closed
+`ResolvedSettingsView` with `Cache-Control: no-store`. An unavailable pair or
+bridge returns `runtime_unavailable`; an explicit still-valid submitted pair
+continues to govern after only deployment defaults change. The endpoint uses
+the [unreleased v1.1 candidate lock](contracts/agent-conversation-v1.1-candidate/lock.json)
+beside the unchanged published vendor, as authorized by the
+[defaults-discovery amendment](.ai/specs/how/codex-room-participation.md#approved-defaults-discovery-amendment--2026-10-07).
+The candidate does not claim released interoperability. The
 `/internal/agent-conversations/v1` routes use admitted workload authentication
 for claims, frozen context, updates, authority and receipt recovery. Migration
 `0007_conversation_lifecycle.sql` stores normalized lifecycle projections and

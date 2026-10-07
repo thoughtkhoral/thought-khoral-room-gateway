@@ -12,6 +12,12 @@ pub const MAX_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
 
 const SCHEMAS: &[(&str, &str)] = &[
     (
+        "resolved-settings",
+        include_str!(
+            "../contracts/agent-conversation-v1.1-candidate/schemas/agent-conversation-v1/resolved-settings.schema.json"
+        ),
+    ),
+    (
         "turn",
         include_str!("../contracts/agent-conversation-v1/schemas/turn.schema.json"),
     ),
