@@ -1,5 +1,10 @@
 # Task 9 gateway fix report
 
+Historical retained-room-protocol fix report, tied to the base and evidence
+below. This is separate from the later Codex conversation Task 9; it does not
+close the current cross-project acceptance gates. See the
+[current specification index](.ai/specs/README.md).
+
 Base commit: `5ebe4a5`
 
 ## Follow-up fixes

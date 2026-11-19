@@ -11,6 +11,13 @@ does not define the shared contract or provide the local platform composition.
 
 For the cross-project Codex conversation status and remaining gates, see the [shared status guide](https://github.com/thoughtkhoral/thought-khoral/blob/main/docs/codex-conversation-status.md).
 
+The reviewed Codex broker and defaults integration is on GitHub `main`; the
+v1.1 defaults artifact remains an unreleased candidate. The
+[current specification checkpoint](.ai/specs/README.md#current-verification-boundary--2026-11-19)
+retains the October synthetic evidence and the open Task 9 packaged-stack,
+rendered-browser, live-provider and release gates. Later native worker CI adds
+no new broker verification.
+
 ## Build and verify
 
 Requires Rust 1.88 or newer and a PostgreSQL-compatible development database for
