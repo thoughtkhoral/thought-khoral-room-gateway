@@ -6,6 +6,22 @@ See the [root specification index](https://github.com/thoughtkhoral/thought-khor
 
 For the coordinated Codex conversation status across all projects, see the [shared status guide](https://github.com/thoughtkhoral/thought-khoral/blob/main/docs/codex-conversation-status.md).
 
+## Current verification boundary — 2026-11-19
+
+The reviewed conversation broker and defaults-discovery implementation is on
+GitHub `main`. Its defaults endpoint consumes the unreleased v1.1 candidate
+beside the unchanged published v1.0 vendor. The October provider-free broker
+and composed synthetic results retain their exact source attribution.
+
+The [owning conversation design](how/codex-room-participation.md) and
+[coordinated plan](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/codex-room-conversations-implementation-plan.md)
+are authoritative for implementation and evidence. The later native Linux CI
+closes only the worker's tested build/runtime/package-policy gates. It does not
+retest this repository or close Task 9 packaged room-stack, rendered-browser,
+live-provider, v1.1 publication or production/release acceptance. Earlier dated
+checkpoints below preserve the state at their recording time; their local-only,
+unmerged and pending-push wording is historical.
+
 ## Local areas
 
 - [What: MVP room gateway](what/mvp-room.md)

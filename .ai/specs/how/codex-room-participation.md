@@ -9,6 +9,23 @@ Implementation follows the [plan](https://github.com/thoughtkhoral/thought-khora
 Release/tag publication, provider use and service activation require their
 separate later authorization. No completed runtime or live verification is claimed.
 
+## Current implementation and evidence — 2026-11-19
+
+The reviewed conversation broker and defaults-discovery implementation is on
+GitHub `main`. Its defaults endpoint consumes the unreleased v1.1 candidate
+beside the unchanged published v1.0 vendor. The October provider-free broker
+and composed synthetic results retain their exact source attribution.
+
+The [coordinated plan](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/codex-room-conversations-implementation-plan.md)
+records subsequent native Linux worker acceptance. That evidence closes only
+the tested worker gates and adds no new contract, broker or mediator runtime
+verification. Task 9 packaged room-stack, rendered-browser and live-provider
+acceptance, v1.1 artifact publication and production/release acceptance remain
+open. Approval-era status wording and dated checkpoints below retain their
+historical scope; later integration/publication checkpoints supersede earlier
+local-only or unmerged statements. No runtime tests were rerun for this
+Markdown synchronization.
+
 ## Governing sources
 
 - [Local requirements](../what/codex-room-participation.md)
@@ -475,6 +492,6 @@ container was removed after verification.
 ### Pushed POC checkpoint — 2026-10-07
 
 The reviewed broker and defaults-discovery implementation is pushed to GitHub
-`main` in `d70d0e3d99de4bc1b1fb3ff74bb8c993457a12f2a`. Provider-free checks are
+`main` in `d70d0e3d99de4bc1bfb3ff74bb8c993457a12f2a`. Provider-free checks are
 recorded above. Packaged-stack and separately authorized live verification
 remain open; this checkpoint does not claim production readiness.
