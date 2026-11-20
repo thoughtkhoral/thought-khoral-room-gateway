@@ -1,5 +1,18 @@
 # ThoughtKhoral room gateway
 
+## Current workspace context — 2026-11-20
+
+Released-v1.1 defaults consumption is implemented and reviewed at local source `673294e66fed2b6e98d73e08cfe4a23a0e5e4d48`. It preserves both historical vendors and the dependency lock; full isolated-database verification passed 160 tests with one intentional external-agent ignore. This is component-source evidence, not assembled-stack/browser/provider acceptance.
+
+This canonical checkout retains its previous candidate imports/historical runner.
+The prepared implementation is on a separate local branch, not integrated here.
+Current documentation describes both contexts without importing runtime changes.
+
+Derived from the [local specification index](.ai/specs/README.md) and
+[root workspace authority](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/workspace-state.md).
+The cited tests retain their original source identities; this documentation
+refresh adds no activation, publication or runtime acceptance.
+
 `thought-khoral-room-gateway` is the Rust/Axum service that authenticates room
 participants and validates, persists, replays, and broadcasts governed
 ThoughtKhoral room events.
@@ -12,7 +25,8 @@ does not define the shared contract or provide the local platform composition.
 For the cross-project Codex conversation status and remaining gates, see the [shared status guide](https://github.com/thoughtkhoral/thought-khoral/blob/main/docs/codex-conversation-status.md).
 
 The reviewed Codex broker and defaults integration is on GitHub `main`; the
-v1.1 defaults artifact remains an unreleased candidate. The
+v1.1 artifact is now published. The retained candidate vendor is a separate
+historical synthetic input. The
 [current specification checkpoint](.ai/specs/README.md#current-verification-boundary--2026-11-19)
 retains the October synthetic evidence and the open Task 9 packaged-stack,
 rendered-browser, live-provider and release gates. Later native worker CI adds
