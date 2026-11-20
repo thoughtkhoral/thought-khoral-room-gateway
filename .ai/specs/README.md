@@ -24,6 +24,8 @@ unmerged and pending-push wording is historical.
 
 ## Local areas
 
+- [Approved How: released defaults contract consumption](how/released-defaults-consumption.md) — local v1.1 release transition; historical pins preserved.
+
 - [What: MVP room gateway](what/mvp-room.md)
 - [What: public documentation](what/public-documentation.md)
 - [How: implementation](how/implementation.md)
