@@ -1,5 +1,18 @@
 # ThoughtKhoral room gateway
 
+## Current workspace context — 2026-11-20
+
+Released-v1.1 defaults consumption is implemented and reviewed at local source `673294e66fed2b6e98d73e08cfe4a23a0e5e4d48`. It preserves both historical vendors and the dependency lock; full isolated-database verification passed 160 tests with one intentional external-agent ignore. This is component-source evidence, not assembled-stack/browser/provider acceptance.
+
+This is the prepared source branch: its released imports/profile are present.
+Its frozen implementation commit above remains the acceptance identity; later
+documentation commits are evidence followups. The branch remains unpushed/unmerged.
+
+Derived from the [local specification index](.ai/specs/README.md) and
+[root workspace authority](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/workspace-state.md).
+The cited tests retain their original source identities; this documentation
+refresh adds no activation, publication or runtime acceptance.
+
 The local released-defaults transition consumes verified conversation v1.1.0
 at source `f1c8621` for resolved-settings validation. Its 156-file vendor and
 external lock anchor are checked by `released_defaults_pin_test`; retained v1.0
@@ -19,7 +32,8 @@ does not define the shared contract or provide the local platform composition.
 For the cross-project Codex conversation status and remaining gates, see the [shared status guide](https://github.com/thoughtkhoral/thought-khoral/blob/main/docs/codex-conversation-status.md).
 
 The reviewed Codex broker and defaults integration is on GitHub `main`; the
-v1.1 defaults artifact remains an unreleased candidate. The
+v1.1 artifact is now published. The retained candidate vendor is a separate
+historical synthetic input. The
 [current specification checkpoint](.ai/specs/README.md#current-verification-boundary--2026-11-19)
 retains the October synthetic evidence and the open Task 9 packaged-stack,
 rendered-browser, live-provider and release gates. Later native worker CI adds
@@ -131,9 +145,10 @@ catalog in five seconds, under current human authority. It accepts no query,
 works for a valid unused room, creates no stored rows, and returns the closed
 `ResolvedSettingsView` with `Cache-Control: no-store`. An unavailable pair or
 bridge returns `runtime_unavailable`; an explicit still-valid submitted pair
-continues to govern after only deployment defaults change. The endpoint uses
-the [unreleased v1.1 candidate lock](contracts/agent-conversation-v1.1-candidate/lock.json)
-beside the unchanged published vendor, as authorized by the
+continues to govern after only deployment defaults change. The endpoint now uses
+the [published v1.1 release lock](contracts/agent-conversation-v1.1/lock.json).
+The [historical candidate lock](contracts/agent-conversation-v1.1-candidate/lock.json)
+and published v1.0 vendor remain unchanged, as required by the
 [defaults-discovery amendment](.ai/specs/how/codex-room-participation.md#approved-defaults-discovery-amendment--2026-10-07).
 The candidate does not claim released interoperability. The
 `/internal/agent-conversations/v1` routes use admitted workload authentication
