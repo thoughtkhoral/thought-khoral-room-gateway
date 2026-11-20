@@ -1,5 +1,7 @@
 # ThoughtKhoral room gateway
 
+[Project documentation](docs/README.md) · [Documentation requirements](.ai/specs/what/public-documentation.md)
+
 ## Current workspace context — 2026-11-20
 
 Released-v1.1 defaults consumption is implemented and reviewed at local source `673294e66fed2b6e98d73e08cfe4a23a0e5e4d48`. It preserves both historical vendors and the dependency lock; full isolated-database verification passed 160 tests with one intentional external-agent ignore. This is component-source evidence, not assembled-stack/browser/provider acceptance.
