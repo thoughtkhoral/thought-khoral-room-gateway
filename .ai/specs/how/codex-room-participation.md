@@ -1,5 +1,19 @@
 # Codex Room Participation — implementation design
 
+## Current workspace state — 2026-11-20
+
+Released-v1.1 defaults consumption is implemented and reviewed at local source `673294e66fed2b6e98d73e08cfe4a23a0e5e4d48`. It preserves both historical vendors and the dependency lock; full isolated-database verification passed 160 tests with one intentional external-agent ignore. This is component-source evidence, not assembled-stack/browser/provider acceptance.
+
+This is the prepared source branch: its released imports/profile are present.
+Its frozen implementation commit above remains the acceptance identity; later
+documentation commits are evidence followups. The branch remains unpushed/unmerged.
+
+See the [root workspace authority](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/workspace-state.md) for exact source/release
+identities, preserved source snapshots and remaining gates. Documentation-only
+HEADs are not substitutions for frozen acceptance commits. Earlier dated
+checkpoints retain their historical evidence; no runtime suite was rerun for
+this prose refresh.
+
 ## Status
 
 Approved by the project maintainer in the Codex working session on 2026-10-05,
@@ -9,7 +23,9 @@ Implementation follows the [plan](https://github.com/thoughtkhoral/thought-khora
 Release/tag publication, provider use and service activation require their
 separate later authorization. No completed runtime or live verification is claimed.
 
-## Current implementation and evidence — 2026-11-19
+<a id="current-implementation-and-evidence--2026-11-19"></a>
+
+## Historical implementation and evidence — 2026-11-19
 
 The reviewed conversation broker and defaults-discovery implementation is on
 GitHub `main`. Its defaults endpoint consumes the unreleased v1.1 candidate
