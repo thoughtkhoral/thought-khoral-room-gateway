@@ -53,3 +53,14 @@ identity-gate compatibility allows only the exact retained contractVersion
 field in ordinary-human-message.json and ordinary-codex-message.json beneath
 the new release vendor; it grants no broader path or legacy-name exception.
 Publication, merges, live activation and provider checks retain separate gates.
+
+## Local verification checkpoint — 2026-11-20
+
+Full serial broker suite: 160 passed and one intentionally ignored external-reference-agent test. The isolated PostgreSQL fixture was migrated and removed successfully. Protocol/release integrity tests passed, including RED/GREEN empty-directory refusal.
+
+Independent code review found no actionable issue. All 156 release hashes
+match the published lock and historical candidate bytes; dependency locks
+and both historical vendor directories are unchanged. Root identity regression
+coverage verifies only the four exact compatibility fixture paths and rejects
+unapproved neighboring paths/fields. These results are local component evidence,
+not source publication, packaged-stack/browser verification or provider use.

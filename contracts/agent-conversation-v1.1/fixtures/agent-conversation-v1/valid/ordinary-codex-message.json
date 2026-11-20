@@ -1,0 +1,20 @@
+{
+  "contractVersion": "n2n.room.v1",
+  "requestId": "81818181-8181-4181-8181-818181818181",
+  "roomId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "occurredAt": "2026-09-18T12:10:00Z",
+  "sequence": 8,
+  "eventId": "82828282-8282-4282-8282-828282828282",
+  "eventType": "message.created",
+  "actor": {
+    "id": "74686f75-6768-746b-686f-72616c000004",
+    "role": "agent"
+  },
+  "payload": {
+    "messageId": "82828282-8282-4282-8282-828282828282",
+    "text": "Maya proposed blue; Leo corrected it to green.",
+    "delivery": "room",
+    "mentions": [],
+    "audienceIds": []
+  }
+}

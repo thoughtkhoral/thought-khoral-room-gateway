@@ -14,7 +14,7 @@ const SCHEMAS: &[(&str, &str)] = &[
     (
         "resolved-settings",
         include_str!(
-            "../contracts/agent-conversation-v1.1-candidate/schemas/agent-conversation-v1/resolved-settings.schema.json"
+            "../contracts/agent-conversation-v1.1/schemas/agent-conversation-v1/resolved-settings.schema.json"
         ),
     ),
     (

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thoughtkhoral/thought-khoral-contracts/schemas/agent-conversation-v1/ack.schema.json",
+  "title": "ThoughtKhoral agent conversation v1 ack",
+  "type": "object",
+  "properties": {
+    "profileVersion": {
+      "const": "thought-khoral.agent-conversation.v1"
+    },
+    "taskId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "conversationId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "generation": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "replyEventId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "replySequence": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "textDigest": {
+      "type": "string",
+      "minLength": 64,
+      "pattern": "^[0-9a-f]{64}$",
+      "maxLength": 64
+    },
+    "consumedRevision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "contextDigest": {
+      "type": "string",
+      "minLength": 64,
+      "pattern": "^[0-9a-f]{64}$",
+      "maxLength": 64
+    }
+  },
+  "required": [
+    "profileVersion",
+    "taskId",
+    "conversationId",
+    "generation",
+    "replyEventId",
+    "replySequence",
+    "textDigest",
+    "consumedRevision",
+    "contextDigest"
+  ],
+  "additionalProperties": false
+}

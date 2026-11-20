@@ -1,0 +1,19 @@
+{
+  "profileVersion": "thought-khoral.agent-conversation.v1",
+  "catalogRevision": "catalog-1",
+  "data": [
+    {
+      "id": "model-a",
+      "displayName": "Example model",
+      "defaultReasoningEffort": "effort-medium",
+      "supportedReasoningEfforts": [
+        {
+          "id": "effort-medium",
+          "description": "Medium effort"
+        }
+      ],
+      "providerKey": "forbidden"
+    }
+  ],
+  "nextCursor": null
+}

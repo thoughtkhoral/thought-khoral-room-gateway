@@ -1,0 +1,26 @@
+{
+  "contractVersion": "n2n.room.v1",
+  "requestId": "81818181-8181-4181-8181-818181818181",
+  "roomId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "occurredAt": "2026-09-18T12:10:00Z",
+  "sequence": 8,
+  "eventId": "82828282-8282-4282-8282-828282828282",
+  "eventType": "message.created",
+  "actor": {
+    "id": "11111111-1111-4111-8111-111111111111",
+    "role": "human"
+  },
+  "payload": {
+    "messageId": "82828282-8282-4282-8282-828282828282",
+    "text": "@codex-agent What did Maya propose?",
+    "delivery": "room",
+    "mentions": [
+      {
+        "type": "participant",
+        "id": "74686f75-6768-746b-686f-72616c000004",
+        "token": "codex-agent"
+      }
+    ],
+    "audienceIds": []
+  }
+}

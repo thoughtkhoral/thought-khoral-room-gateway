@@ -1,0 +1,804 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thoughtkhoral/thought-khoral-contracts/schemas/agent-conversation-v1/turn.schema.json",
+  "title": "ThoughtKhoral agent conversation v1 turn",
+  "type": "object",
+  "properties": {
+    "profileVersion": {
+      "const": "thought-khoral.agent-conversation.v1"
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "roomId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "agentId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "occurredAt": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date-time"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8000
+    },
+    "mentions": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "participant"
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "token": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              }
+            },
+            "required": [
+              "type",
+              "id",
+              "token"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "alias"
+              },
+              "alias": {
+                "enum": [
+                  "allhumans",
+                  "allagents"
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "alias"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 50,
+      "uniqueItems": true
+    },
+    "conversation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "new"
+            }
+          },
+          "required": [
+            "mode"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "continue"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "generation": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "mode",
+            "id",
+            "generation"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "settings": {
+      "$ref": "turn.schema.json#/$defs/selectedSettings"
+    }
+  },
+  "required": [
+    "profileVersion",
+    "requestId",
+    "roomId",
+    "agentId",
+    "occurredAt",
+    "text",
+    "mentions"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "safeInteger": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "positiveInteger": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "dateTime": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date-time"
+    },
+    "digest": {
+      "type": "string",
+      "minLength": 64,
+      "pattern": "^[0-9a-f]{64}$",
+      "maxLength": 64
+    },
+    "selectedSettings": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "reasoningEffort": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "catalogRevision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "model",
+        "reasoningEffort",
+        "catalogRevision"
+      ],
+      "additionalProperties": false
+    },
+    "effectiveSettings": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reasoningEffort": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "confirmation": {
+          "enum": [
+            "confirmed",
+            "unconfirmed"
+          ]
+        },
+        "reroutedModel": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "model",
+        "reasoningEffort",
+        "confirmation",
+        "reroutedModel"
+      ],
+      "additionalProperties": false
+    },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "lastTotalTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "modelContextWindow": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reportedAt": {
+          "type": "string",
+          "minLength": 1,
+          "format": "date-time"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "freshness": {
+          "enum": [
+            "fresh",
+            "stale",
+            "unavailable"
+          ]
+        }
+      },
+      "required": [
+        "lastTotalTokens",
+        "modelContextWindow",
+        "reportedAt",
+        "model",
+        "freshness"
+      ],
+      "additionalProperties": false
+    },
+    "failure": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "enum": [
+            "invalid_task_input",
+            "forbidden",
+            "conversation_busy",
+            "conversation_stale",
+            "context_mismatch",
+            "context_too_large",
+            "runtime_unavailable",
+            "authentication_required",
+            "session_unavailable",
+            "timeout",
+            "conversation_interrupted",
+            "execution_failed",
+            "duplicate_conflict"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 512
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "reply": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "conversation-reply.v1"
+        },
+        "conversationId": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "assistantText": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 65536
+        },
+        "consumedRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "contextDigest": {
+          "type": "string",
+          "minLength": 64,
+          "pattern": "^[0-9a-f]{64}$",
+          "maxLength": 64
+        },
+        "citations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "minItems": 0,
+          "maxItems": 100,
+          "uniqueItems": true
+        },
+        "effectiveSettings": {
+          "anyOf": [
+            {
+              "$ref": "turn.schema.json#/$defs/effectiveSettings"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "usage": {
+          "anyOf": [
+            {
+              "$ref": "turn.schema.json#/$defs/usage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "conversationId",
+        "generation",
+        "assistantText",
+        "consumedRevision",
+        "contextDigest",
+        "citations",
+        "effectiveSettings",
+        "usage"
+      ],
+      "additionalProperties": false
+    },
+    "taskUpdate": {
+      "type": "object",
+      "properties": {
+        "updateId": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "kind": {
+          "enum": [
+            "progress",
+            "settings",
+            "usage",
+            "completed",
+            "failed"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "minLength": 1,
+          "format": "date-time"
+        },
+        "data": {}
+      },
+      "required": [
+        "updateId",
+        "ordinal",
+        "kind",
+        "occurredAt",
+        "data"
+      ],
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "kind": {
+              "const": "progress"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "phase": {
+                  "enum": [
+                    "accepted",
+                    "working",
+                    "finalizing"
+                  ]
+                },
+                "text": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                }
+              },
+              "required": [
+                "phase",
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "settings"
+            },
+            "data": {
+              "$ref": "turn.schema.json#/$defs/effectiveSettings"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "usage"
+            },
+            "data": {
+              "$ref": "turn.schema.json#/$defs/usage"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "completed"
+            },
+            "data": {
+              "$ref": "turn.schema.json#/$defs/reply"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "failed"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "enum": [
+                    "invalid_task_input",
+                    "forbidden",
+                    "conversation_busy",
+                    "conversation_stale",
+                    "context_mismatch",
+                    "context_too_large",
+                    "runtime_unavailable",
+                    "authentication_required",
+                    "session_unavailable",
+                    "timeout",
+                    "conversation_interrupted",
+                    "execution_failed",
+                    "duplicate_conflict"
+                  ]
+                }
+              },
+              "required": [
+                "code"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "acceptedTurn": {
+      "type": "object",
+      "properties": {
+        "profileVersion": {
+          "const": "thought-khoral.agent-conversation.v1"
+        },
+        "roomId": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "taskId": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "conversationId": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "triggerEventId": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "contextRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "selectedSettings": {
+          "anyOf": [
+            {
+              "$ref": "turn.schema.json#/$defs/selectedSettings"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "profileVersion",
+        "roomId",
+        "taskId",
+        "conversationId",
+        "generation",
+        "triggerEventId",
+        "contextRevision",
+        "selectedSettings"
+      ],
+      "additionalProperties": false
+    },
+    "taskView": {
+      "type": "object",
+      "properties": {
+        "profileVersion": {
+          "const": "thought-khoral.agent-conversation.v1"
+        },
+        "roomId": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "taskId": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "conversationId": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "requesterId": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "reserved",
+            "running",
+            "completed",
+            "failed"
+          ]
+        },
+        "selectedSettings": {
+          "anyOf": [
+            {
+              "$ref": "turn.schema.json#/$defs/selectedSettings"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "effectiveSettings": {
+          "anyOf": [
+            {
+              "$ref": "turn.schema.json#/$defs/effectiveSettings"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "usage": {
+          "anyOf": [
+            {
+              "$ref": "turn.schema.json#/$defs/usage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "updates": {
+          "type": "array",
+          "items": {
+            "$ref": "turn.schema.json#/$defs/taskUpdate"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "result": {
+          "anyOf": [
+            {
+              "$ref": "turn.schema.json#/$defs/reply"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "replyEventId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "failure": {
+          "anyOf": [
+            {
+              "$ref": "turn.schema.json#/$defs/failure"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "profileVersion",
+        "roomId",
+        "taskId",
+        "conversationId",
+        "generation",
+        "requesterId",
+        "state",
+        "selectedSettings",
+        "effectiveSettings",
+        "usage",
+        "updates",
+        "result",
+        "replyEventId",
+        "failure"
+      ],
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "state": {
+              "enum": [
+                "reserved",
+                "running"
+              ]
+            },
+            "result": {
+              "type": "null"
+            },
+            "replyEventId": {
+              "type": "null"
+            },
+            "failure": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "state": {
+              "const": "completed"
+            },
+            "result": {
+              "$ref": "turn.schema.json#/$defs/reply"
+            },
+            "replyEventId": {
+              "type": "string",
+              "minLength": 1,
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "failure": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "state": {
+              "const": "failed"
+            },
+            "result": {
+              "type": "null"
+            },
+            "replyEventId": {
+              "type": "null"
+            },
+            "failure": {
+              "$ref": "turn.schema.json#/$defs/failure"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

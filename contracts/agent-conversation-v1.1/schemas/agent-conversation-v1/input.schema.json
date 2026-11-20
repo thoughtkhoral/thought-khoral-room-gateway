@@ -1,0 +1,335 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thoughtkhoral/thought-khoral-contracts/schemas/agent-conversation-v1/input.schema.json",
+  "title": "ThoughtKhoral agent conversation v1 input",
+  "type": "object",
+  "properties": {
+    "profileVersion": {
+      "const": "thought-khoral.agent-conversation.v1"
+    },
+    "taskId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "roomId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "requesterId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "agentId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "skillId": {
+      "const": "chat"
+    },
+    "conversation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "mode": {
+          "enum": [
+            "new",
+            "continue"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "generation",
+        "mode"
+      ],
+      "additionalProperties": false
+    },
+    "triggerEventId": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "baseline",
+            "delta"
+          ]
+        },
+        "baseRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "policyRevision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "eventId": {
+                "type": "string",
+                "minLength": 1,
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "sequence": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "authorId": {
+                "type": "string",
+                "minLength": 1,
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "authorRole": {
+                "enum": [
+                  "human",
+                  "agent"
+                ]
+              },
+              "occurredAt": {
+                "type": "string",
+                "minLength": 1,
+                "format": "date-time"
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1
+              },
+              "displayName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              }
+            },
+            "required": [
+              "eventId",
+              "sequence",
+              "authorId",
+              "authorRole",
+              "occurredAt",
+              "text"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 2000
+        },
+        "activeDecisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "decisionId": {
+                "type": "string",
+                "minLength": 1,
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "summary": {
+                "type": "string",
+                "minLength": 0
+              },
+              "sourceEventIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "minItems": 0,
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "decisionId",
+              "title",
+              "summary",
+              "sourceEventIds"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "nativeReplyBindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "eventId": {
+                "type": "string",
+                "minLength": 1,
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "sequence": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "sourceTaskId": {
+                "type": "string",
+                "minLength": 1,
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "generation": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "textDigest": {
+                "type": "string",
+                "minLength": 64,
+                "pattern": "^[0-9a-f]{64}$",
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "eventId",
+              "sequence",
+              "sourceTaskId",
+              "generation",
+              "textDigest"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 2000
+        },
+        "digest": {
+          "type": "string",
+          "minLength": 64,
+          "pattern": "^[0-9a-f]{64}$",
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "kind",
+        "baseRevision",
+        "revision",
+        "policyRevision",
+        "entries",
+        "activeDecisions",
+        "nativeReplyBindings",
+        "digest"
+      ],
+      "additionalProperties": false
+    },
+    "guidanceRevision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "issuedAt": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date-time"
+    },
+    "expiresAt": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date-time"
+    },
+    "authorizationExpiresAt": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date-time"
+    },
+    "leaseOwner": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "leaseExpiresAt": {
+      "type": "string",
+      "minLength": 1,
+      "format": "date-time"
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "reasoningEffort": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "catalogRevision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  },
+  "required": [
+    "profileVersion",
+    "taskId",
+    "roomId",
+    "requesterId",
+    "agentId",
+    "skillId",
+    "conversation",
+    "triggerEventId",
+    "context",
+    "guidanceRevision",
+    "issuedAt",
+    "expiresAt",
+    "authorizationExpiresAt",
+    "leaseOwner",
+    "leaseExpiresAt"
+  ],
+  "additionalProperties": false,
+  "dependentRequired": {
+    "model": [
+      "reasoningEffort",
+      "catalogRevision"
+    ],
+    "reasoningEffort": [
+      "model",
+      "catalogRevision"
+    ],
+    "catalogRevision": [
+      "model",
+      "reasoningEffort"
+    ]
+  }
+}

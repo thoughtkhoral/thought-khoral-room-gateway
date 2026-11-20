@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thoughtkhoral/thought-khoral-contracts/schemas/agent-conversation-v1/task.schema.json",
+  "title": "ThoughtKhoral agent conversation v1 task",
+  "oneOf": [
+    {
+      "$ref": "turn.schema.json#/$defs/acceptedTurn"
+    },
+    {
+      "$ref": "turn.schema.json#/$defs/taskView"
+    }
+  ]
+}

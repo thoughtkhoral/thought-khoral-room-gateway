@@ -1,5 +1,12 @@
 # ThoughtKhoral room gateway
 
+The local released-defaults transition consumes verified conversation v1.1.0
+at source `f1c8621` for resolved-settings validation. Its 156-file vendor and
+external lock anchor are checked by `released_defaults_pin_test`; retained v1.0
+and historical candidate vendors are unchanged. See the
+[owning specification](.ai/specs/how/released-defaults-consumption.md).
+This source transition is not packaged-stack or live-provider acceptance.
+
 `thought-khoral-room-gateway` is the Rust/Axum service that authenticates room
 participants and validates, persists, replays, and broadcasts governed
 ThoughtKhoral room events.

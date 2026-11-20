@@ -1,0 +1,7 @@
+{
+  "profileVersion": "thought-khoral.agent-conversation.v1",
+  "code": "context_too_large",
+  "message": "Start a new room to reduce public history.",
+  "requestId": null,
+  "providerMessage": "forbidden"
+}

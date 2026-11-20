@@ -1,0 +1,3203 @@
+[
+  {
+    "path": "valid/first-turn.json",
+    "schema": "turn",
+    "valid": true
+  },
+  {
+    "path": "valid/explicit-new.json",
+    "schema": "turn",
+    "valid": true
+  },
+  {
+    "path": "valid/continue-another-human.json",
+    "schema": "turn",
+    "valid": true,
+    "context": {
+      "roomId": "22222222-2222-4222-8222-222222222222",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "agentToken": "codex-agent",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "catalogRevision": "catalog-1",
+      "models": [
+        {
+          "id": "model-a",
+          "efforts": [
+            "effort-medium"
+          ]
+        }
+      ],
+      "requesterId": "00000004-1111-4111-8111-000000000004"
+    }
+  },
+  {
+    "path": "invalid/forbidden-delivery.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/forbidden-requesterid.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/forbidden-threadid.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/forbidden-directory.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/forbidden-endpoint.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/empty-prompt.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/oversized-prompt.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "valid/unicode-scalars-at-limit.json",
+    "schema": "turn",
+    "valid": true
+  },
+  {
+    "path": "invalid/duplicate-mention-id.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "mention-duplicate"
+  },
+  {
+    "path": "invalid/alias-only.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "direct-mention"
+  },
+  {
+    "path": "invalid/wrong-direct-token.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "direct-mention"
+  },
+  {
+    "path": "invalid/invalid-generation.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/unsafe-generation.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "json-number"
+  },
+  {
+    "path": "invalid/uppercase-uuid.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/unsupported-effort.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "unsupported-settings",
+    "context": {
+      "roomId": "22222222-2222-4222-8222-222222222222",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "agentToken": "codex-agent",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "catalogRevision": "catalog-1",
+      "models": [
+        {
+          "id": "model-a",
+          "efforts": [
+            "effort-medium"
+          ]
+        }
+      ],
+      "requesterId": "00000004-1111-4111-8111-000000000004"
+    }
+  },
+  {
+    "path": "invalid/stale-catalog.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "catalog-stale",
+    "context": {
+      "roomId": "22222222-2222-4222-8222-222222222222",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "agentToken": "codex-agent",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "catalogRevision": "catalog-1",
+      "models": [
+        {
+          "id": "model-a",
+          "efforts": [
+            "effort-medium"
+          ]
+        }
+      ],
+      "requesterId": "00000004-1111-4111-8111-000000000004"
+    }
+  },
+  {
+    "path": "valid/baseline-hidden-sequence-gap.json",
+    "schema": "input",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "valid/full-bound-canonical-vector.json",
+    "schema": "canonical",
+    "valid": true
+  },
+  {
+    "path": "valid/unicode-canonical-vector.json",
+    "schema": "canonical",
+    "valid": true
+  },
+  {
+    "path": "invalid/wrong-room.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "room-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/wrong-generation.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "generation-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/wrong-digest.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "context-digest",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/wrong-base.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "context-base",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/duplicate-source.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "source-duplicate",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/duplicate-sequence.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "sequence-order",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/trigger-not-human.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "trigger-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/trigger-wrong-author.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "trigger-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/decision-hidden-provenance.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "decision-provenance",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/context-byte-overflow.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "context-bytes",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/baseline-with-native-binding.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "baseline-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/input-partial-settings.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "schema",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/input-lease-token.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "schema",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/input-targeted-delivery.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "schema",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/expired-lease.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "authority-expired",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/late-packet.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "authority-expired",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:03:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/deadline-exceeds-limit.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "deadline-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/wrong-policy.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "policy-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "valid/native-reply-substitution.json",
+    "schema": "input",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 5,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c",
+        "0000000d-1111-4111-8111-00000000000d",
+        "00000011-1111-4111-8111-000000000011"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c",
+        "0000000d-1111-4111-8111-00000000000d",
+        "00000011-1111-4111-8111-000000000011"
+      ],
+      "acknowledgedReplies": [
+        {
+          "eventId": "0000000d-1111-4111-8111-00000000000d",
+          "sequence": 6,
+          "sourceTaskId": "0000000e-1111-4111-8111-00000000000e",
+          "generation": 1,
+          "textDigest": "7e9370aeb6b948846fbbf2895757df4012682d53b0b9ce408ac621f25718b8e8"
+        }
+      ],
+      "contextDigest": "64f56223076d971c2e01abac271d53909a77fcefef38f0e9925c1aff25338d72",
+      "contextRevision": 8,
+      "triggerEventId": "00000011-1111-4111-8111-000000000011",
+      "triggerText": "@codex-agent Continue from the correction."
+    }
+  },
+  {
+    "path": "invalid/unacknowledged-native-reply.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "native-ack-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 5,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c",
+        "0000000d-1111-4111-8111-00000000000d",
+        "00000011-1111-4111-8111-000000000011"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c",
+        "0000000d-1111-4111-8111-00000000000d",
+        "00000011-1111-4111-8111-000000000011"
+      ],
+      "acknowledgedReplies": [
+        {
+          "eventId": "0000000d-1111-4111-8111-00000000000d",
+          "sequence": 6,
+          "sourceTaskId": "0000000e-1111-4111-8111-00000000000e",
+          "generation": 1,
+          "textDigest": "7e9370aeb6b948846fbbf2895757df4012682d53b0b9ce408ac621f25718b8e8"
+        }
+      ],
+      "contextDigest": "64f56223076d971c2e01abac271d53909a77fcefef38f0e9925c1aff25338d72",
+      "contextRevision": 8,
+      "triggerEventId": "00000011-1111-4111-8111-000000000011",
+      "triggerText": "@codex-agent Continue from the correction."
+    }
+  },
+  {
+    "path": "invalid/native-binding-wrong-generation.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "generation-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 5,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c",
+        "0000000d-1111-4111-8111-00000000000d",
+        "00000011-1111-4111-8111-000000000011"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c",
+        "0000000d-1111-4111-8111-00000000000d",
+        "00000011-1111-4111-8111-000000000011"
+      ],
+      "acknowledgedReplies": [
+        {
+          "eventId": "0000000d-1111-4111-8111-00000000000d",
+          "sequence": 6,
+          "sourceTaskId": "0000000e-1111-4111-8111-00000000000e",
+          "generation": 1,
+          "textDigest": "7e9370aeb6b948846fbbf2895757df4012682d53b0b9ce408ac621f25718b8e8"
+        }
+      ],
+      "contextDigest": "64f56223076d971c2e01abac271d53909a77fcefef38f0e9925c1aff25338d72",
+      "contextRevision": 8,
+      "triggerEventId": "00000011-1111-4111-8111-000000000011",
+      "triggerText": "@codex-agent Continue from the correction."
+    }
+  },
+  {
+    "path": "valid/result-last-usage.json",
+    "schema": "result",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/over-capacity-usage.json",
+    "schema": "result",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 1200,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/missing-window-unavailable.json",
+    "schema": "result",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": null,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/missing-numerator-null-usage.json",
+    "schema": "result",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/zero-window.json",
+    "schema": "result",
+    "valid": false,
+    "reason": "schema",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/missing-numerator.json",
+    "schema": "result",
+    "valid": false,
+    "reason": "schema",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/null-window-fresh.json",
+    "schema": "result",
+    "valid": false,
+    "reason": "usage-window",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/negative-numerator.json",
+    "schema": "result",
+    "valid": false,
+    "reason": "json-number",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/unconfirmed-settings.json",
+    "schema": "result",
+    "valid": false,
+    "reason": "settings-confirmation",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/result-byte-overflow.json",
+    "schema": "result",
+    "valid": false,
+    "reason": "result-bytes",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/undisclosed-citation.json",
+    "schema": "result",
+    "valid": false,
+    "reason": "citation-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/result-revision-mismatch.json",
+    "schema": "result",
+    "valid": false,
+    "reason": "revision-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/result-native-id.json",
+    "schema": "result",
+    "valid": false,
+    "reason": "schema",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/wrong-thread-usage.json",
+    "schema": "result",
+    "valid": false,
+    "reason": "usage-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "wrong-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/wrong-turn-usage.json",
+    "schema": "result",
+    "valid": false,
+    "reason": "usage-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "wrong-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/accepted-turn.json",
+    "schema": "task",
+    "valid": true
+  },
+  {
+    "path": "valid/non-codex-no-settings.json",
+    "schema": "task",
+    "valid": true
+  },
+  {
+    "path": "valid/catalog.json",
+    "schema": "catalog",
+    "valid": true
+  },
+  {
+    "path": "valid/no-settings-catalog.json",
+    "schema": "catalog",
+    "valid": true
+  },
+  {
+    "path": "invalid/catalog-duplicate-model.json",
+    "schema": "catalog",
+    "valid": false,
+    "reason": "catalog-duplicate"
+  },
+  {
+    "path": "invalid/catalog-duplicate-effort.json",
+    "schema": "catalog",
+    "valid": false,
+    "reason": "catalog-duplicate"
+  },
+  {
+    "path": "invalid/catalog-unsupported-default.json",
+    "schema": "catalog",
+    "valid": false,
+    "reason": "catalog-default"
+  },
+  {
+    "path": "valid/ready-view.json",
+    "schema": "view",
+    "valid": true
+  },
+  {
+    "path": "valid/absent-view.json",
+    "schema": "view",
+    "valid": true
+  },
+  {
+    "path": "invalid/ready-active-task.json",
+    "schema": "view",
+    "valid": false,
+    "reason": "conversation-state"
+  },
+  {
+    "path": "invalid/browser-native-thread.json",
+    "schema": "view",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "valid/completed-update.json",
+    "schema": "update",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/progress-update.json",
+    "schema": "update",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/settings-update.json",
+    "schema": "update",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/usage-update.json",
+    "schema": "update",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/failed-update.json",
+    "schema": "update",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/update-kind-data-mismatch.json",
+    "schema": "update",
+    "valid": false,
+    "reason": "schema",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/completed-task.json",
+    "schema": "task",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/failed-task.json",
+    "schema": "task",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/reserved-task.json",
+    "schema": "task",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/terminal-without-result.json",
+    "schema": "task",
+    "valid": false,
+    "reason": "schema",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/terminal-update-mismatch.json",
+    "schema": "task",
+    "valid": false,
+    "reason": "task-terminal",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "invalid/duplicate-update-ordinal.json",
+    "schema": "task",
+    "valid": false,
+    "reason": "update-order",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/result-ack.json",
+    "schema": "ack",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "result": {
+        "kind": "conversation-reply.v1",
+        "conversationId": "00000005-1111-4111-8111-000000000005",
+        "generation": 1,
+        "assistantText": "Maya proposed blue; Leo corrected it to green.",
+        "consumedRevision": 5,
+        "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+        "citations": [
+          "0000000a-1111-4111-8111-00000000000a",
+          "0000000b-1111-4111-8111-00000000000b"
+        ],
+        "effectiveSettings": {
+          "model": "model-a",
+          "reasoningEffort": "effort-medium",
+          "confirmation": "confirmed",
+          "reroutedModel": null
+        },
+        "usage": {
+          "lastTotalTokens": 120,
+          "modelContextWindow": 1000,
+          "reportedAt": "2026-10-05T12:00:05Z",
+          "model": "model-a",
+          "freshness": "fresh"
+        }
+      },
+      "replyEventId": "00000016-1111-4111-8111-000000000016",
+      "replySequence": 6
+    }
+  },
+  {
+    "path": "valid/terminal-replay.json",
+    "schema": "ack",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "result": {
+        "kind": "conversation-reply.v1",
+        "conversationId": "00000005-1111-4111-8111-000000000005",
+        "generation": 1,
+        "assistantText": "Maya proposed blue; Leo corrected it to green.",
+        "consumedRevision": 5,
+        "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+        "citations": [
+          "0000000a-1111-4111-8111-00000000000a",
+          "0000000b-1111-4111-8111-00000000000b"
+        ],
+        "effectiveSettings": {
+          "model": "model-a",
+          "reasoningEffort": "effort-medium",
+          "confirmation": "confirmed",
+          "reroutedModel": null
+        },
+        "usage": {
+          "lastTotalTokens": 120,
+          "modelContextWindow": 1000,
+          "reportedAt": "2026-10-05T12:00:05Z",
+          "model": "model-a",
+          "freshness": "fresh"
+        }
+      },
+      "replyEventId": "00000016-1111-4111-8111-000000000016",
+      "replySequence": 6,
+      "prior": {
+        "profileVersion": "thought-khoral.agent-conversation.v1",
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "conversationId": "00000005-1111-4111-8111-000000000005",
+        "generation": 1,
+        "replyEventId": "00000016-1111-4111-8111-000000000016",
+        "replySequence": 6,
+        "textDigest": "6c4bb74b93a3752517f2550374f8942da8cb0b4dda42338445cc7ca8976d1759",
+        "consumedRevision": 5,
+        "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62"
+      }
+    }
+  },
+  {
+    "path": "invalid/changed-terminal.json",
+    "schema": "ack",
+    "valid": false,
+    "reason": "terminal-conflict",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "result": {
+        "kind": "conversation-reply.v1",
+        "conversationId": "00000005-1111-4111-8111-000000000005",
+        "generation": 1,
+        "assistantText": "Maya proposed blue; Leo corrected it to green.",
+        "consumedRevision": 5,
+        "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+        "citations": [
+          "0000000a-1111-4111-8111-00000000000a",
+          "0000000b-1111-4111-8111-00000000000b"
+        ],
+        "effectiveSettings": {
+          "model": "model-a",
+          "reasoningEffort": "effort-medium",
+          "confirmation": "confirmed",
+          "reroutedModel": null
+        },
+        "usage": {
+          "lastTotalTokens": 120,
+          "modelContextWindow": 1000,
+          "reportedAt": "2026-10-05T12:00:05Z",
+          "model": "model-a",
+          "freshness": "fresh"
+        }
+      },
+      "replyEventId": "00000016-1111-4111-8111-000000000016",
+      "replySequence": 6,
+      "prior": {
+        "profileVersion": "thought-khoral.agent-conversation.v1",
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "conversationId": "00000005-1111-4111-8111-000000000005",
+        "generation": 1,
+        "replyEventId": "00000016-1111-4111-8111-000000000016",
+        "replySequence": 6,
+        "textDigest": "6c4bb74b93a3752517f2550374f8942da8cb0b4dda42338445cc7ca8976d1759",
+        "consumedRevision": 5,
+        "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62"
+      }
+    }
+  },
+  {
+    "path": "invalid/ack-text-digest-mismatch.json",
+    "schema": "ack",
+    "valid": false,
+    "reason": "text-digest",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "result": {
+        "kind": "conversation-reply.v1",
+        "conversationId": "00000005-1111-4111-8111-000000000005",
+        "generation": 1,
+        "assistantText": "Maya proposed blue; Leo corrected it to green.",
+        "consumedRevision": 5,
+        "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+        "citations": [
+          "0000000a-1111-4111-8111-00000000000a",
+          "0000000b-1111-4111-8111-00000000000b"
+        ],
+        "effectiveSettings": {
+          "model": "model-a",
+          "reasoningEffort": "effort-medium",
+          "confirmation": "confirmed",
+          "reroutedModel": null
+        },
+        "usage": {
+          "lastTotalTokens": 120,
+          "modelContextWindow": 1000,
+          "reportedAt": "2026-10-05T12:00:05Z",
+          "model": "model-a",
+          "freshness": "fresh"
+        }
+      },
+      "replyEventId": "00000016-1111-4111-8111-000000000016",
+      "replySequence": 6
+    }
+  },
+  {
+    "path": "valid/profile-error.json",
+    "schema": "error",
+    "valid": true
+  },
+  {
+    "path": "invalid/unknown-error-code.json",
+    "schema": "error",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "valid/idempotent-request-replay.json",
+    "schema": "turn",
+    "valid": true,
+    "context": {
+      "prior": {
+        "profileVersion": "thought-khoral.agent-conversation.v1",
+        "requestId": "11111111-1111-4111-8111-111111111111",
+        "roomId": "22222222-2222-4222-8222-222222222222",
+        "agentId": "74686f75-6768-746b-686f-72616c000004",
+        "occurredAt": "2026-10-02T16:00:00Z",
+        "text": "@codex-agent What did Maya propose?",
+        "mentions": [
+          {
+            "type": "participant",
+            "id": "74686f75-6768-746b-686f-72616c000004",
+            "token": "codex-agent"
+          }
+        ],
+        "conversation": {
+          "mode": "new"
+        }
+      },
+      "sameRequester": true
+    }
+  },
+  {
+    "path": "invalid/conflicting-duplicate.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "duplicate-conflict",
+    "context": {
+      "prior": {
+        "profileVersion": "thought-khoral.agent-conversation.v1",
+        "requestId": "11111111-1111-4111-8111-111111111111",
+        "roomId": "22222222-2222-4222-8222-222222222222",
+        "agentId": "74686f75-6768-746b-686f-72616c000004",
+        "occurredAt": "2026-10-02T16:00:00Z",
+        "text": "@codex-agent What did Maya propose?",
+        "mentions": [
+          {
+            "type": "participant",
+            "id": "74686f75-6768-746b-686f-72616c000004",
+            "token": "codex-agent"
+          }
+        ],
+        "conversation": {
+          "mode": "new"
+        }
+      },
+      "sameRequester": true
+    }
+  },
+  {
+    "path": "invalid/duplicate-another-requester.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "duplicate-conflict",
+    "context": {
+      "prior": {
+        "profileVersion": "thought-khoral.agent-conversation.v1",
+        "requestId": "11111111-1111-4111-8111-111111111111",
+        "roomId": "22222222-2222-4222-8222-222222222222",
+        "agentId": "74686f75-6768-746b-686f-72616c000004",
+        "occurredAt": "2026-10-02T16:00:00Z",
+        "text": "@codex-agent What did Maya propose?",
+        "mentions": [
+          {
+            "type": "participant",
+            "id": "74686f75-6768-746b-686f-72616c000004",
+            "token": "codex-agent"
+          }
+        ],
+        "conversation": {
+          "mode": "new"
+        }
+      },
+      "sameRequester": false
+    }
+  },
+  {
+    "path": "invalid/duplicate-object-key.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "json-duplicate"
+  },
+  {
+    "path": "invalid/unpaired-surrogate.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "unicode-scalar"
+  },
+  {
+    "path": "invalid/fractional-generation.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "json-number"
+  },
+  {
+    "path": "invalid/exponent-generation.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "json-number"
+  },
+  {
+    "path": "valid/ordinary-human-message.json",
+    "schema": "retained-event",
+    "valid": true
+  },
+  {
+    "path": "valid/ordinary-codex-message.json",
+    "schema": "retained-event",
+    "valid": true
+  },
+  {
+    "path": "invalid/cumulative-usage-rejected.json",
+    "schema": "result",
+    "valid": false,
+    "reason": "usage-counts",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/zero-last-usage.json",
+    "schema": "result",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 0,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/wrong-thread-usage-unavailable.json",
+    "schema": "result",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "wrong-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/result-utf8-at-limit.json",
+    "schema": "result",
+    "valid": true,
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:06Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextRevision": 5,
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "expectedThreadId": "native-test-thread",
+      "expectedTurnId": "native-test-turn",
+      "rawUsageBinding": {
+        "taskId": "00000006-1111-4111-8111-000000000006",
+        "generation": 1,
+        "threadId": "native-test-thread",
+        "turnId": "native-test-turn"
+      },
+      "rawUsage": {
+        "lastTotalTokens": 120,
+        "modelContextWindow": 1000,
+        "totalTokens": 99999
+      }
+    }
+  },
+  {
+    "path": "valid/control-escapes-vector.json",
+    "schema": "canonical",
+    "valid": true
+  },
+  {
+    "path": "valid/decomposed-unicode-vector.json",
+    "schema": "canonical",
+    "valid": true
+  },
+  {
+    "path": "valid/reversed-array-vector.json",
+    "schema": "canonical",
+    "valid": true
+  },
+  {
+    "path": "invalid/escaped-duplicate-object-key.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "json-duplicate"
+  },
+  {
+    "path": "invalid/low-unpaired-surrogate.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "unicode-scalar"
+  },
+  {
+    "path": "invalid/negative-zero-generation.json",
+    "schema": "turn",
+    "valid": false,
+    "reason": "json-number"
+  },
+  {
+    "path": "invalid/update-outer-generation.json",
+    "schema": "update",
+    "valid": false,
+    "reason": "generation-binding"
+  },
+  {
+    "path": "invalid/update-outer-digest.json",
+    "schema": "update",
+    "valid": false,
+    "reason": "context-digest"
+  },
+  {
+    "path": "invalid/combined-record-overflow.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "context-records",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 5,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c",
+        "0000000d-1111-4111-8111-00000000000d",
+        "00000011-1111-4111-8111-000000000011"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c",
+        "0000000d-1111-4111-8111-00000000000d",
+        "00000011-1111-4111-8111-000000000011"
+      ],
+      "acknowledgedReplies": [
+        {
+          "eventId": "0000000d-1111-4111-8111-00000000000d",
+          "sequence": 6,
+          "sourceTaskId": "0000000e-1111-4111-8111-00000000000e",
+          "generation": 1,
+          "textDigest": "7e9370aeb6b948846fbbf2895757df4012682d53b0b9ce408ac621f25718b8e8"
+        }
+      ],
+      "contextDigest": "64f56223076d971c2e01abac271d53909a77fcefef38f0e9925c1aff25338d72",
+      "contextRevision": 8,
+      "triggerEventId": "00000011-1111-4111-8111-000000000011",
+      "triggerText": "@codex-agent Continue from the correction."
+    }
+  },
+  {
+    "path": "invalid/catalog-unknown-private-field.json",
+    "schema": "catalog",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/input-unknown-private-field.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "schema",
+    "context": {
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/result-unknown-private-field.json",
+    "schema": "result",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/ack-unknown-private-field.json",
+    "schema": "ack",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/update-unknown-private-field.json",
+    "schema": "update",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/task-unknown-private-field.json",
+    "schema": "task",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/error-unknown-private-field.json",
+    "schema": "error",
+    "valid": false,
+    "reason": "schema"
+  },
+  {
+    "path": "invalid/view-room-binding.json",
+    "schema": "view",
+    "valid": false,
+    "reason": "room-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1
+    }
+  },
+  {
+    "path": "invalid/view-agent-binding.json",
+    "schema": "view",
+    "valid": false,
+    "reason": "agent-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1
+    }
+  },
+  {
+    "path": "invalid/view-conversation-binding.json",
+    "schema": "view",
+    "valid": false,
+    "reason": "conversation-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1
+    }
+  },
+  {
+    "path": "invalid/view-generation-binding.json",
+    "schema": "view",
+    "valid": false,
+    "reason": "generation-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1
+    }
+  },
+  {
+    "path": "invalid/absent-view-room-binding.json",
+    "schema": "view",
+    "valid": false,
+    "reason": "room-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1
+    }
+  },
+  {
+    "path": "invalid/undisclosed-trigger.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "disclosure-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/rehashed-altered-trigger.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "context-digest",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007"
+    }
+  },
+  {
+    "path": "invalid/rehashed-altered-revision.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "revision-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  },
+  {
+    "path": "invalid/rehashed-altered-trigger-id.json",
+    "schema": "input",
+    "valid": false,
+    "reason": "trigger-binding",
+    "context": {
+      "roomId": "00000002-1111-4111-8111-000000000002",
+      "agentId": "74686f75-6768-746b-686f-72616c000004",
+      "taskId": "00000006-1111-4111-8111-000000000006",
+      "requesterId": "00000004-1111-4111-8111-000000000004",
+      "conversationId": "00000005-1111-4111-8111-000000000005",
+      "generation": 1,
+      "baseRevision": 0,
+      "policyRevision": "policy-1",
+      "guidanceRevision": "fixed-1",
+      "now": "2026-10-05T12:00:04Z",
+      "authorizedSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "roomWideSourceIds": [
+        "0000000a-1111-4111-8111-00000000000a",
+        "0000000b-1111-4111-8111-00000000000b",
+        "00000007-1111-4111-8111-000000000007",
+        "0000000c-1111-4111-8111-00000000000c"
+      ],
+      "acknowledgedReplies": [],
+      "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+      "contextRevision": 5,
+      "triggerEventId": "00000007-1111-4111-8111-000000000007",
+      "triggerText": "@codex-agent What did Maya propose?"
+    }
+  }
+]

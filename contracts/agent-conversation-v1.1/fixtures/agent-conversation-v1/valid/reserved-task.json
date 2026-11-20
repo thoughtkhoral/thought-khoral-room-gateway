@@ -1,0 +1,31 @@
+{
+  "profileVersion": "thought-khoral.agent-conversation.v1",
+  "roomId": "00000002-1111-4111-8111-000000000002",
+  "taskId": "00000006-1111-4111-8111-000000000006",
+  "conversationId": "00000005-1111-4111-8111-000000000005",
+  "generation": 1,
+  "requesterId": "00000004-1111-4111-8111-000000000004",
+  "state": "reserved",
+  "selectedSettings": {
+    "model": "model-a",
+    "reasoningEffort": "effort-medium",
+    "catalogRevision": "catalog-1"
+  },
+  "effectiveSettings": {
+    "model": "model-a",
+    "reasoningEffort": "effort-medium",
+    "confirmation": "confirmed",
+    "reroutedModel": null
+  },
+  "usage": {
+    "lastTotalTokens": 120,
+    "modelContextWindow": 1000,
+    "reportedAt": "2026-10-05T12:00:05Z",
+    "model": "model-a",
+    "freshness": "fresh"
+  },
+  "updates": [],
+  "result": null,
+  "replyEventId": null,
+  "failure": null
+}

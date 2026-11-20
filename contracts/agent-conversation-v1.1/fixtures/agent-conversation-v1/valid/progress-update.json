@@ -1,0 +1,13 @@
+{
+  "profileVersion": "thought-khoral.agent-conversation.v1",
+  "updateId": "00000015-1111-4111-8111-000000000015",
+  "ordinal": 1,
+  "taskId": "00000006-1111-4111-8111-000000000006",
+  "generation": 1,
+  "contextDigest": "d72f81e3da10a0b3f0c9f1bafc32bc1f6afea94875ab0e7ee2b0d6f31c157e62",
+  "kind": "progress",
+  "data": {
+    "phase": "working",
+    "text": "Working."
+  }
+}

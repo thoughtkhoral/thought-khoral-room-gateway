@@ -1,0 +1,60 @@
+{
+  "profileVersion": "thought-khoral.agent-conversation.v1",
+  "taskId": "00000006-1111-4111-8111-000000000006",
+  "roomId": "00000002-1111-4111-8111-000000000002",
+  "requesterId": "00000004-1111-4111-8111-000000000004",
+  "agentId": "74686f75-6768-746b-686f-72616c000004",
+  "skillId": "chat",
+  "conversation": {
+    "id": "00000005-1111-4111-8111-000000000005",
+    "generation": 1,
+    "mode": "continue"
+  },
+  "triggerEventId": "00000011-1111-4111-8111-000000000011",
+  "context": {
+    "kind": "delta",
+    "baseRevision": 5,
+    "revision": 8,
+    "policyRevision": "policy-1",
+    "entries": [
+      {
+        "eventId": "00000011-1111-4111-8111-000000000011",
+        "sequence": 8,
+        "authorId": "00000004-1111-4111-8111-000000000004",
+        "authorRole": "human",
+        "occurredAt": "2026-10-05T12:00:02Z",
+        "text": "@codex-agent Continue from the correction."
+      }
+    ],
+    "activeDecisions": [
+      {
+        "decisionId": "0000000c-1111-4111-8111-00000000000c",
+        "title": "Example color",
+        "summary": "Use green.",
+        "sourceEventIds": [
+          "0000000a-1111-4111-8111-00000000000a",
+          "0000000b-1111-4111-8111-00000000000b"
+        ]
+      }
+    ],
+    "nativeReplyBindings": [
+      {
+        "eventId": "0000000d-1111-4111-8111-00000000000d",
+        "sequence": 6,
+        "sourceTaskId": "0000000e-1111-4111-8111-00000000000e",
+        "generation": 1,
+        "textDigest": "7e9370aeb6b948846fbbf2895757df4012682d53b0b9ce408ac621f25718b8e8"
+      }
+    ],
+    "digest": "64f56223076d971c2e01abac271d53909a77fcefef38f0e9925c1aff25338d72"
+  },
+  "guidanceRevision": "fixed-1",
+  "issuedAt": "2026-10-05T12:00:03Z",
+  "expiresAt": "2026-10-05T12:03:03Z",
+  "authorizationExpiresAt": "2026-10-05T12:05:00Z",
+  "leaseOwner": "mediator-test",
+  "leaseExpiresAt": "2026-10-05T12:05:00Z",
+  "model": "model-a",
+  "reasoningEffort": "effort-medium",
+  "catalogRevision": "catalog-1"
+}
