@@ -1,12 +1,30 @@
 # ThoughtKhoral room gateway specifications
 
+## Current workspace state — 2026-11-20
+
+Released-v1.1 defaults consumption is implemented and reviewed at local source `673294e66fed2b6e98d73e08cfe4a23a0e5e4d48`. It preserves both historical vendors and the dependency lock; full isolated-database verification passed 160 tests with one intentional external-agent ignore. This is component-source evidence, not assembled-stack/browser/provider acceptance.
+
+This canonical checkout retains its previous candidate imports/historical runner.
+The prepared implementation is on a separate local branch, not integrated here.
+Current documentation describes both contexts without importing runtime changes.
+
+- [How: released defaults consumption](how/released-defaults-consumption.md)
+
+See the [root workspace authority](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/workspace-state.md) for exact source/release
+identities, preserved source snapshots and remaining gates. Documentation-only
+HEADs are not substitutions for frozen acceptance commits. Earlier dated
+checkpoints retain their historical evidence; no runtime suite was rerun for
+this prose refresh.
+
 Parent requirements in the ThoughtKhoral root `.ai/specs/` apply here. This project may diverge only through an accepted local decision record that identifies the overridden parent rule and its consequences.
 
 See the [root specification index](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/README.md).
 
 For the coordinated Codex conversation status across all projects, see the [shared status guide](https://github.com/thoughtkhoral/thought-khoral/blob/main/docs/codex-conversation-status.md).
 
-## Current verification boundary — 2026-11-19
+<a id="current-verification-boundary--2026-11-19"></a>
+
+## Historical verification boundary — 2026-11-19
 
 The reviewed conversation broker and defaults-discovery implementation is on
 GitHub `main`. Its defaults endpoint consumes the unreleased v1.1 candidate
