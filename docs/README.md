@@ -8,9 +8,9 @@ current documentation contract, not a new runtime or release decision.
 
 ## Checkout applicability
 
-This is the prepared source branch: its released imports/profile are present.
-Its frozen implementation commit above remains the acceptance identity; later
-documentation commits are evidence followups. The branch remains unpushed/unmerged.
+This checkout contains the reviewed released-v1.1 implementation. The
+maintainer authorized coordinated integration on 2026-11-23. Frozen component
+acceptance commits remain unchanged; packaged/browser/live gates remain open.
 
 The [workspace guide](https://github.com/thoughtkhoral/thought-khoral/blob/main/docs/workspace-status.md)
 identifies canonical mains, prepared branches, published artifacts and exact

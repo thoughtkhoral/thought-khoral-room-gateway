@@ -6,9 +6,9 @@
 
 Released-v1.1 defaults consumption is implemented and reviewed at local source `673294e66fed2b6e98d73e08cfe4a23a0e5e4d48`. It preserves both historical vendors and the dependency lock; full isolated-database verification passed 160 tests with one intentional external-agent ignore. This is component-source evidence, not assembled-stack/browser/provider acceptance.
 
-This is the prepared source branch: its released imports/profile are present.
-Its frozen implementation commit above remains the acceptance identity; later
-documentation commits are evidence followups. The branch remains unpushed/unmerged.
+This checkout contains the reviewed released-v1.1 implementation. The
+maintainer authorized coordinated integration on 2026-11-23. Frozen component
+acceptance commits remain unchanged; packaged/browser/live gates remain open.
 
 Derived from the [local specification index](.ai/specs/README.md) and
 [root workspace authority](https://github.com/thoughtkhoral/thought-khoral/blob/main/.ai/specs/how/workspace-state.md).
